@@ -1,0 +1,15 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    // Project rules (.claude/rules/typescript.md) on top of Astro's strict preset.
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    // React islands (same values `astro add react` writes).
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  }
+}
