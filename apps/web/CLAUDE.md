@@ -22,7 +22,7 @@ e2e/                Playwright tests (desktop, iPhone/WebKit, Android/Chromium w
 | Dev server | `pnpm --dir apps/web run dev` |
 | Fast checks | `pnpm --dir apps/web run check:fast` (prettier --check, eslint, stylelint, astro check, vitest) |
 | Unit / component tests | `pnpm --dir apps/web run test` |
-| E2E (+ axe, visual) | `pnpm --dir apps/web run e2e` · one project: `… run e2e -- --project=mobile-android` |
+| E2E (+ axe, visual) | `pnpm --dir apps/web run e2e` · one project: `… run e2e --project=mobile-android` |
 | Build (CV PDF from ROADMAP 2.5) | `pnpm --dir apps/web run build` |
 | Bundle budgets | `pnpm --dir apps/web run budget` |
 | Lighthouse CI | `pnpm --dir apps/web run lhci` |

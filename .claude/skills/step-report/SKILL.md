@@ -33,7 +33,7 @@ Every step ends with this report, in **Russian**. Then wait for Ivan's OK before
 | Команда | Результат |
 |---|---|
 | `node scripts/check-fast.mjs web` | ✔ |
-| `pnpm --dir apps/web run e2e -- --project=mobile-android` | ✘ 1 failed → fixed in … |
+| `pnpm --dir apps/web run e2e --project=mobile-android` | ✘ 1 failed → fixed in … |
 
 ### Открытые вопросы / решения за тобой
 - <only if any>

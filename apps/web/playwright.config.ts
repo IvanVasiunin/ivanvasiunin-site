@@ -6,7 +6,8 @@ import { SLOW_4G, type ThrottleOptions } from './e2e/fixtures';
 const PORT = 4400;
 const isCI = Boolean(process.env.CI);
 
-// E2E, a11y and (later) visual tests against the production build (docs/TESTING.md §1).
+// E2E, a11y and visual tests against the production build (docs/TESTING.md §1).
+const VISUAL = /visual\.spec\.ts$/;
 export default defineConfig<ThrottleOptions>({
   testDir: './e2e',
   fullyParallel: true,
@@ -28,13 +29,16 @@ export default defineConfig<ThrottleOptions>({
     env: { ASTRO_TELEMETRY_DISABLED: '1' },
   },
   projects: [
-    { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'desktop-chromium', testIgnore: VISUAL, use: { ...devices['Desktop Chrome'] } },
     // WebKit has no CDP, so the iPhone profile runs without CPU / network throttling.
-    { name: 'mobile-iphone', use: { ...devices['iPhone 17 Pro Max'] } },
+    { name: 'mobile-iphone', testIgnore: VISUAL, use: { ...devices['iPhone 17 Pro Max'] } },
     // 360 px wide: the smallest supported viewport. Slow 4G + 4x CPU slowdown via CDP.
     {
       name: 'mobile-android',
+      testIgnore: VISUAL,
       use: { ...devices['Galaxy S24'], throttle: { cpuRate: 4, network: SLOW_4G } },
     },
+    // Responsive snapshots: one engine, no throttling, widths set per test (TESTING.md §6).
+    { name: 'visual-chromium', testMatch: VISUAL, use: { ...devices['Desktop Chrome'] } },
   ],
 });

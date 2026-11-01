@@ -27,8 +27,8 @@ All commands run from the repository root.
 | Fast checks, all targets | `node scripts/check-fast.mjs` (`web`, `api`, `scripts`; `--changed` for uncommitted changes only; `--strict` in CI). The Stop hook runs `--changed` |
 | Fast checks, web | `node scripts/check-fast.mjs web` = `pnpm --dir apps/web run check:fast` (Prettier check, ESLint, Stylelint, `astro check` + `tsc`, Vitest) |
 | Fast checks, api | `node scripts/check-fast.mjs api` (ruff format --check, ruff check, pyright, `pytest -m "not mentor_pending"`) |
-| E2E (+ axe) | `pnpm --dir apps/web run e2e` (all projects) / `pnpm --dir apps/web run e2e -- --project=mobile-android` |
-| Visual snapshots update (from ROADMAP 1.1) | `pnpm --dir apps/web run e2e -- --update-snapshots` (only with Ivan's OK) |
+| E2E (+ axe) | `pnpm --dir apps/web run e2e` (all projects) / `pnpm --dir apps/web run e2e --project=mobile-android` (no `--` before Playwright flags: pnpm forwards it and Playwright then ignores the flags) |
+| Visual snapshots (from ROADMAP 1.1) | run as part of `e2e` in the `visual-chromium` project (`apps/web/e2e/visual.spec.ts`); update: `pnpm --dir apps/web run e2e --project=visual-chromium --update-snapshots` (only with Ivan's OK). Baselines are per platform: `-win32` locally, Linux ones with the CI e2e job (ROADMAP 1.8) |
 | Build + JS budgets | `pnpm --dir apps/web run build` then `pnpm --dir apps/web run budget` |
 | Lighthouse CI | `pnpm --dir apps/web run lhci` (mobile + desktop) |
 | Performance, long frames (from ROADMAP 6.4) | skill `perf-check` |
