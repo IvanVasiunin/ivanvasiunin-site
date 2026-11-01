@@ -1,0 +1,15 @@
+---
+// First focusable element on every page: jumps keyboard users past the header to the main content.
+import './SkipLink.scss';
+
+interface Props {
+  /** `id` of the element to jump to. */
+  readonly target: string;
+}
+
+const { target } = Astro.props;
+---
+
+<a class="skip-link" href={`#${target}`}>
+  Skip to content
+</a>

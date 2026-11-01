@@ -1,0 +1,100 @@
+@use '../../styles/mixins' as *;
+
+// Sticky (not fixed): it stays in the flow, so no layout offsets are needed. The bar is opaque because
+// the gradient border technique paints the gradient under the padding box too.
+@layer components {
+  .site-header {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-header);
+    padding-block-start: max(var(--space-xs), env(safe-area-inset-top));
+    padding-inline: max(var(--gutter), env(safe-area-inset-left))
+      max(var(--gutter), env(safe-area-inset-right));
+
+    @include mq(md) {
+      padding-block-start: max(var(--space-md), env(safe-area-inset-top));
+    }
+  }
+
+  .site-header__bar {
+    @include gradient-border;
+
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    justify-content: space-between;
+
+    // The page frame includes the gutter, the bar sits inside it: its edge lines up with the content.
+    max-inline-size: calc(var(--size-container) - 2 * var(--gutter));
+    margin-inline: auto;
+    padding: var(--space-2xs);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-raised);
+  }
+
+  // The components layer beats base.scss, so the base link underline on hover never applies here.
+  .site-header__brand {
+    position: relative;
+    isolation: isolate; // keeps the ::before highlight under the text but above the bar
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+    min-block-size: var(--size-touch);
+
+    // The mark's inline offset equals its block offset: (44 − 24) / 2 on every side of the star.
+    padding-inline: calc((var(--size-touch) - var(--size-icon)) / 2) var(--space-md);
+    border-radius: var(--radius-pill);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    text-decoration-line: none;
+
+    // Hover highlight: a soft accent pill that fades in (opacity only).
+    &::before {
+      position: absolute;
+      inset: 0;
+      z-index: var(--z-below);
+      border-radius: inherit;
+      background-color: var(--color-highlight-soft);
+      content: '';
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    @media (hover: hover) {
+      &:hover::before {
+        opacity: 1;
+      }
+
+      &:hover .site-header__mark {
+        transform: rotate(45deg);
+      }
+    }
+
+    &:active .site-header__mark {
+      transform: rotate(45deg) scale(0.9);
+    }
+  }
+
+  .site-header__mark {
+    flex-shrink: 0;
+    transition: transform var(--duration-slow) var(--ease-out);
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  .site-header__mark-stop-start {
+    stop-color: var(--color-accent);
+  }
+
+  .site-header__mark-stop-end {
+    stop-color: var(--color-accent-2);
+  }
+
+  .site-header__actions {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+  }
+}

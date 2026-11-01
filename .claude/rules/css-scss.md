@@ -8,7 +8,7 @@ paths:
 Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` review only.
 
 ## Architecture
-- Cascade layers, declared once in the global entry: `@layer reset, base, tokens, components, utilities;`. Component styles live in `components`. Nothing is unlayered except third-party CSS that cannot be layered. `[review]`
+- Cascade layers, declared once as an inline `<style>` first in `<head>` (`src/layouts/BaseLayout.astro`), before any bundled CSS: `@layer reset, base, tokens, components, utilities;`. A statement inside a bundled file is not enough: the bundler may emit component CSS first. Component styles live in `components`. Nothing is unlayered except third-party CSS that cannot be layered. `[test]` (e2e/layout.spec.ts)
 - Resets use `:where()` to keep specificity at zero. `[review]`
 - SCSS modules use `@use` / `@forward`; `@import` is forbidden. `[lint]` (`at-rule-disallowed-list: [import]`; `scss/load-no-partial-leading-underscore`)
 - **SCSS variables and mixins** are for build-time values only (breakpoints, mixins for media queries). Everything that themes or varies at runtime is a CSS custom property. `[review]`

@@ -1,0 +1,34 @@
+---
+// Button or button-styled link. Navigation renders `<a href>`, actions render `<button type>`
+// (html-a11y.md). Variants: `primary` (gradient fill + glow) and `secondary` (gradient border).
+import type { HTMLAttributes } from 'astro/types';
+import './Button.scss';
+
+type Variant = 'primary' | 'secondary';
+
+// A link cannot really be disabled (`aria-disabled` would look off but still navigate), so the link
+// variant does not accept it. Disabled actions are `<button disabled>`.
+type Props =
+  | (Omit<HTMLAttributes<'a'>, 'aria-disabled'> & {
+      readonly href: string;
+      readonly variant?: Variant;
+    })
+  | (HTMLAttributes<'button'> & {
+      readonly href?: never;
+      readonly type?: 'button' | 'submit' | 'reset';
+      readonly variant?: Variant;
+    });
+
+const { variant = 'primary', class: className, ...rest } = Astro.props;
+const classes = ['button', `button--${variant}`, className];
+---
+
+{'href' in rest && rest.href !== undefined ? (
+  <a class:list={classes} {...rest}>
+    <slot />
+  </a>
+) : (
+  <button class:list={classes} type="button" {...rest}>
+    <slot />
+  </button>
+)}

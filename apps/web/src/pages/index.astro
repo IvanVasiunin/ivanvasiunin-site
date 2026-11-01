@@ -1,27 +1,14 @@
 ---
-// Placeholder for AI mode (SPEC §2). The layout, tokens and islands arrive in Phase 1.
+// Placeholder for AI mode (SPEC §2). The chat and the vector-space islands arrive in Phases 3 and 5.
+import Button from '../components/Button/Button.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
-    />
-    <title>Ivan Vasiunin</title>
-    <meta
-      name="description"
-      content="Ivan Vasiunin, Senior Markup Developer moving into AI Engineering."
-    />
-  </head>
-  <body>
-    <main>
-      <h1>Ivan Vasiunin</h1>
-      <p>AI mode is coming soon.</p>
-      <p>
-        <a href="/cv">Read the CV</a>
-      </p>
-    </main>
-  </body>
-</html>
+<BaseLayout
+  title="Ivan Vasiunin"
+  description="Ivan Vasiunin, Senior Markup Developer moving into AI Engineering."
+>
+  <h1>Ivan Vasiunin</h1>
+  <p>AI mode is coming soon.</p>
+  <Button href="/cv">Read the CV</Button>
+</BaseLayout>

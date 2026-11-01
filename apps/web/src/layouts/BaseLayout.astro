@@ -1,0 +1,51 @@
+---
+// Page shell for every route (ROADMAP 1.1): document head, skip link, backdrop, header, main, footer.
+// Global styles are imported first so the cascade layer order is established before component CSS.
+import '../styles/global.scss';
+import './BaseLayout.scss';
+import Backdrop from '../components/Backdrop/Backdrop.astro';
+import SiteFooter from '../components/SiteFooter/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader/SiteHeader.astro';
+import SkipLink from '../components/SkipLink/SkipLink.astro';
+
+interface Props {
+  readonly title: string;
+  readonly description: string;
+}
+
+const { title, description } = Astro.props;
+// Must match --color-bg in src/styles/tokens.scss: mobile browsers paint their UI in this colour.
+const THEME_COLOR = { light: '#e8ecf5', dark: '#0e1430' } as const;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    {/* The cascade layer order, declared once and before any bundled CSS (css-scss.md). The bundler
+    orders CSS by import graph and the minifier folds layer statements into the first blocks, so a
+    statement inside a bundled file cannot guarantee the order. Checked by e2e/layout.spec.ts. */}
+    <style is:inline>
+      @layer reset, base, tokens, components, utilities;
+    </style>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content={THEME_COLOR.light} />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content={THEME_COLOR.dark} />
+  </head>
+  <body class="page">
+    <SkipLink target="main" />
+    <Backdrop />
+    <SiteHeader>
+      <slot name="header-actions" slot="actions" />
+    </SiteHeader>
+    <main id="main" class="page__main" tabindex="-1">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>

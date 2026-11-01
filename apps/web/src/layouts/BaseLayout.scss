@@ -1,0 +1,28 @@
+// Page frame: header, a main area that takes the free height, footer. Mobile-first from 360 px.
+@layer components {
+  // A flex column: main takes the free height, the sticky header and the footer keep their size.
+  .page {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 100svh;
+  }
+
+  // The main area is a left-aligned reading column inside a centred frame (src/styles/README.md).
+  .page__main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-lg);
+    align-items: flex-start;
+    inline-size: 100%;
+    max-inline-size: var(--size-container);
+    margin-inline: auto;
+    padding-block: var(--space-2xl) var(--space-3xl);
+    padding-inline: max(var(--gutter), env(safe-area-inset-left))
+      max(var(--gutter), env(safe-area-inset-right));
+
+    > :where(p, ul, ol) {
+      max-inline-size: var(--measure);
+    }
+  }
+}

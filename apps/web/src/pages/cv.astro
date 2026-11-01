@@ -1,24 +1,13 @@
 ---
 // Placeholder for text mode (SPEC §2). The CV content collection arrives in Phase 2.
+import Button from '../components/Button/Button.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
-    />
-    <title>CV — Ivan Vasiunin</title>
-    <meta name="description" content="CV of Ivan Vasiunin, Senior Markup Developer." />
-  </head>
-  <body>
-    <main>
-      <h1>Ivan Vasiunin — CV</h1>
-      <p>The CV is coming soon.</p>
-      <p>
-        <a href="/">Back to the home page</a>
-      </p>
-    </main>
-  </body>
-</html>
+<BaseLayout title="CV — Ivan Vasiunin" description="CV of Ivan Vasiunin, Senior Markup Developer.">
+  <h1>Ivan Vasiunin — CV</h1>
+  <p>The CV is coming soon.</p>
+  <Button href="/" variant="secondary">
+    Back to the home page
+  </Button>
+</BaseLayout>

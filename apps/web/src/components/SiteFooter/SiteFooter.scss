@@ -1,0 +1,19 @@
+@layer components {
+  // A gradient hairline on top: `border-image` is fine here, the edge is straight (no radius).
+  // No side padding: the box itself is inset by the gutter, so the hairline starts where content does.
+  .site-footer {
+    inline-size: min(
+      100% - 2 * max(var(--gutter), env(safe-area-inset-left), env(safe-area-inset-right)),
+      var(--size-container) - 2 * var(--gutter)
+    );
+    margin-inline: auto;
+    padding-block: var(--space-lg) max(var(--space-lg), env(safe-area-inset-bottom));
+    border-block-start: var(--border-width) solid;
+    border-image: var(--gradient-border) 1;
+  }
+
+  .site-footer__copyright {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+}
