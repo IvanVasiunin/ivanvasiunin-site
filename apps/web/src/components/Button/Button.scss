@@ -84,6 +84,9 @@
     }
   }
 
+  // The label keeps the body text colour in every state: accent text on the accent-tinted state layers
+  // reads blue on blue (only ~4.7:1 when pressed); body text stays at 8:1 or more. The layers and the
+  // glow carry the state.
   .button--secondary {
     @include gradient-border($fill-image: var(--gradient-surface));
 
@@ -95,16 +98,6 @@
 
     &::after {
       background-image: var(--gradient-surface-active);
-    }
-
-    @media (hover: hover) {
-      &:hover {
-        color: var(--color-accent);
-      }
-    }
-
-    &:active {
-      color: var(--color-accent);
     }
   }
 }

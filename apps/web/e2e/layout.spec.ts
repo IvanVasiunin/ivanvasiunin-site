@@ -158,6 +158,33 @@ test('button hover and active states fade layers in without moving the button', 
   await page.mouse.up();
 });
 
+for (const colorScheme of ['light', 'dark'] as const) {
+  test(`the secondary button label keeps the body text colour on hover and press (${colorScheme})`, async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'Touch devices have no hover state.');
+    await page.emulateMedia({ colorScheme });
+    await page.goto('/cv');
+    const button = page.getByRole('link', { name: 'Back to the home page' });
+    const colours = () =>
+      button.evaluate((element) => ({
+        label: getComputedStyle(element).color,
+        text: getComputedStyle(document.body).color,
+        pressedLayer: getComputedStyle(element, '::after').opacity,
+      }));
+    const atRest = await colours();
+    expect(atRest.label).toBe(atRest.text);
+
+    await button.hover();
+    expect((await colours()).label).toBe(atRest.text);
+    await page.mouse.down();
+    await expect.poll(async () => (await colours()).pressedLayer).toBe('1');
+    expect((await colours()).label).toBe(atRest.text);
+    await page.mouse.up();
+  });
+}
+
 test('the brand mark sits at equal distances from the bar edges', async ({ page }) => {
   await page.goto('/');
   const offsets = await page.evaluate(() => {
