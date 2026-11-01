@@ -23,7 +23,7 @@ Verification tags: `[lint]` ESLint, `[test]` automated test, `[review]` review o
 - Props are typed with an `interface ComponentProps`, never with `React.FC`. `[lint]` (`@typescript-eslint/consistent-type-definitions: interface`) `[review]`
 - Rules of Hooks. Exhaustive dependencies. `[lint]` (eslint-plugin-react-hooks `rules-of-hooks`, `exhaustive-deps` as error)
 - **Inline styles** are forbidden, except passing dynamic values as CSS custom properties: `style={{ '--relevance': score }}`. `[lint]` (custom `no-restricted-syntax` on `style` objects with non-`--` keys) `[review]`
-- No `dangerouslySetInnerHTML`. `[lint]` (`react/no-danger`)
+- No `dangerouslySetInnerHTML`. `[lint]` (`no-restricted-syntax` on the `dangerouslySetInnerHTML` JSX attribute)
 
 ## State
 - State is local (`useState` / `useReducer`). A global store (Redux, Zustand, Context-as-store) needs a documented reason. `[review]`

@@ -1,6 +1,6 @@
 # Testing
 
-- **Status:** Draft. Exact commands are finalized when the skeleton is created (Phase 0, Stage 6).
+- **Status:** Final for Phase 0. Commands in §2 match the scripts in the repository; rows marked "from ROADMAP x.y" arrive with that task.
 - **Last updated:** 2026-11-01
 
 ## 1. Strategy
@@ -18,20 +18,24 @@
 | RAG evals | pytest + DeepEval, separate command | Faithfulness, relevance; router accuracy per class; unknown fact → "no information"; NDA and salary policy. Thresholds in config; below threshold = fail. **Costs money, runs only with Ivan's consent.** |
 | Security | gitleaks, pnpm audit, pip-audit | Pre-commit (gitleaks) + CI |
 
-## 2. Commands (planned; finalized in Stage 6)
+## 2. Commands
+
+All commands run from the repository root.
 
 | Purpose | Command |
 |---|---|
-| Fast checks, web | `pnpm --filter web check` (format check, lint, typecheck, unit + component tests) |
-| Fast checks, api | In `apps/api`: `uv run ruff format --check . ; uv run ruff check . ; uv run pyright ; uv run pytest -m "not mentor_pending"` (wrapped in one cross-platform script in Stage 6) |
-| E2E | `pnpm --filter web e2e` (all projects) / `pnpm --filter web e2e --project=mobile-android` |
-| Visual snapshots update | `pnpm --filter web e2e --update-snapshots` (only with Ivan's OK) |
-| Lighthouse CI | `pnpm --filter web lhci` |
-| Performance (long frames) | `pnpm --filter web perf` |
+| Fast checks, all targets | `node scripts/check-fast.mjs` (`web`, `api`, `scripts`; `--changed` for uncommitted changes only; `--strict` in CI). The Stop hook runs `--changed` |
+| Fast checks, web | `node scripts/check-fast.mjs web` = `pnpm --dir apps/web run check:fast` (Prettier check, ESLint, Stylelint, `astro check` + `tsc`, Vitest) |
+| Fast checks, api | `node scripts/check-fast.mjs api` (ruff format --check, ruff check, pyright, `pytest -m "not mentor_pending"`) |
+| E2E (+ axe) | `pnpm --dir apps/web run e2e` (all projects) / `pnpm --dir apps/web run e2e -- --project=mobile-android` |
+| Visual snapshots update (from ROADMAP 1.1) | `pnpm --dir apps/web run e2e -- --update-snapshots` (only with Ivan's OK) |
+| Build + JS budgets | `pnpm --dir apps/web run build` then `pnpm --dir apps/web run budget` |
+| Lighthouse CI | `pnpm --dir apps/web run lhci` (mobile + desktop) |
+| Performance, long frames (from ROADMAP 6.4) | skill `perf-check` |
 | Evals | `uv run --directory apps/api python -m site_api.evals --estimate` then `… --run` |
 | Mentor-pending report | `uv run --directory apps/api pytest -m mentor_pending --co -q` |
 | CI (`.github/workflows/ci.yml`) | Jobs `web` (fast checks, build, budgets), `api` (fast checks + non-blocking mentor-pending report), `security` (gitleaks over the whole history, repo scripts, `pnpm audit --prod` blocking / dev report-only, pip-audit). Fast checks run with `--strict`, so a missing app fails instead of being skipped |
-| Fast checks, repo scripts | `node scripts/check-fast.mjs scripts` (Prettier + `node --test scripts/*.test.mjs`) |
+| Fast checks, repo scripts and hooks | `node scripts/check-fast.mjs scripts` (Prettier + `node --test scripts/*.test.mjs .claude/hooks/*.test.mjs`) |
 | Git hooks (lefthook) | pre-commit: gitleaks on the staged diff, Prettier, ESLint, Stylelint, ruff (fix + re-stage); commit-msg: `scripts/check-commit-msg.mjs`. Dry run: `pnpm exec lefthook run pre-commit` |
 | Full pre-PR | skill `pre-pr-check` |
 

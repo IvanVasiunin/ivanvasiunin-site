@@ -16,7 +16,7 @@ Verification tags: `[lint]` ruff / pyright, `[hook]` Claude Code hook, `[test]`,
 
 ## Types and lint
 - Type annotations everywhere: function parameters, return types, module-level constants, class attributes. `[lint]` (ruff `ANN` rules; pyright `strict`)
-- **pyright strict** passes with no errors. `# type: ignore` / `# pyright: ignore` only with a specific rule code and a reason comment. `[lint]` (`reportUnnecessaryTypeIgnoreComment`; ruff `PGH003`)
+- **pyright strict** passes with no errors. `# type: ignore` / `# pyright: ignore` only with a specific rule code and a reason comment. `[lint]` for the rule code (`reportUnnecessaryTypeIgnoreComment`; ruff `PGH003`), `[review]` for the reason
 - `Any` is avoided; when unavoidable (untyped library boundaries), it is wrapped and narrowed immediately. `[lint]` (ruff `ANN401`) `[review]`
 - **ruff** handles lint and format. The hook formats and fixes every edited `.py` file. `[lint]` `[hook]`
 - Rule sets:

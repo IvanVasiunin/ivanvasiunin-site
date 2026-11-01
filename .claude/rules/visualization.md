@@ -26,7 +26,7 @@ Decision record: [ADR-0005](../../docs/adr/0005-visualization-rendering.md). Ver
 - ≤ ~1,000 point nodes. More requires a new ADR (Canvas 2D). `[test]` (assert node count on fixtures)
 
 ## Animation
-- Animate only `transform` and `opacity`, via CSS. No SMIL (`<animate>`, `<animateTransform>`). No per-frame attribute or style updates from JS (`requestAnimationFrame` loops that write to the DOM are forbidden). `[lint]` (`no-restricted-syntax` for `requestAnimationFrame` in viz modules; Stylelint transition rules) `[review]`
+- Animate only `transform` and `opacity`, via CSS. No SMIL (`<animate>`, `<animateTransform>`). No per-frame attribute or style updates from JS (`requestAnimationFrame` loops that write to the DOM are forbidden). `[lint]` (`no-restricted-globals` / `no-restricted-properties` for `requestAnimationFrame` in `src/lib/viz/` and `src/islands/VectorSpace/`; Stylelint transition rules) `[review]`
 - **Glow:** a shared `radialGradient` in `<defs>`, or pre-made shapes. No SVG filters (`feGaussianBlur`, `filter:`) on animated or repeated elements. `[review]`
 - Drift uses per-point CSS custom properties (`--dx`, `--dy`, `--delay`) set once at render. `[review]`
 - **Pausing:**

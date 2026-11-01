@@ -39,6 +39,9 @@ const REACT_RESTRICTIONS = [
   },
 ];
 
+const VIZ_RAF_MESSAGE =
+  'No per-frame JS in the visualization: animate transform / opacity with CSS transitions.';
+
 export default defineConfig(
   globalIgnores(['dist/', '.astro/', 'node_modules/', 'src/lib/api/schema.d.ts']),
 
@@ -71,11 +74,21 @@ export default defineConfig(
   {
     files: ['**/*.tsx'],
     extends: [reactHooks.configs.flat.recommended, jsxA11y.configs.strict],
+    rules: {
+      // The recommended preset only warns (react.md: exhaustive dependencies are an error).
+      'react-hooks/exhaustive-deps': 'error',
+      // Not in the strict preset: <button>, not role="button" (html-a11y.md).
+      'jsx-a11y-x/prefer-tag-over-role': 'error',
+    },
   },
 
   // Astro components: syntax rules and accessibility (html-a11y.md).
   astro.configs['flat/recommended'],
   astro.configs['flat/jsx-a11y-strict'],
+  {
+    files: ['**/*.astro'],
+    rules: { 'astro/jsx-a11y/prefer-tag-over-role': 'error' },
+  },
 
   // Rules for all source files.
   {
@@ -106,6 +119,25 @@ export default defineConfig(
   {
     files: ['**/*.tsx'],
     rules: { 'no-restricted-syntax': ['error', ...NO_DEFAULT_EXPORTS, ...REACT_RESTRICTIONS] },
+  },
+
+  // Visualization: drift and highlight are CSS transitions, never per-frame JS (visualization.md).
+  // A heuristic, not a guarantee (aliases slip through), so the rule is also [review]. Any
+  // justified exception needs a disable comment with a reason.
+  {
+    files: ['src/lib/viz/**/*.{ts,tsx}', 'src/islands/VectorSpace/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        { name: 'requestAnimationFrame', message: VIZ_RAF_MESSAGE },
+      ],
+      'no-restricted-properties': [
+        'error',
+        { object: 'window', property: 'requestAnimationFrame', message: VIZ_RAF_MESSAGE },
+        { object: 'globalThis', property: 'requestAnimationFrame', message: VIZ_RAF_MESSAGE },
+        { object: 'self', property: 'requestAnimationFrame', message: VIZ_RAF_MESSAGE },
+      ],
+    },
   },
 
   // Unit and component tests: no focused or disabled tests (testing.md).

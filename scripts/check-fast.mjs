@@ -42,14 +42,17 @@ const APPS = {
       ['uv', ['run', 'pytest', '-m', 'not mentor_pending', '-q']],
     ],
   },
-  // Repo-level Node scripts, the git-hook configs they test, and CI workflows.
+  // Repo-level Node scripts, Claude Code hooks, the git-hook configs they test, and CI workflows.
   scripts: {
     marker: 'scripts/check-commit-msg.test.mjs',
     cwd: '.',
-    paths: ['scripts/', 'lefthook.yml', '.gitleaks.toml', '.github/'],
+    paths: ['scripts/', 'lefthook.yml', '.gitleaks.toml', '.github/', '.claude/hooks/'],
     steps: [
-      ['pnpm', ['exec', 'prettier', '--check', 'scripts', 'lefthook.yml', '.github']],
-      ['node', ['--test', 'scripts/*.test.mjs']],
+      [
+        'pnpm',
+        ['exec', 'prettier', '--check', 'scripts', 'lefthook.yml', '.github', '.claude/hooks'],
+      ],
+      ['node', ['--test', 'scripts/*.test.mjs', '.claude/hooks/*.test.mjs']],
     ],
   },
 };

@@ -10,7 +10,7 @@ Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` revie
 ## Architecture
 - Cascade layers, declared once in the global entry: `@layer reset, base, tokens, components, utilities;`. Component styles live in `components`. Nothing is unlayered except third-party CSS that cannot be layered. `[review]`
 - Resets use `:where()` to keep specificity at zero. `[review]`
-- SCSS modules use `@use` / `@forward`; `@import` is forbidden. `[lint]` (`scss/at-import-no-partial-leading-underscore`, `scss/load-no-partial-leading-underscore`; `at-rule-disallowed-list: [import]`)
+- SCSS modules use `@use` / `@forward`; `@import` is forbidden. `[lint]` (`at-rule-disallowed-list: [import]`; `scss/load-no-partial-leading-underscore`)
 - **SCSS variables and mixins** are for build-time values only (breakpoints, mixins for media queries). Everything that themes or varies at runtime is a CSS custom property. `[review]`
 
 ## Naming
@@ -61,7 +61,7 @@ Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` revie
   - `:disabled` / `[aria-disabled="true"]`;
   - loading — `[aria-busy="true"]` or `[data-state="loading"]`.
 
-  `[review]` (`[lint]` for bare `:hover`: `selector-disallowed-list` with a custom rule or plugin where possible)
+  `[review]` (no Stylelint rule can check that `:hover` sits inside `@media (hover: hover)`)
 - `outline: none` / `outline: 0` without a visible replacement in the same rule is forbidden. `[review]`
 
 ## Motion

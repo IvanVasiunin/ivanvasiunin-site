@@ -11,32 +11,13 @@
 // - An acknowledged failure is not blocked again on later turns until it changes
 //   or the checks turn green. The user still sees a short reminder.
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { projectDir, readHookInput, run } from './lib.mjs';
+import { projectDir, readHookInput, run, workingTreeKey } from './lib.mjs';
 
 // Overridable only for testing the hook itself.
 const CHECK_SCRIPT = process.env.CLAUDE_STOP_CHECK_SCRIPT ?? 'scripts/check-fast.mjs';
 const sha1 = (text) => createHash('sha1').update(text).digest('hex');
-
-// Fingerprint of the uncommitted app files (path + size + mtime). If it matches
-// the last green run, the checks are skipped: nothing changed since then.
-function workingTreeKey() {
-  const status = run('git', ['status', '--porcelain', '-uall', '--', 'apps']);
-  const entries = status.output
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .map((line) => {
-      const file = line.slice(3).replaceAll('\\', '/');
-      try {
-        const s = statSync(path.join(projectDir, file));
-        return `${line}|${s.size}|${s.mtimeMs}`;
-      } catch {
-        return `${line}|deleted`;
-      }
-    });
-  return sha1(entries.join('\n'));
-}
 
 // Identity of a failure: which steps failed and where, without timings or counts
 // that change between identical runs.
@@ -69,6 +50,7 @@ const writeState = (state) => {
 
 const input = await readHookInput();
 const state = readState();
+// Same working-tree fingerprint as the last green run: nothing changed, skip the checks.
 const treeKey = workingTreeKey();
 if (state.lastGreen === treeKey) process.exit(0);
 

@@ -16,7 +16,7 @@ Verification tags: `[lint]` ESLint / Stylelint, `[hook]` Claude Code hook, `[tes
 
 ## Interactive elements
 - Navigation is `<a href>`, actions are `<button type="button">`. Clickable `div` / `span`, `onClick` on non-interactive elements, and `href="#"` / `javascript:` links are forbidden. `[lint]` (jsx-a11y-x `no-static-element-interactions`, `click-events-have-key-events`, `anchor-is-valid`; astro equivalents)
-- Do not add ARIA roles where a native element exists (`<button>`, not `role="button"`). `[lint]` (`prefer-tag-over-role`) `[review]`
+- Do not add ARIA roles where a native element exists (`<button>`, not `role="button"`). `[lint]` (`jsx-a11y-x/prefer-tag-over-role`, `astro/jsx-a11y/prefer-tag-over-role`) `[review]`
 - **Mode switcher:** `<nav aria-label="Mode">` with two links; the active link has `aria-current="page"`. It is **not** a WAI-ARIA tablist (SPEC §2). `[test]`
 - **Brief / Full:** two `<button>`s with `aria-pressed`. The state is reflected in `?view=`. Without JS, the Full view is shown. `[test]`
 - **Under the hood:** a `<button aria-expanded aria-controls>` toggles a region. It works with Enter / Space, and focus stays on the button. `[test]`

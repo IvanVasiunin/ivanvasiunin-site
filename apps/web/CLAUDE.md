@@ -23,10 +23,10 @@ e2e/                Playwright tests (desktop, iPhone/WebKit, Android/Chromium w
 | Fast checks | `pnpm --dir apps/web run check:fast` (prettier --check, eslint, stylelint, astro check, vitest) |
 | Unit / component tests | `pnpm --dir apps/web run test` |
 | E2E (+ axe, visual) | `pnpm --dir apps/web run e2e` · one project: `… run e2e -- --project=mobile-android` |
-| Build (+ CV PDF) | `pnpm --dir apps/web run build` |
+| Build (CV PDF from ROADMAP 2.5) | `pnpm --dir apps/web run build` |
 | Bundle budgets | `pnpm --dir apps/web run budget` |
 | Lighthouse CI | `pnpm --dir apps/web run lhci` |
-| Regenerate API types | `pnpm --dir apps/web run gen:api` |
+| Regenerate API types (from ROADMAP 1.5) | `pnpm --dir apps/web run gen:api` |
 
 ## App-specific notes
 - `/cv` ships no framework runtime: Brief/Full and theme toggle are tiny scripts. JS budget ≤ 30 KB gzip.

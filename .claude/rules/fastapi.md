@@ -41,7 +41,7 @@ Mentor zone: `ingestion/`, `rag/`, `graph/`, `prompts/`, `evals/`. `[review]`
 - CPU-heavy work (UMAP, chunking) never runs in a request. It belongs to ingestion. `[review]`
 
 ## Contract
-- Every input and output is a Pydantic model in `schemas/`. No `dict` responses, no `Any`. `[lint]` `[test]`
+- Every input and output is a Pydantic model in `schemas/`. No `dict` responses, no `Any`. `[lint]` for `Any` (ruff `ANN401`, pyright strict) `[test]` (contract tests) `[review]`
 - **SSE:**
   - `/api/chat` uses `fastapi.sse.EventSourceResponse`;
   - the endpoint is annotated `-> AsyncIterable[ChatEvent]`, where `ChatEvent` is a discriminated union on `type`;
