@@ -1,0 +1,102 @@
+[project]
+name = "site-api"
+version = "0.1.0"
+description = "Backend of ivanvasiunin.com: FastAPI + LangChain / LangGraph RAG assistant Elio."
+license = "MIT"
+# 3.13 only: langgraph, umap-learn and langchain-postgres do not declare 3.14 yet (ADR-0001).
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pip-audit==2.10.1",
+    "pyright==1.1.414",
+    "pytest==9.2.0",
+    "pytest-asyncio==1.4.1",
+    "pytest-cov==7.1.0",
+    "ruff==0.17.3",
+]
+
+# --- ruff: lint + format (.claude/rules/python.md) ---------------------------
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",  # pycodestyle, pyflakes
+    "I",            # isort
+    "B",            # bugbear
+    "UP",           # pyupgrade
+    "ANN",          # type annotations everywhere
+    "S",            # bandit (incl. S105/S106 hardcoded secrets)
+    "SIM",          # simplify
+    "RUF",          # ruff-specific
+    "PTH",          # pathlib, not os.path
+    "DTZ",          # timezone-aware datetimes
+    "ASYNC",        # async pitfalls
+    "PL",           # pylint (incl. PLR0915 too many statements)
+    "C90",          # mccabe complexity
+    "D",            # docstrings (Google style)
+    "PGH",          # PGH003: no blanket `# type: ignore`
+    "TID",          # TID251: banned APIs below
+]
+ignore = [
+    "D105",  # magic methods document themselves
+    "D107",  # __init__ is documented in the class docstring
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",     # assert is how pytest checks things
+    "PLR2004",  # literal expected values are fine in tests
+    "D",        # test names are the documentation
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"os.getenv".msg = "Read configuration via pydantic-settings (core/config.py)."
+"os.environ".msg = "Read configuration via pydantic-settings (core/config.py)."
+
+# --- pyright strict ------------------------------------------------------------
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "strict"
+reportUnnecessaryTypeIgnoreComment = "error"
+
+# --- pytest (native TOML table, pytest >= 9) ----------------------------------
+
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["tests"]
+# strict = unknown markers / config keys are errors, xfail(strict) by default.
+strict = true
+# importlib mode: test dirs need no __init__.py and same-named test files do not clash.
+addopts = ["-ra", "--import-mode=importlib"]
+asyncio_mode = "auto"
+# Explicit: each async test / fixture gets its own event loop (pytest-asyncio's future default).
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "mentor_pending: failing test for a mentor task Ivan has not finished; excluded from fast checks, the Stop hook and blocking CI (ADR-0007). Only Ivan removes it.",
+]
+
+[tool.coverage.run]
+source = ["site_api"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
