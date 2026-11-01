@@ -1,0 +1,15 @@
+# LF everywhere, regardless of the local core.autocrlf setting (matches .editorconfig and Prettier).
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
+*.pdf binary
+*.docx binary

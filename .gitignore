@@ -1,0 +1,39 @@
+# Private source CV (contains phone number) — never commit
+data/raw/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Claude Code — personal settings and hook state
+.claude/settings.local.json
+.claude/.cache/
+
+# Node / web
+node_modules/
+.pnpm-store/
+dist/
+.astro/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.lighthouseci/
+.playwright-cli/
+apps/web/public/data/points.json
+
+# Python / api
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+apps/api/artifacts/
+
+# OS / editors
+.DS_Store
+Thumbs.db

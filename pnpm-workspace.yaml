@@ -1,0 +1,12 @@
+packages:
+  - apps/web
+
+# Dependency install scripts are denied unless reviewed and listed here
+# (pnpm `allowBuilds`; unlisted packages fail the install).
+allowBuilds:
+  # Its install script only compiles from source with node-gyp when no prebuilt
+  # binary exists; prebuilt @parcel/watcher-<platform> packages cover our targets.
+  '@parcel/watcher': false
+  # Its postinstall only runs `lefthook install`, which writes the git hooks
+  # (skipped when CI=true). The binary itself comes from an optional dependency.
+  lefthook: true

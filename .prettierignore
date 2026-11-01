@@ -1,0 +1,25 @@
+# Lockfiles and generated files
+pnpm-lock.yaml
+apps/api/uv.lock
+apps/web/src/lib/api/schema.d.ts
+
+# Build and test output
+dist/
+.astro/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.lighthouseci/
+
+# RAG sources: edited only with Ivan's OK, never reformatted automatically
+data/
+
+# Markdown is not reformatted: Prettier pads table columns, so editing one cell
+# rewrites the whole table and makes line-by-line review noisy.
+*.md
+
+# Python virtualenvs and caches (Python itself is formatted by ruff)
+.venv/
+.pytest_cache/
+.ruff_cache/
