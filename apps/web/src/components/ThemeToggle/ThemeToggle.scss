@@ -1,0 +1,127 @@
+// Theme toggle: a round 44 px icon button in the header bar. Hover and pressed states are accent washes
+// on ::before / ::after (opacity only); the icon for the current preference fades and turns in.
+@layer components {
+  .theme-toggle {
+    position: relative;
+    isolation: isolate; // keeps the ::before / ::after washes under the icon but above the bar
+    display: inline-grid;
+    flex-shrink: 0;
+    place-items: center;
+    inline-size: var(--size-touch);
+    block-size: var(--size-touch);
+    padding: 0;
+    border: var(--border-width) solid transparent; // invisible, but drawn in forced colors
+    border-radius: var(--radius-pill);
+    color: var(--color-text);
+    background-color: transparent;
+
+    &::before,
+    &::after {
+      position: absolute;
+      inset: 0;
+      z-index: var(--z-below);
+      border-radius: inherit;
+      content: '';
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    &::before {
+      background-color: var(--color-highlight-soft);
+    }
+
+    &::after {
+      background-color: var(--color-highlight-strong);
+      transition-duration: var(--duration-fast);
+    }
+
+    @media (hover: hover) {
+      &:hover::before {
+        opacity: 1;
+      }
+    }
+
+    &:active::after {
+      opacity: 1;
+    }
+
+    // Forced colors drop the background washes: the border marks the control, Highlight marks hover
+    // and press.
+    @media (forced-colors: active) {
+      border-color: ButtonText;
+
+      &:active {
+        border-color: Highlight;
+      }
+
+      @media (hover: hover) {
+        &:hover {
+          border-color: Highlight;
+        }
+      }
+    }
+
+    // Without JS the toggle cannot work, so it is not shown; the system theme applies.
+    @media (scripting: none) {
+      display: none;
+    }
+
+    @media print {
+      display: none;
+    }
+  }
+
+  .theme-toggle__icons {
+    overflow: visible;
+  }
+
+  .theme-toggle__stop-start {
+    stop-color: var(--color-accent);
+  }
+
+  .theme-toggle__stop-end {
+    stop-color: var(--color-accent-2);
+  }
+
+  // Both icons are stacked; only the visible theme's icon is shown (sun in light, moon in dark).
+  .theme-toggle__icon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+    transform-box: view-box;
+    transform-origin: center;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out);
+
+    // Reduced motion: a plain cross-fade.
+    @media (prefers-reduced-motion: reduce) {
+      transform: none;
+    }
+
+    @media (forced-colors: active) {
+      fill: ButtonText;
+    }
+  }
+
+  // `data-theme` is set by the head script before first paint, so the right icon shows from the first
+  // frame. Without it (no choice yet) the icon follows the system theme, like the colours do.
+  :root[data-theme='light'] .theme-toggle__icon--light,
+  :root[data-theme='dark'] .theme-toggle__icon--dark {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) .theme-toggle__icon--light {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .theme-toggle__icon--dark {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

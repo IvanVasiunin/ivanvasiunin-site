@@ -21,9 +21,17 @@ accent, star gold for relevance. The chart is the one bold element; everything e
 
 - Light values live on `:root`. Dark values are one Sass mixin, applied under `:root[data-theme='dark']`
   and under `@media (prefers-color-scheme: dark)` guarded by `:root:not([data-theme='light'])`.
-- Without JS (or with no stored choice) the system preference wins. `data-theme` is set by the theme
-  script (ROADMAP 1.1, step 3).
-- `e2e/tokens.spec.ts` checks that both themes resolve and that the contrast below holds.
+- Without JS (or with no stored choice) the system preference wins.
+- The toggle (`src/components/ThemeToggle/`) switches between light and dark; the choice is stored in
+  `localStorage['theme']`. There is no "System" option: before the first choice the system theme applies.
+  An inline blocking script in `<head>` (BaseLayout) applies it before first paint: it sets `data-theme`
+  (none without a choice) and syncs the `theme-color` / `color-scheme` metas. Its source is the pair of
+  self-contained functions in `src/lib/theme/theme.ts`, serialized at build time, so the head script and
+  the toggle share one tested implementation.
+- Components that depend on the theme choice (not just on colours) may key on
+  `:root[data-theme='light' | 'dark']` / `:root:not([data-theme])` (allowed by the Stylelint BEM config).
+- `e2e/tokens.spec.ts` checks that both themes resolve and that the contrast below holds;
+  `e2e/theme.spec.ts` covers the toggle, persistence, no flash, other tabs, blocked storage and no JS.
 
 ## Colour
 
@@ -45,7 +53,8 @@ text keep a resting underline (WCAG 1.4.1).
   `::before` layer (`--gradient-accent-hover` / `--gradient-surface-hover` + glow), active is an `::after`
   layer (`--gradient-accent-active` / `--gradient-surface-active`). Only their opacity transitions; nothing
   moves. `--color-accent-active` / `--color-accent-2-active` keep `--color-on-accent` at ≥ 4.5:1 (tested).
-- `--color-highlight-soft`: a translucent accent wash for hover highlights (header brand).
+- `--color-highlight-soft` / `--color-highlight-strong`: translucent accent washes for hover / pressed
+  highlights on icon-like controls (header brand, theme toggle).
 
 ## Cursors
 

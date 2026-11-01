@@ -25,8 +25,17 @@ const BEM_CLASS = `^(?:(?:is|has)-${WORD}|${BLOCK}(?:__${WORD})?(?:--${WORD})?)$
 // PascalCase (`ChatInput.scss`) and classes are kebab-case (`.chat-input`). Map one to the other.
 const toKebabCase = (/** @type {string} */ name) =>
   name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-const bemComponentSelectors = (/** @type {string} */ fileName) =>
-  new RegExp(`^\\.${toKebabCase(fileName)}(?:__${WORD})?(?:--${WORD})?(?:\\[.+\\])?$`);
+const bemBlockSelector = (/** @type {string} */ fileName) =>
+  `\\.${toKebabCase(fileName)}(?:__${WORD})?(?:--${WORD})?(?:\\[.+\\])?`;
+// A component may also start a selector with the theme state on the root (`:root[data-theme='dark']
+// .theme-toggle__icon`), set before first paint by the theme script in BaseLayout. Only the block's own
+// classes may follow a combinator.
+const THEME_ROOT = `:root(?:\\[data-theme='(?:light|dark)'\\]|:not\\(\\[data-theme\\]\\))`;
+const bemComponentSelectors = {
+  initial: (/** @type {string} */ fileName) =>
+    new RegExp(`^(?:${bemBlockSelector(fileName)}|${THEME_ROOT})$`),
+  combined: (/** @type {string} */ fileName) => new RegExp(`^${bemBlockSelector(fileName)}$`),
+};
 
 // `transition` / `transition-property` may only animate transform and opacity.
 const ONLY_TRANSFORM_OPACITY =

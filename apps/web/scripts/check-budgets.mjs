@@ -48,6 +48,24 @@ export function findEntries(html) {
 }
 
 /**
+ * Gzip size of the JS written inline in a page (`<script>` without `src`), e.g. the theme head script
+ * and small module scripts that Astro inlines. JSON data blocks (JSON-LD, import maps) are not JS.
+ * @param {string} html
+ * @returns {number}
+ */
+export function inlineScriptsSize(html) {
+  let total = 0;
+  for (const [tag, code = ''] of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) {
+    const opening = tag.slice(0, tag.indexOf('>') + 1);
+    const type = attr(opening, 'type') ?? '';
+    if (attr(opening, 'src') !== undefined || /json|importmap/.test(type) || code.trim() === '')
+      continue;
+    total += gzipSync(code).length;
+  }
+  return total;
+}
+
+/**
  * Module specifiers of static and dynamic imports that point to `.js` files.
  * @param {string} code
  * @returns {string[]}
@@ -90,11 +108,13 @@ function main() {
   };
 
   for (const [page, budget] of Object.entries(BUDGETS.pages)) {
-    const { eager, lazy } = findEntries(read(path.posix.join(page, 'index.html')));
+    const html = read(path.posix.join(page, 'index.html'));
+    const { eager, lazy } = findEntries(html);
+    const inline = inlineScriptsSize(html);
     const beforeViz = collectGraph(eager, read);
     const total = collectGraph([...eager, ...lazy], read);
-    report(`${page} JS before visualization`, sum(beforeViz), budget.beforeViz);
-    report(`${page} JS total`, sum(total), budget.total);
+    report(`${page} JS before visualization`, inline + sum(beforeViz), budget.beforeViz);
+    report(`${page} JS total`, inline + sum(total), budget.total);
   }
 
   const points = path.join(dist, 'data/points.json');

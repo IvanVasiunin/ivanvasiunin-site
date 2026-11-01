@@ -120,8 +120,9 @@
     0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent),
     0 8px 32px color-mix(in srgb, var(--color-accent) 30%, transparent);
 
-  // Soft accent wash for hover highlights; follows the theme's accent.
+  // Accent washes for icon-control highlights (hover: soft, pressed: strong); follow the theme's accent.
   --color-highlight-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  --color-highlight-strong: color-mix(in srgb, var(--color-accent) 26%, transparent);
 
   // Backdrop details (dot grid, stars, celestial chart) are dimmed to 75% behind content.
   --backdrop-detail-opacity: 0.75;

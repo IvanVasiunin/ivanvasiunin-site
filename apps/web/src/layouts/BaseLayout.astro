@@ -7,6 +7,8 @@ import Backdrop from '../components/Backdrop/Backdrop.astro';
 import SiteFooter from '../components/SiteFooter/SiteFooter.astro';
 import SiteHeader from '../components/SiteHeader/SiteHeader.astro';
 import SkipLink from '../components/SkipLink/SkipLink.astro';
+import ThemeToggle from '../components/ThemeToggle/ThemeToggle.astro';
+import { THEME_COLOR, themeHeadScript } from '../lib/theme/theme';
 
 interface Props {
   readonly title: string;
@@ -14,8 +16,6 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
-// Must match --color-bg in src/styles/tokens.scss: mobile browsers paint their UI in this colour.
-const THEME_COLOR = { light: '#e8ecf5', dark: '#0e1430' } as const;
 ---
 
 <html lang="en">
@@ -34,14 +34,29 @@ const THEME_COLOR = { light: '#e8ecf5', dark: '#0e1430' } as const;
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content={THEME_COLOR.light} />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content={THEME_COLOR.dark} />
+    <meta
+      name="theme-color"
+      data-scheme="light"
+      media="(prefers-color-scheme: light)"
+      content={THEME_COLOR.light}
+    />
+    <meta
+      name="theme-color"
+      data-scheme="dark"
+      media="(prefers-color-scheme: dark)"
+      content={THEME_COLOR.dark}
+    />
+    {/* Applies the stored theme choice before first paint (no flash) and syncs the metas above, so it
+    comes after them. Blocking and inline on purpose; its source is src/lib/theme/theme.ts. The future
+    CSP (Phase 8) needs hashes of the inline scripts: this one and ThemeToggle's (Astro inlines it). */}
+    <script is:inline set:html={themeHeadScript()} />
   </head>
   <body class="page">
     <SkipLink target="main" />
     <Backdrop />
     <SiteHeader>
       <slot name="header-actions" slot="actions" />
+      <ThemeToggle slot="actions" />
     </SiteHeader>
     <main id="main" class="page__main" tabindex="-1">
       <slot />

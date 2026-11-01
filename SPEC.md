@@ -181,7 +181,7 @@ Notation: **US-A** = AI mode, **US-T** = Text mode, **US-X** = cross-cutting.
 
 **US-X1. Theme.**
 - Light and dark themes. The default follows `prefers-color-scheme`.
-- A manual toggle cycles Light / Dark / System. The choice is stored in `localStorage` and applied before first paint (no flash).
+- A manual toggle switches between Light and Dark (no separate "System" option: until the first choice, the default above applies). The choice is stored in `localStorage` and applied before first paint (no flash).
 - Without JS, the system preference is used.
 
 **US-X2. Mobile.**
