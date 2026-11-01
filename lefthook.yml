@@ -1,0 +1,48 @@
+# Git hooks (ADR-0001, .claude/rules/git.md). Installed by the lefthook npm
+# package's postinstall (`pnpm install`); the config is re-read on every run.
+# Hooks are never skipped: `git commit --no-verify` is denied in .claude/settings.json.
+
+# Standard `**` semantics: `**/*.py` also matches files at the top of `root`.
+glob_matcher: doublestar
+
+pre-commit:
+  # Sequential on purpose: several jobs fix and re-stage the same files.
+  jobs:
+    - name: prettier
+      glob: '**/*.{js,mjs,cjs,ts,tsx,astro,json,yaml,yml,css,scss}'
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+
+    - name: eslint
+      root: apps/web/
+      glob: '**/*.{js,mjs,cjs,ts,tsx,astro}'
+      run: pnpm exec eslint --fix {staged_files}
+      stage_fixed: true
+
+    - name: stylelint
+      root: apps/web/
+      glob: '**/*.{css,scss,astro}'
+      run: pnpm exec stylelint --fix {staged_files}
+      stage_fixed: true
+
+    - name: ruff format
+      root: apps/api/
+      glob: '**/*.py'
+      run: uv run ruff format {staged_files}
+      stage_fixed: true
+
+    - name: ruff check
+      root: apps/api/
+      glob: '**/*.py'
+      run: uv run ruff check --fix {staged_files}
+      stage_fixed: true
+
+    # Last, so it scans the final index after the fixers above re-staged files.
+    # If gitleaks is not on PATH, the job fails and blocks the commit.
+    - name: gitleaks
+      run: gitleaks git --pre-commit --staged --redact --no-banner --verbose
+
+commit-msg:
+  jobs:
+    - name: conventional commits
+      run: node scripts/check-commit-msg.mjs {1}

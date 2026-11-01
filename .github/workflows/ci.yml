@@ -1,0 +1,136 @@
+# CI: the same fast checks as the Stop hook (scripts/check-fast.mjs), plus build,
+# JS budgets, dependency audits and a full-history gitleaks scan (.claude/rules/infra-security.md).
+# Third-party actions are pinned to commit SHAs; the tag is in the trailing comment.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Superseded PR runs are cancelled; every run on main finishes.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  ASTRO_TELEMETRY_DISABLED: '1'
+  # Also stops lefthook's postinstall from installing git hooks on the runner.
+  CI: 'true'
+
+jobs:
+  web:
+    name: Web — format, lint, typecheck, unit, build, budgets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0 (version from packageManager)
+        with:
+          cache: true
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/check-fast.mjs --strict web
+      - run: pnpm --dir apps/web run build
+      - name: JS / points.json budgets (docs/TESTING.md §5)
+        run: pnpm --dir apps/web run budget
+
+  api:
+    name: API — format, lint, typecheck, tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.6'
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version # for scripts/check-fast.mjs
+      - run: uv sync --locked --directory apps/api
+      - name: Fast checks (excluding mentor_pending)
+        run: node scripts/check-fast.mjs --strict api
+      - name: Mentor-pending tasks (report only, never blocks — ADR-0007)
+        working-directory: apps/api
+        run: |
+          set +e
+          uv run pytest -m mentor_pending -q --no-header -rfE
+          code=$?
+          # 0: all pass, 1: some fail (Ivan is still working), 5: no mentor tasks.
+          # Anything else is a real failure. A collection error (2) would also break
+          # the fast checks above, so mentor tasks ship signature stubs that raise
+          # NotImplementedError rather than tests importing missing modules.
+          if [ "$code" -le 1 ] || [ "$code" -eq 5 ]; then exit 0; fi
+          exit "$code"
+
+  security:
+    name: Security — gitleaks (full history), repo scripts, dependency audits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # gitleaks scans every commit, not only the last one
+          persist-credentials: false
+      - name: Install gitleaks 8.30.1 (pinned sha256)
+        working-directory: ${{ runner.temp }}
+        # The hash is pinned here, not read from the release, so a replaced release
+        # fails the check. Update both lines together.
+        run: |
+          v=8.30.1
+          sha=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+          curl -fsSLO "https://github.com/gitleaks/gitleaks/releases/download/v$v/gitleaks_${v}_linux_x64.tar.gz"
+          echo "$sha  gitleaks_${v}_linux_x64.tar.gz" | sha256sum -c -
+          tar -xzf "gitleaks_${v}_linux_x64.tar.gz" gitleaks
+          echo "$PWD" >> "$GITHUB_PATH"
+      - name: gitleaks — secrets and phone numbers in the whole history
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        # A pull request must not weaken the scan it is checked by: it is scanned with
+        # the base branch's rules, without .gitleaksignore and inline gitleaks:allow.
+        run: |
+          config=.gitleaks.toml
+          if [ "$EVENT" = "pull_request" ]; then
+            git show "origin/$BASE_REF:.gitleaks.toml" > "$RUNNER_TEMP/gitleaks-base.toml"
+            config="$RUNNER_TEMP/gitleaks-base.toml"
+          fi
+          gitleaks git --config "$config" --gitleaks-ignore-path "$RUNNER_TEMP" \
+            --ignore-gitleaks-allow --redact --no-banner --verbose .
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          cache: true
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - run: pnpm install --frozen-lockfile
+      - name: Repo scripts and gitleaks rule tests
+        run: node scripts/check-fast.mjs --strict scripts
+      - name: pnpm audit — production dependencies (blocking)
+        run: pnpm audit --prod --audit-level=high
+      - name: pnpm audit — dev dependencies (report only)
+        # Known: @lhci/cli pulls outdated transitive deps (ADR-0001 trade-off).
+        run: pnpm audit --audit-level=high || echo "::warning::pnpm audit (dev) failed or found advisories, see log"
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.6'
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+      - name: pip-audit — locked Python dependencies
+        # pip-audit itself is a locked dev dependency (hashes in uv.lock), not a loose uvx install.
+        run: |
+          uv export --directory apps/api --locked --format requirements-txt \
+            --no-emit-project --all-groups --quiet -o "$RUNNER_TEMP/requirements.txt"
+          uv run --directory apps/api --locked pip-audit -r "$RUNNER_TEMP/requirements.txt" \
+            --disable-pip --require-hashes --strict --progress-spinner off
