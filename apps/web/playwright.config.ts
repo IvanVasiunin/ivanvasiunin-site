@@ -1,13 +1,18 @@
 import { defineConfig, devices } from '@playwright/test';
 import { SLOW_4G, type ThrottleOptions } from './e2e/fixtures';
 
-const PORT = 4321;
+// Not 4321 (and its 4322+ fallbacks): that is `astro dev`, and a reused dev server would make e2e test
+// the dev build instead of the production build.
+const PORT = 4400;
 const isCI = Boolean(process.env.CI);
 
 // E2E, a11y and (later) visual tests against the production build (docs/TESTING.md §1).
 export default defineConfig<ThrottleOptions>({
   testDir: './e2e',
   fullyParallel: true,
+  // Locally, more parallel browsers than this crash on memory pressure (Windows commit limit); CI keeps
+  // Playwright's default.
+  ...(isCI ? {} : { workers: 2 }),
   forbidOnly: isCI,
   retries: 0,
   reporter: isCI ? [['github'], ['html', { open: 'never' }]] : [['list']],

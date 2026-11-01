@@ -1,0 +1,87 @@
+---
+// Decorative sky behind every page (visual direction "Celestial atlas", src/styles/README.md):
+// nebula glows and a star-chart dot grid in CSS, a star field and a celestial chart fragment in inline
+// SVG. Inline SVG, not PNG / WebP: crisp at any pixel ratio, a few KB, and recoloured by theme tokens.
+// Rendered at build time; ships no JS.
+import { createStars } from '../../lib/backdrop/stars';
+import './Backdrop.scss';
+
+// Two star layers with coprime tile sizes, so the repeat never lines up into a visible grid.
+const starLayers = [
+  {
+    id: 'backdrop-stars-faint',
+    size: 283,
+    stars: createStars({ count: 34, size: 283, seed: 1101 }),
+  },
+  {
+    id: 'backdrop-stars-bright',
+    size: 617,
+    stars: createStars({ count: 22, size: 617, seed: 2026 }),
+  },
+];
+
+// Celestial chart: concentric rings (declination circles) and meridians around one centre.
+const CHART_RADIUS = 600;
+const rings = [110, 210, 300, 390, 480, 570].map((radius, index, all) => ({
+  radius,
+  // Inner rings read stronger; the chart fades towards its edge.
+  opacity: 0.55 - (index / all.length) * 0.4,
+}));
+const MERIDIANS = 24;
+const meridians = Array.from({ length: MERIDIANS }, (_, index) => {
+  const angle = (index / MERIDIANS) * 2 * Math.PI;
+  const round = (value: number): number => Math.round(value * 10) / 10;
+  return {
+    x: round(Math.cos(angle) * CHART_RADIUS),
+    y: round(Math.sin(angle) * CHART_RADIUS),
+    // Every sixth meridian (the cardinal ones) is drawn heavier.
+    major: index % (MERIDIANS / 4) === 0,
+  };
+});
+---
+
+<div class="backdrop" aria-hidden="true">
+  <div class="backdrop__grid"></div>
+  <svg class="backdrop__stars" width="100%" height="100%" focusable="false">
+    <defs>
+      {starLayers.map((layer) => (
+        <pattern id={layer.id} width={layer.size} height={layer.size} patternUnits="userSpaceOnUse">
+          {layer.stars.map((star) => (
+            <circle
+              cx={star.x}
+              cy={star.y}
+              r={star.radius}
+              fill="currentColor"
+              fill-opacity={star.opacity}
+            />
+          ))}
+        </pattern>
+      ))}
+    </defs>
+    {starLayers.map((layer) => (
+      <rect width="100%" height="100%" fill={`url(#${layer.id})`} />
+    ))}
+  </svg>
+  <svg
+    class="backdrop__chart"
+    viewBox={`${-CHART_RADIUS} ${-CHART_RADIUS} ${CHART_RADIUS * 2} ${CHART_RADIUS * 2}`}
+    focusable="false"
+  >
+    <g fill="none" stroke="currentColor">
+      {meridians.map((meridian) => (
+        <line
+          vector-effect="non-scaling-stroke"
+          x1="0"
+          y1="0"
+          x2={meridian.x}
+          y2={meridian.y}
+          stroke-opacity={meridian.major ? 0.4 : 0.18}
+          stroke-dasharray={meridian.major ? undefined : '2 6'}
+        />
+      ))}
+      {rings.map((ring) => (
+        <circle r={ring.radius} stroke-opacity={ring.opacity} vector-effect="non-scaling-stroke" />
+      ))}
+    </g>
+  </svg>
+</div>

@@ -1,0 +1,104 @@
+// Element defaults built on the tokens. Loaded into the `base` layer by global.scss.
+// Never redefine custom properties here: `tokens` is a later layer and would win anyway.
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(html) {
+    scroll-behavior: smooth;
+  }
+}
+
+:where(body) {
+  min-block-size: 100svh;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-body);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+:where(h1, h2, h3) {
+  font-weight: var(--font-weight-bold);
+  text-wrap: balance;
+}
+
+:where(h1) {
+  font-size: var(--font-size-3xl);
+  line-height: var(--line-height-tight);
+}
+
+:where(h2) {
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-snug);
+}
+
+:where(h3) {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-snug);
+}
+
+:where(p, li) {
+  text-wrap: pretty;
+}
+
+// Standalone links: no underline at rest, one underline on hover and keyboard focus.
+// Links inside running text (CV prose, Elio's answers) must keep a resting underline in their component:
+// the accent is < 3:1 against body text, so colour alone does not mark them (WCAG 1.4.1).
+:where(a) {
+  color: var(--color-accent);
+  text-decoration-line: none;
+  text-decoration-thickness: var(--border-width);
+  text-underline-offset: 0.2em;
+}
+
+:where(a:focus-visible) {
+  text-decoration-line: underline;
+}
+
+@media (hover: hover) {
+  :where(a):hover {
+    text-decoration-line: underline;
+  }
+}
+
+// Custom cursors (CSS only, no JS), only for a fine pointer that can hover. They keep the familiar
+// shapes (arrow, hand, I-beam) in the site's style, so expectations still hold; each value falls back to
+// the native keyword.
+@media (hover: hover) and (pointer: fine) {
+  :where(html) {
+    cursor:
+      url('/cursors/arrow.svg') 3 2,
+      auto;
+  }
+
+  // Readable text keeps the native I-beam too, so selecting text still feels native.
+  :where(p, li, dt, dd, blockquote, pre, code, h1, h2, h3, h4, h5, h6, input, textarea) {
+    cursor:
+      url('/cursors/text.svg') 12 12,
+      text;
+  }
+
+  // Listed after the text rule: a link inside a paragraph gets the pointer.
+  :where(
+    a[href],
+    button:not(:disabled),
+    summary,
+    label[for],
+    select,
+    input:is([type='button'], [type='submit'], [type='reset'], [type='checkbox'], [type='radio'])
+  ) {
+    cursor:
+      url('/cursors/pointer.svg') 9 2,
+      pointer;
+  }
+}
+
+:where(:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-width);
+}
+
+// Pseudo-elements are not allowed inside `:where()`; the layer already keeps this below components.
+::selection {
+  color: var(--color-bg);
+  background-color: var(--color-accent);
+}

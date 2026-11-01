@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 32 32">
+  <!-- Site cursor: a cobalt-to-violet arrow with a white outline, legible on both themes. Drawn on a 32 grid, served at 24px. Hotspot 3 2. -->
+  <defs>
+    <linearGradient id="fill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f7bff"/>
+      <stop offset="1" stop-color="#9b6bff"/>
+    </linearGradient>
+  </defs>
+  <path d="M5 4v21l5.5-5.5 3.5 8.5 3.5-1.5-3.5-8.5h7.5z" fill="#0e1430" fill-opacity=".35"/>
+  <path d="M4 3v21l5.5-5.5 3.5 8.5 3.5-1.5-3.5-8.5h7.5z" fill="url(#fill)" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>

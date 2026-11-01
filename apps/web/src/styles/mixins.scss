@@ -1,0 +1,46 @@
+// Build-time helpers only (.claude/rules/css-scss.md): breakpoints and media-query mixins.
+@use 'sass:map';
+
+// Mobile-first: base styles target 360 px; these are `min-width` enhancements.
+$breakpoints: (
+  sm: 480px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1440px,
+);
+
+// Gradient border without `mask` (.claude/rules/css-scss.md → Performance): a transparent border shows
+// the gradient painted under the border box, and a fill layer covers the padding box. The fill is a
+// colour (`$fill`) or an image such as a gradient (`$fill-image`, which wins when given).
+@mixin gradient-border(
+  $fill: var(--color-surface),
+  $border: var(--gradient-border),
+  $width: var(--border-width),
+  $fill-image: null
+) {
+  $fill-layer: linear-gradient($fill, $fill);
+
+  @if $fill-image {
+    $fill-layer: $fill-image;
+  }
+
+  border: $width solid transparent;
+  background-image: $fill-layer, $border;
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+
+  // Forced colours drop background images: give the box a real system-coloured border instead.
+  @media (forced-colors: active) {
+    border-color: CanvasText;
+  }
+}
+
+@mixin mq($name) {
+  @if not map.has-key($breakpoints, $name) {
+    @error 'Unknown breakpoint "#{$name}". Use one of: #{map.keys($breakpoints)}.';
+  }
+
+  @media (width >= map.get($breakpoints, $name)) {
+    @content;
+  }
+}

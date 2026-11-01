@@ -1,0 +1,208 @@
+// Design tokens (.claude/rules/css-scss.md → Tokens). Loaded into the `tokens` layer by global.scss.
+// Visual direction "Celestial atlas": the vector space is a star chart of Ivan's experience.
+// Documented in README.md.
+@use 'mixins' as *;
+
+// Dark colour values. Included twice: for the explicit `data-theme="dark"` choice and for the
+// system preference when no explicit light choice is stored (SPEC US-X1).
+@mixin dark-colors {
+  color-scheme: dark;
+
+  // Deep space.
+  --color-bg: #0e1430;
+  --color-surface: #161e40;
+  --color-text: #dde4f5;
+  --color-text-muted: #a3aecb;
+  --color-grid: #232c52;
+  --color-border: #7c88b0;
+  --color-accent: #8db2ff;
+  --color-accent-2: #bba6ff;
+  --color-accent-3: #6ed3c8;
+  --color-on-accent: #0e1430;
+  --color-focus: #8db2ff;
+  --color-highlight: #f2c14e;
+
+  // Deep, saturated nebulae: strong colour, little added luminance.
+  --color-glow-1: rgb(59 31 168 / 45%);
+  --color-glow-2: rgb(14 79 160 / 40%);
+  --color-glow-3: rgb(122 30 140 / 30%);
+  --color-star: #e6ecff;
+  --color-chart-line: #5a6cb0;
+  --color-source-cv: #8db2ff;
+  --color-source-experience: #6ed3c8;
+  --color-source-personal: #f29ac0;
+  --color-source-site-docs: #bba6ff;
+  --color-source-github: #a9b3cc;
+  --shadow-raised: 0 1px 2px rgb(4 6 20 / 50%), 0 4px 16px rgb(4 6 20 / 40%);
+}
+
+:root {
+  color-scheme: light dark;
+
+  // Colour. Light: star-chart paper, navy ink, cobalt, star gold.
+  --color-bg: #e8ecf5;
+  --color-surface: #f5f7fb;
+  --color-text: #182036;
+  --color-text-muted: #4a5470;
+  --color-grid: #bfc7da; // decoration only, no contrast requirement
+  --color-border: #646e8a; // UI boundaries, ≥ 3:1 against bg
+  --color-accent: #2b54b0; // links, primary actions; < 3:1 against text, so inline links keep an underline
+  --color-accent-2: #6a4fb0; // violet, second gradient stop
+  --color-accent-3: #1f7373; // teal, third gradient stop
+  --color-on-accent: #fff; // text on accent gradients
+  --color-focus: #2b54b0;
+  --color-highlight: #8f5d00; // relevance highlight on the map (graphic, not text)
+  // Backdrop nebulae: pastel tints that colour the paper without darkening it. Alphas are capped so
+  // text keeps its contrast where all three overlap (tested).
+  --color-glow-1: rgb(160 140 255 / 22%);
+  --color-glow-2: rgb(127 176 255 / 20%);
+  --color-glow-3: rgb(127 224 210 / 16%);
+  --color-star: #4a5a8a; // printed stars on a paper chart
+  --color-chart-line: #7d8ab0; // celestial chart rings and meridians (decoration)
+  // Map key: one colour per RAG source type (.claude/rules/visualization.md).
+  --color-source-cv: #2b54b0;
+  --color-source-experience: #1f7373;
+  --color-source-personal: #a6466e;
+  --color-source-site-docs: #6a4fb0;
+  --color-source-github: #5b6478;
+
+  // Typography. Families stay generic until the self-hosted fonts arrive (ROADMAP 1.3):
+  // naming a font here before it is loaded would pick up local installs and vary between machines.
+  --font-sans: system-ui, -apple-system, 'Segoe UI', roboto, 'Helvetica Neue', arial, sans-serif;
+  --font-serif: georgia, 'Times New Roman', serif;
+
+  // Type scale after the traditional scale in The Elements of Typographic Style
+  // (12 14 16 18 21 24 36 48 px). Larger steps are fluid between two rem values.
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: clamp(1.3125rem, 1.2rem + 0.5vw, 1.5rem);
+  --font-size-2xl: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+  --font-size-3xl: clamp(2rem, 1.6rem + 1.5vw, 3rem);
+  --line-height-tight: 1.1;
+  --line-height-snug: 1.3;
+  --line-height-body: 1.5;
+  --line-height-prose: 1.6; // serif text gets more leading
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --measure: 65ch;
+
+  // Spacing (px, per the rules) on a 4 px grid.
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+  --gutter: var(--space-md); // page side padding; widened from md up (below)
+
+  // Sizes.
+  --size-touch: 44px; // minimum touch target (SPEC US-X2)
+  --size-icon: 24px;
+  --size-container: 75rem; // max width of the page frame
+
+  // Shape.
+  --radius-sm: 4px; // chips, inputs
+  --radius-md: 8px; // panels
+  --radius-pill: 999px; // toggles
+  --border-width: 1px;
+  --focus-ring-width: 2px;
+  --shadow-raised: 0 1px 2px rgb(24 32 54 / 12%), 0 4px 16px rgb(24 32 54 / 8%);
+
+  // Accent glow for primary controls and focused panels; follows the theme's accent.
+  --shadow-glow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent),
+    0 8px 32px color-mix(in srgb, var(--color-accent) 30%, transparent);
+
+  // Soft accent wash for hover highlights; follows the theme's accent.
+  --color-highlight-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
+
+  // Backdrop details (dot grid, stars, celestial chart) are dimmed to 75% behind content.
+  --backdrop-detail-opacity: 0.75;
+
+  // Gradients. Built from the colour tokens, so they follow the theme without redefinition.
+  --gradient-accent: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+
+  // Button state layers (hover on ::before, active on ::after; only their opacity animates).
+  --color-accent-active: color-mix(in srgb, var(--color-accent) 82%, #000);
+  --color-accent-2-active: color-mix(in srgb, var(--color-accent-2) 82%, #000);
+  --gradient-accent-hover: linear-gradient(135deg, var(--color-accent-2), var(--color-accent));
+  --gradient-accent-active: linear-gradient(
+    135deg,
+    var(--color-accent-active),
+    var(--color-accent-2-active)
+  );
+  --gradient-surface: linear-gradient(
+    135deg,
+    var(--color-surface),
+    color-mix(in srgb, var(--color-accent-2) 8%, var(--color-surface))
+  );
+  --gradient-surface-hover: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-accent) 14%, var(--color-surface)),
+    color-mix(in srgb, var(--color-accent-2) 14%, var(--color-surface))
+  );
+  --gradient-surface-active: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-accent) 22%, var(--color-surface)),
+    color-mix(in srgb, var(--color-accent-2) 22%, var(--color-surface))
+  );
+  --gradient-border: linear-gradient(
+    135deg,
+    var(--color-accent),
+    var(--color-accent-2) 50%,
+    var(--color-accent-3)
+  );
+
+  // Motion.
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Z-index: a fixed scale. The backdrop and the map sit under the page content.
+  --z-backdrop: -2;
+  --z-map: -1;
+  --z-below: -1; // under siblings inside an isolated component (e.g. a hover highlight)
+  --z-base: 0;
+  --z-raised: 10;
+  --z-header: 100;
+  --z-overlay: 200;
+  --z-toast: 300;
+  --z-skip-link: 400;
+}
+
+:root {
+  @include mq(md) {
+    --gutter: var(--space-xl);
+  }
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  @include dark-colors;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark-colors;
+  }
+}
+
+// Reduced motion: every duration collapses to the shortest one. Components also drop transforms.
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-base: var(--duration-fast);
+    --duration-slow: var(--duration-fast);
+  }
+}
