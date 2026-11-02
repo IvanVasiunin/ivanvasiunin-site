@@ -2,6 +2,7 @@
 pnpm-lock.yaml
 apps/api/uv.lock
 apps/web/src/lib/api/schema.d.ts
+apps/web/src/lib/api/openapi.json
 
 # Build and test output
 dist/

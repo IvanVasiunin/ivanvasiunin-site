@@ -18,6 +18,15 @@ export default defineConfig({
   // The dev toolbar is dev-only (never in the build); disabled because it overlaps the page bottom
   // during visual review. Accessibility audits run via axe in e2e instead.
   devToolbar: { enabled: false },
+  // Content Security Policy (infra-security.md): Astro writes a <meta> CSP with the hashes of every
+  // script and style it emits, so inline scripts need no 'unsafe-inline'. Header-only directives
+  // (frame-ancestors) come from Caddy (infra/Caddyfile). 'inline-speculation-rules' allows the
+  // speculation rules block (ADR-0009).
+  security: {
+    csp: {
+      scriptDirective: { resources: ["'self'", "'inline-speculation-rules'"] },
+    },
+  },
   // Self-hosted OFL fonts (ROADMAP 1.3, ADR-0010, docs/CREDITS.md). The files come from pinned Fontsource
   // npm packages (versions in the lockfile), so builds are reproducible and need no network; they are
   // served from the site's own origin, so pages make no third-party requests.

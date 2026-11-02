@@ -11,13 +11,13 @@ Run everything except evals and long performance runs. Delegate to the **`test-r
 |---|---|---|
 | 1 | Secrets | `gitleaks git --pre-commit --staged --no-banner --redact`, and `gitleaks git --no-banner --redact .` for the whole history |
 | 2 | Fast checks, all apps | `node scripts/check-fast.mjs` |
-| 3 | API contract + type staleness | regenerate OpenAPI types; `git diff --exit-code apps/web/src/lib/api/` |
+| 3 | API contract + type staleness | `pnpm --dir apps/web run gen:api:check` (fix: `pnpm --dir apps/web run gen:api`) |
 | 4 | Web build (incl. CV PDF) | `pnpm --dir apps/web run build` |
 | 5 | E2E + axe + visual, all Playwright projects | `pnpm --dir apps/web run e2e` |
 | 6 | Bundle budgets | `pnpm --dir apps/web run budget` |
 | 7 | Dependency audits | `pnpm audit --prod --audit-level=high`; pip-audit on the locked export, as in CI (`.github/workflows/ci.yml`, step "pip-audit") |
 | 8 | Mentor-pending report (informational) | `uv run --directory apps/api pytest -m mentor_pending --co -q` |
-| 9 | Lighthouse CI (if pages changed) | `pnpm --dir apps/web run lhci` |
+| 9 | Lighthouse budgets (if pages changed) | `pnpm --dir apps/web run lighthouse` |
 
 Commands that do not exist yet (empty skeleton) are reported as "n/a", never as passed.
 

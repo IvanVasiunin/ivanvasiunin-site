@@ -1,0 +1,34 @@
+# Allow-list build context (infra-security.md): everything is excluded unless listed below, so the
+# private CV with the phone number (data/raw/), .env files, .git and local caches can never reach an
+# image, whatever new files appear in the repository.
+**
+
+# Workspace manifests (web build).
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+
+# Web app sources (build artifacts and caches excluded again below).
+!apps/web/**
+apps/web/node_modules
+apps/web/dist
+apps/web/.astro
+apps/web/coverage
+apps/web/test-results
+apps/web/playwright-report
+apps/web/.lighthouseci
+apps/web/.env*
+
+# Caddy config for the web image.
+!infra/Caddyfile
+
+# API: lock files and the package source only.
+!apps/api/pyproject.toml
+!apps/api/uv.lock
+!apps/api/src/**
+apps/api/src/**/__pycache__
+
+# Never, even if a rule above would match.
+**/.env
+**/.env.*
+data/raw

@@ -1,5 +1,5 @@
 // Checks the gzip size of JS (and points.json) in the production build against the budgets in
-// docs/TESTING.md §5. Deterministic counterpart of Lighthouse CI: it follows every import, including
+// docs/TESTING.md §5. Deterministic counterpart of the Lighthouse budgets: it follows every import, including
 // lazy islands that a Lighthouse run may never load.
 //
 // Usage: pnpm run budget   (after `pnpm run build`)

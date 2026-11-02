@@ -14,8 +14,8 @@ export interface ThrottleOptions {
 
 /**
  * Lighthouse mobile "Slow 4G" values for DevTools (applied) throttling: `throttling.mobileSlow4G`
- * (requestLatencyMs, downloadThroughputKbps, uploadThroughputKbps) in Lantern's Constants.js,
- * checked against Lighthouse 12.6.1 bundled with @lhci/cli 0.15.1.
+ * (requestLatencyMs, downloadThroughputKbps, uploadThroughputKbps) in lighthouse/core/config/constants.js,
+ * checked against Lighthouse 13.5.0 (ROADMAP 1.8).
  */
 export const SLOW_4G: NetworkConditions = {
   latencyMs: 562.5,

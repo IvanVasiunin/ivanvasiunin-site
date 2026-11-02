@@ -19,10 +19,11 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "budget": "node scripts/check-budgets.mjs",
-    "lhci": "pnpm run build && pnpm run lhci:mobile && pnpm run lhci:desktop",
-    "lhci:mobile": "lhci autorun --config=lighthouse/mobile.cjs",
-    "lhci:desktop": "lhci autorun --config=lighthouse/desktop.cjs",
-    "check:fast": "pnpm run format:check && pnpm run lint && pnpm run lint:css && pnpm run typecheck && pnpm run test"
+    "check:fast": "pnpm run format:check && pnpm run lint && pnpm run lint:css && pnpm run typecheck && pnpm run test",
+    "gen:api": "node scripts/gen-api.mjs",
+    "gen:api:check": "node scripts/gen-api.mjs --check",
+    "lighthouse": "pnpm run build && node scripts/lighthouse.mjs",
+    "e2e:visual:linux": "node scripts/visual-linux.mjs"
   },
   "dependencies": {
     "@astrojs/react": "7.1.2",
@@ -37,7 +38,6 @@
     "@eslint/js": "10.0.1",
     "@fontsource-variable/schibsted-grotesk": "5.3.0",
     "@fontsource/newsreader": "5.3.0",
-    "@lhci/cli": "0.15.1",
     "@playwright/test": "1.64.1",
     "@testing-library/dom": "10.4.2",
     "@testing-library/react": "16.3.3",
@@ -53,6 +53,8 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "17.13.0",
     "jsdom": "30.1.3",
+    "lighthouse": "13.5.0",
+    "openapi-typescript": "7.13.0",
     "postcss-html": "2.0.0",
     "sass": "1.107.1",
     "stylelint": "17.16.0",

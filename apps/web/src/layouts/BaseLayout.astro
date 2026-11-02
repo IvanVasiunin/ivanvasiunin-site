@@ -10,6 +10,7 @@ import SiteFooter from '../components/SiteFooter/SiteFooter.astro';
 import SiteHeader from '../components/SiteHeader/SiteHeader.astro';
 import SkipLink from '../components/SkipLink/SkipLink.astro';
 import ThemeToggle from '../components/ThemeToggle/ThemeToggle.astro';
+import { cspHash } from '../lib/csp';
 import { THEME_COLOR, themeHeadScript } from '../lib/theme/theme';
 
 interface Props {
@@ -18,6 +19,13 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
+
+// The two inline blocks Astro does not hash itself. Their exact text is rendered from these
+// constants and hashed into the page's CSP <meta> (security.csp in astro.config.mjs).
+const LAYER_ORDER = '@layer reset, base, tokens, components, utilities;';
+const THEME_SCRIPT = themeHeadScript();
+Astro.csp?.insertStyleHash(cspHash(LAYER_ORDER));
+Astro.csp?.insertScriptHash(cspHash(THEME_SCRIPT));
 
 const SPECULATION_RULES = {
   prerender: [
@@ -40,9 +48,7 @@ const SPECULATION_RULES = {
     {/* The cascade layer order, declared once and before any bundled CSS (css-scss.md). The bundler
     orders CSS by import graph and the minifier folds layer statements into the first blocks, so a
     statement inside a bundled file cannot guarantee the order. Checked by e2e/layout.spec.ts. */}
-    <style is:inline>
-      @layer reset, base, tokens, components, utilities;
-    </style>
+    <Fragment set:html={`<style>${LAYER_ORDER}</style>`} />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
@@ -71,7 +77,7 @@ const SPECULATION_RULES = {
     {/* Applies the stored theme choice before first paint (no flash) and syncs the metas above, so it
     comes after them. Blocking and inline on purpose; its source is src/lib/theme/theme.ts. The future
     CSP (Phase 8) needs hashes of the inline scripts: this one and ThemeToggle's (Astro inlines it). */}
-    <script is:inline set:html={themeHeadScript()} />
+    <script is:inline set:html={THEME_SCRIPT} />
     {/* Speculation rules (no JS): when a mode tab is hovered or pressed, the browser prerenders that
     page, so the switch (with its view transition) is near-instant. Ignored where unsupported. The
     future CSP needs 'inline-speculation-rules' or this block's hash. ADR-0009. */}

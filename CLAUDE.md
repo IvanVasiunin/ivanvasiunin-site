@@ -40,7 +40,7 @@ The full list is in `docs/TESTING.md` §2. Names are finalized when the skeleton
 | Web dev / build | `pnpm --dir apps/web run dev` / `… run build` |
 | API dev | `uv run --directory apps/api fastapi dev src/site_api/main.py` |
 | E2E (all Playwright projects) | `pnpm --dir apps/web run e2e` |
-| Lighthouse CI | `pnpm --dir apps/web run lhci` |
+| Lighthouse budgets | `pnpm --dir apps/web run lighthouse` |
 | Evals (**cost money, only with Ivan's consent**) | `uv run --directory apps/api python -m site_api.evals --estimate`, then `--run` |
 
 ## Work zones ([ADR-0007](docs/adr/0007-mentor-mode.md))

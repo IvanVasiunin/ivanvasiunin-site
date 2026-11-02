@@ -30,7 +30,7 @@ Budgets: SPEC §6.1 and `docs/TESTING.md` §5. Verification tags: `[test]`, `[re
 
   `[test]`
 - The visualization loads after the chat (`client:idle` / `client:visible`) and never blocks input. `[review]` `[test]` (INP budget)
-- **Budgets (Lighthouse CI + bundle checks):**
+- **Budgets (Lighthouse + bundle checks):**
 
   | Page | JS | Other |
   |---|---|---|

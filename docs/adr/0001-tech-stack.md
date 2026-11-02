@@ -126,7 +126,7 @@ A hard spend limit is set on the OpenAI project (requests then fail with HTTP 42
 
 ## Consequences
 
-- Pinned exceptions to "latest": TypeScript 6.0.3 and Lighthouse 12.6 (via LHCI). Both are revisited when upstream catches up.
+- Pinned exceptions to "latest": TypeScript 6.0.3 (revisited when upstream catches up). Lighthouse 12.6 via LHCI was replaced by `lighthouse` 13.5.0 (amendment of 2026-11-02 below).
 - Pre-1.0 dependencies on the critical path: langchain-postgres 0.0.19 and eslint-plugin-jsx-a11y-x 0.2.0. Each has a recorded fallback.
 - Every model ID, price, temperature and token limit lives in config, not in code.
 - **Correction (2026-11-01, Stage 5):** frontend-design is not pinned to a commit sha. It is installed from the `claude-plugins-official` marketplace as plugin **version 1.1.1** at project scope (`enabledPlugins` in `.claude/settings.json`). Updates arrive when the marketplace is refreshed. Plugin updates are reviewed before they are accepted, and the version in use is recorded here.
@@ -154,5 +154,23 @@ A hard spend limit is set on the OpenAI project (requests then fail with HTTP 42
   - **Commit messages** are checked by a dependency-free `scripts/check-commit-msg.mjs` instead of commitlint (one regular expression).
   - **`pnpm audit` policy:** production dependencies at `high` or above block CI. Dev dependencies are reported as a warning only. Reason: on 2026-11-01 all 8 advisories (5 high) are in dev tooling, 7 of them via `@lhci/cli`'s outdated transitive dependencies (the trade-off recorded above), and `extract-zip` has no patched version. Revisit when LHCI is replaced by `lighthouse` 13 (the recorded fallback). `pip-audit` audits the locked Python dependencies and blocks.
   - GitHub Actions, pinned by SHA: `actions/checkout` v7.0.1, `actions/setup-node` v7.1.0, `pnpm/action-setup` v6.1.0, `astral-sh/setup-uv` v10.3.3 (all on the node24 runtime).
+- **Amendment (2026-11-02, ROADMAP 1.4–1.8) — status: Proposed (Ivan pre-approved routine stages; to be confirmed with the batch commit).**
+  - **Lighthouse:** `@lhci/cli` 0.15.1 is replaced by `lighthouse` **13.5.0** (Apache-2.0, released 2026-09-18; 13.6.0 from 2026-10-27 was too new to adopt) run by `apps/web/scripts/lighthouse.mjs`. It serves `dist/` with gzip, runs each page 3 times per profile in Playwright's Chromium, and checks the same budgets on the median (`pnpm --dir apps/web run lighthouse`). The 12.6 exception to "latest" is gone.
+  - **`pnpm audit` policy (revisited):** without LHCI, 7 of the 8 dev advisories are gone. The remaining one is a moderate `minimatch` advisory, reached only by linters and the type generator through glob patterns, so dev dependencies now **block CI at `high`** like production ones.
+  - **CI jobs added:**
+    - `e2e`: Playwright desktop, iPhone / WebKit and throttled Android, plus axe;
+    - `visual`: snapshots in `mcr.microsoft.com/playwright:v1.64.1-noble`; it warns until Linux baselines exist;
+    - `lighthouse`;
+    - `contract`: the OpenAPI types are not stale (ROADMAP 1.5);
+    - `infra`: Compose / Dockerfile checks, the image build, an image scan, a `docker compose up` smoke test and a header check (ROADMAP 1.6).
+
+    A `deploy` workflow builds, scans and pushes the images to GHCR and deploys over SSH, without third-party actions (ROADMAP 1.7).
+  - **API dependencies (ROADMAP 1.4), pinned as in the table:**
+    - runtime: `fastapi` 0.162.0 without extras, `uvicorn[standard]` 0.54.0, `pydantic-settings` 2.16.2, `sqlalchemy[asyncio]` 2.1.6, `psycopg` 3.3.6 (pure Python with the system libpq in the image);
+    - dev: `psycopg-binary` 3.3.6, `fastapi-cli` 0.0.32, `httpx` 0.28.1.
+  - **Web additions:**
+    - `openapi-typescript` 7.13.0 (types, ROADMAP 1.5);
+    - Fontsource font packages (ADR-0010);
+    - Astro `security.csp` for a hash-based CSP `<meta>` (no new dependency).
 - pnpm 12 denies dependency install scripts unless they are listed in `allowBuilds` (`pnpm-workspace.yaml`). `@parcel/watcher` (via sass) is set to `false`: its script only compiles from source when no prebuilt binary exists.
 - Follow-up ADRs: 0002 frontend framework, 0003 vector database and schema ownership, 0004 guardrails, 0005 visualization rendering, 0006 2D projection, 0007 mentor mode, 0008 LangChain / LangGraph roles.

@@ -102,8 +102,11 @@ test('the switch sits in the header bar from md and floats at the bottom below i
 test('with enlarged text the floating switch still fits the screen', async ({ page }) => {
   await page.goto('/cv');
   // Text-only zoom to 200% (WCAG 1.4.4). The em-based icon query follows the browser setting, not this
-  // style, so this checks the worst case: icons shown, labels shrinking.
-  await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+  // style, so this checks the worst case: icons shown, labels shrinking. Set through CSSOM: the page's
+  // CSP blocks an injected <style> element (as it should), but not a style property.
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('This test needs a fixed viewport.');
   test.skip(viewport.width >= MD, 'From md the switch is part of the header bar.');

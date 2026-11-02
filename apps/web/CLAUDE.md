@@ -25,7 +25,7 @@ e2e/                Playwright tests (desktop, iPhone/WebKit, Android/Chromium w
 | E2E (+ axe, visual) | `pnpm --dir apps/web run e2e` · one project: `… run e2e --project=mobile-android` |
 | Build (CV PDF from ROADMAP 2.5) | `pnpm --dir apps/web run build` |
 | Bundle budgets | `pnpm --dir apps/web run budget` |
-| Lighthouse CI | `pnpm --dir apps/web run lhci` |
+| Lighthouse budgets (mobile + desktop) | `pnpm --dir apps/web run lighthouse` |
 | Regenerate API types (from ROADMAP 1.5) | `pnpm --dir apps/web run gen:api` |
 
 ## App-specific notes

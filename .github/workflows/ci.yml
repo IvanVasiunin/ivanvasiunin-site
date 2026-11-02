@@ -32,15 +32,81 @@ jobs:
           persist-credentials: false
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0 (version from packageManager)
         with:
-          cache: true
+          cache: ${{ github.ref == 'refs/heads/main' }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: node scripts/check-fast.mjs --strict web
       - run: pnpm --dir apps/web run build
       - name: JS / points.json budgets (docs/TESTING.md §5)
         run: pnpm --dir apps/web run budget
+
+  e2e:
+    name: E2E — Playwright (desktop, iPhone / WebKit, Android throttled) + axe
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          cache: ${{ github.ref == 'refs/heads/main' }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Playwright browsers (the versions pinned by @playwright/test)
+        run: pnpm --dir apps/web exec playwright install --with-deps chromium webkit
+      - name: E2E against the production build (visual snapshots run in the `visual` job)
+        run: pnpm --dir apps/web run e2e --project=desktop-chromium --project=mobile-iphone --project=mobile-android
+
+  visual:
+    name: Visual snapshots (Linux baselines, Playwright image)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # The same image `pnpm --dir apps/web run e2e:visual:linux` uses, so baselines made locally match.
+    # Pinned by digest (tags are mutable); scripts/playwright-image.test.mjs keeps it in step with
+    # @playwright/test. The container runs as root: `--ignore-scripts` keeps dependency install
+    # scripts from running at all (the image already has the browsers).
+    container: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Visual snapshots
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+        run: |
+          if ! ls apps/web/e2e/visual.spec.ts-snapshots/*-linux.png >/dev/null 2>&1; then
+            echo "::warning::No Linux visual baselines yet: create them with pnpm --dir apps/web run e2e:visual:linux --update-snapshots (docs/TESTING.md)"
+            exit 0
+          fi
+          node -v
+          corepack enable
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm --dir apps/web exec playwright test --project=visual-chromium
+
+  lighthouse:
+    name: Lighthouse budgets (mobile + desktop)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          cache: ${{ github.ref == 'refs/heads/main' }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Chromium for Lighthouse (Playwright's build)
+        run: pnpm --dir apps/web exec playwright install --with-deps chromium
+      - name: Build and check the budgets (docs/TESTING.md §5)
+        run: pnpm --dir apps/web run lighthouse
 
   api:
     name: API — format, lint, typecheck, tests
@@ -53,7 +119,7 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: '0.13.6'
-          enable-cache: true
+          enable-cache: ${{ github.ref == 'refs/heads/main' }}
           cache-dependency-glob: apps/api/uv.lock
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -73,6 +139,84 @@ jobs:
           # NotImplementedError rather than tests importing missing modules.
           if [ "$code" -le 1 ] || [ "$code" -eq 5 ]; then exit 0; fi
           exit "$code"
+
+  contract:
+    name: Contract — generated API types match the OpenAPI schema
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # This job runs code from the pull request (pnpm install, uv run), so its caches are saved on
+    # main only: a pull request can read them but never write one that main would later restore.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          cache: ${{ github.ref == 'refs/heads/main' }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.6'
+          enable-cache: ${{ github.ref == 'refs/heads/main' }}
+          cache-dependency-glob: apps/api/uv.lock
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: uv sync --locked --directory apps/api
+      - name: API types are not stale (ROADMAP 1.5; fix with pnpm --dir apps/web run gen:api)
+        # Exports the schema from the code (no server, no database) and compares the generated
+        # openapi.json / schema.d.ts with the committed ones.
+        run: pnpm --dir apps/web run gen:api:check
+
+  infra:
+    name: Infra — Compose / Dockerfile checks, image build, stack smoke test with headers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Static checks — ports, networks, pinned tags, non-root, health checks, .dockerignore
+        run: node scripts/check-infra.mjs
+      - name: Caddyfile is valid (the pinned Caddy image)
+        run: |
+          docker run --rm -v "$PWD/infra/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.11.7-alpine \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Build the images and start the stack
+        env:
+          SITE_ADDRESS: localhost
+        run: |
+          export POSTGRES_PASSWORD="$(openssl rand -hex 24)"
+          docker compose -f infra/docker-compose.yml up --build --detach --wait --wait-timeout 180
+      - name: Images run as non-root users
+        run: |
+          for image in ivanvasiunin-site-web:local ivanvasiunin-site-api:local; do
+            user="$(docker image inspect --format '{{.Config.User}}' "$image")"
+            echo "$image runs as '$user'"
+            case "$user" in ""|root|0|0:*) echo "::error::$image runs as root"; exit 1;; esac
+          done
+      - name: Install gitleaks 8.30.1 (pinned sha256, same as the security job)
+        working-directory: ${{ runner.temp }}
+        run: |
+          v=8.30.1
+          sha=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+          curl -fsSLO "https://github.com/gitleaks/gitleaks/releases/download/v$v/gitleaks_${v}_linux_x64.tar.gz"
+          echo "$sha  gitleaks_${v}_linux_x64.tar.gz" | sha256sum -c -
+          tar -xzf "gitleaks_${v}_linux_x64.tar.gz" gitleaks
+          echo "$PWD" >> "$GITHUB_PATH"
+      - name: Images contain no phone number, secret or data/raw (golden rule 5)
+        # The same scan as the deploy workflow runs before pushing (infra/scan-images.sh).
+        run: sh infra/scan-images.sh ivanvasiunin-site-web:local ivanvasiunin-site-api:local
+      - name: Security headers, caching and /api/health through Caddy
+        run: node scripts/check-headers.mjs https://localhost
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f infra/docker-compose.yml logs --no-color --tail 200
+        env:
+          POSTGRES_PASSWORD: unused-for-logs
 
   security:
     name: Security — gitleaks (full history), repo scripts, dependency audits
@@ -110,22 +254,21 @@ jobs:
             --ignore-gitleaks-allow --redact --no-banner --verbose .
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
-          cache: true
+          cache: ${{ github.ref == 'refs/heads/main' }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Repo scripts and gitleaks rule tests
         run: node scripts/check-fast.mjs --strict scripts
       - name: pnpm audit — production dependencies (blocking)
         run: pnpm audit --prod --audit-level=high
-      - name: pnpm audit — dev dependencies (report only)
-        # Known: @lhci/cli pulls outdated transitive deps (ADR-0001 trade-off).
-        run: pnpm audit --audit-level=high || echo "::warning::pnpm audit (dev) failed or found advisories, see log"
+      - name: pnpm audit — dev dependencies (blocking at high since LHCI was replaced, ADR-0001)
+        run: pnpm audit --audit-level=high
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: '0.13.6'
-          enable-cache: true
+          enable-cache: ${{ github.ref == 'refs/heads/main' }}
           cache-dependency-glob: apps/api/uv.lock
       - name: pip-audit — locked Python dependencies
         # pip-audit itself is a locked dev dependency (hashes in uv.lock), not a loose uvx install.

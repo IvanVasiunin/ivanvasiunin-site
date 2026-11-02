@@ -14,7 +14,7 @@
 | E2E | Playwright: desktop Chromium + mobile profiles (iPhone on WebKit, Android on Chromium) | Mode switching, keyboard; Brief / Full + URL; "Ask about this" never sends; streaming chat on a mocked LLM, Stop, network errors; Under the hood contents; point highlight |
 | Visual regression | Playwright screenshots | Key screens at 360 / 768 / 1440, light and dark, plus the CV print version |
 | Accessibility | @axe-core/playwright inside e2e | Every screen: **zero serious or critical** violations |
-| Performance | Lighthouse CI (mobile + desktop budgets); Playwright + CDP long-frame measurement at 4× / 6× CPU | Budgets in §5 |
+| Performance | Lighthouse 13 (mobile + desktop budgets, `scripts/lighthouse.mjs`); Playwright + CDP long-frame measurement at 4× / 6× CPU | Budgets in §5 |
 | RAG evals | pytest + DeepEval, separate command | Faithfulness, relevance; router accuracy per class; unknown fact → "no information"; NDA and salary policy. Thresholds in config; below threshold = fail. **Costs money, runs only with Ivan's consent.** |
 | Security | gitleaks, pnpm audit, pip-audit | Pre-commit (gitleaks) + CI |
 
@@ -28,9 +28,11 @@ All commands run from the repository root.
 | Fast checks, web | `node scripts/check-fast.mjs web` = `pnpm --dir apps/web run check:fast` (Prettier check, ESLint, Stylelint, `astro check` + `tsc`, Vitest) |
 | Fast checks, api | `node scripts/check-fast.mjs api` (ruff format --check, ruff check, pyright, `pytest -m "not mentor_pending"`) |
 | E2E (+ axe) | `pnpm --dir apps/web run e2e` (all projects) / `pnpm --dir apps/web run e2e --project=mobile-android` (no `--` before Playwright flags: pnpm forwards it and Playwright then ignores the flags) |
-| Visual snapshots (from ROADMAP 1.1) | run as part of `e2e` in the `visual-chromium` project (`apps/web/e2e/visual.spec.ts`); update: `pnpm --dir apps/web run e2e --project=visual-chromium --update-snapshots` (only with Ivan's OK). Baselines are per platform: `-win32` locally, Linux ones with the CI e2e job (ROADMAP 1.8) |
+| Visual snapshots (from ROADMAP 1.1) | run as part of `e2e` in the `visual-chromium` project (`apps/web/e2e/visual.spec.ts`); update: `pnpm --dir apps/web run e2e --project=visual-chromium --update-snapshots` (only with Ivan's OK). Baselines are per platform: `-win32` locally; the Linux ones (CI job `visual`) are made in the Playwright image with `pnpm --dir apps/web run e2e:visual:linux --update-snapshots` (needs Docker) |
+| API types (from ROADMAP 1.5) | regenerate: `pnpm --dir apps/web run gen:api`; staleness check (CI job `contract`): `pnpm --dir apps/web run gen:api:check` |
+| Infrastructure (from ROADMAP 1.6) | `node scripts/check-infra.mjs` (Compose / Dockerfile / .dockerignore rules, needs the Docker CLI); against a running stack: `node scripts/check-headers.mjs https://localhost` (CI job `infra` runs both, plus the image build, image scan and `docker compose up`) |
 | Build + JS budgets | `pnpm --dir apps/web run build` then `pnpm --dir apps/web run budget` |
-| Lighthouse CI | `pnpm --dir apps/web run lhci` (mobile + desktop) |
+| Lighthouse budgets | `pnpm --dir apps/web run lighthouse` (build, then mobile + desktop; CI job `lighthouse`) |
 | Performance, long frames (from ROADMAP 6.4) | skill `perf-check` |
 | Evals | `uv run --directory apps/api python -m site_api.evals --estimate` then `… --run` |
 | Mentor-pending report | `uv run --directory apps/api pytest -m mentor_pending --co -q` |
@@ -105,6 +107,7 @@ All commands run from the repository root.
 **Real devices:** iPhone 17 Pro Max, checked manually before release. There is no physical weak Android, so it is emulated at 6× CPU.
 
 **Known gaps in automated checks** (manual checks on real devices, ROADMAP 7.5):
+- Visual snapshots in CI: the `visual` job only warns until the Linux baselines are created with `e2e:visual:linux --update-snapshots` (needs Docker; ROADMAP 1.8).
 - Mode switch view transitions (ADR-0009). Under CDP CPU + network throttling, Chromium reveals the new page without a view transition even though it loads in about 1.4 s (cause UNVERIFIED), so the throttled Android profile skips the "runs a transition" test.
 - The prerender → activation path. Playwright init scripts do not run in prerendered pages, so it is not observed.
 

@@ -147,6 +147,8 @@ export default defineConfig(
     rules: {
       'vitest/no-focused-tests': 'error',
       'vitest/no-disabled-tests': 'error',
+      // `expectTypeOf` is an assertion too: it fails the typecheck (`tsc --noEmit`) when types differ.
+      'vitest/expect-expect': ['error', { assertFunctionNames: ['expect', 'expectTypeOf'] }],
     },
   },
 

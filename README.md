@@ -9,7 +9,7 @@ Personal site of Ivan Vasiunin, a Senior Markup Developer moving into AI Enginee
 
 ## Stack
 
-Astro + React islands, TypeScript, SCSS · FastAPI, LangChain / LangGraph, PostgreSQL + pgvector · Playwright, Vitest, pytest, Lighthouse CI. Every choice has a recorded reason in [docs/adr/](docs/adr/).
+Astro + React islands, TypeScript, SCSS · FastAPI, LangChain / LangGraph, PostgreSQL + pgvector · Playwright, Vitest, pytest, Lighthouse. Every choice has a recorded reason in [docs/adr/](docs/adr/).
 
 ## Repository
 

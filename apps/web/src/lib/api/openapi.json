@@ -1,0 +1,152 @@
+{
+  "components": {
+    "schemas": {
+      "ErrorBody": {
+        "description": "What went wrong, in terms that are safe to show to a visitor.",
+        "properties": {
+          "code": {
+            "enum": [
+              "invalid_request",
+              "not_found",
+              "input_too_long",
+              "rate_limited",
+              "session_limit",
+              "budget_exceeded",
+              "upstream_unavailable",
+              "timeout",
+              "internal"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "retry_after_s": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry After S"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "description": "The JSON body of every error response: `{\"error\": {...}}`.",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "description": "Liveness of the API and reachability of its database.",
+        "properties": {
+          "db": {
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "title": "Db",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "db",
+          "version"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "ivanvasiunin.com API",
+    "version": "contract"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "description": "Report whether the API and its database are up, and which build is running.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request (SPEC §4.3)"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error (SPEC §4.3)"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}
