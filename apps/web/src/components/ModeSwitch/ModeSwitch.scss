@@ -38,7 +38,7 @@
 
   .mode-switch__list {
     display: flex;
-    gap: var(--space-3xs);
+    gap: var(--space-2xs);
     padding: 0;
     list-style: none;
   }
@@ -98,14 +98,19 @@
       opacity: 1;
     }
 
+    // The other mode looks like a secondary button: gradient border and a soft surface fill, so it
+    // reads as a control at rest. The current mode wears the accent pill instead.
+    &:not([aria-current='page']) {
+      @include gradient-border($fill-image: var(--gradient-surface));
+    }
+
     &[aria-current='page'] {
       color: var(--color-on-accent);
     }
 
-    // Forced colours: the current mode is drawn in the system Highlight colours (see the indicator).
+    // Forced colours: the other mode keeps a system-coloured border (from the mixin); the current mode
+    // is drawn in the system Highlight colours (see the indicator).
     @media (forced-colors: active) {
-      border-color: Canvas;
-
       &[aria-current='page'] {
         color: HighlightText;
         forced-color-adjust: none;

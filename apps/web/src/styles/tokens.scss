@@ -66,10 +66,11 @@
   --color-source-site-docs: #6a4fb0;
   --color-source-github: #5b6478;
 
-  // Typography. Families stay generic until the self-hosted fonts arrive (ROADMAP 1.3):
-  // naming a font here before it is loaded would pick up local installs and vary between machines.
-  --font-sans: system-ui, -apple-system, 'Segoe UI', roboto, 'Helvetica Neue', arial, sans-serif;
-  --font-serif: georgia, 'Times New Roman', serif;
+  // Typography. Self-hosted OFL fonts (astro.config.mjs → `fonts`); the <Font> components in BaseLayout
+  // define the family variables, including Astro's metric-matched fallback faces. The stacks after the
+  // comma apply only where <Font> is absent (isolated component tests).
+  --font-sans: var(--font-schibsted-grotesk, system-ui, sans-serif);
+  --font-serif: var(--font-newsreader, georgia, serif);
 
   // Type scale after the traditional scale in The Elements of Typographic Style
   // (12 14 16 18 21 24 36 48 px). Larger steps are fluid between two rem values.
@@ -124,13 +125,13 @@
 
   // Accent glow for primary controls and focused panels; follows the theme's accent.
   --shadow-glow:
-    0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent),
-    0 4px 14px color-mix(in srgb, var(--color-accent) 26%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 24%, transparent),
+    0 2px 8px color-mix(in srgb, var(--color-accent) 22%, transparent);
 
   // A tight glow for controls inside a bar (the mode switch pill): stays within the bar.
   --shadow-glow-sm:
-    0 0 0 1px color-mix(in srgb, var(--color-accent) 25%, transparent),
-    0 2px 8px color-mix(in srgb, var(--color-accent) 25%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent),
+    0 1px 4px color-mix(in srgb, var(--color-accent) 22%, transparent);
 
   // Accent washes for icon-control highlights (hover: soft, pressed: strong); follow the theme's accent.
   --color-highlight-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);

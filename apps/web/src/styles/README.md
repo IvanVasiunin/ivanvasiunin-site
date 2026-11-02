@@ -87,8 +87,10 @@ each with the native keyword as fallback.
 
 ## Typography
 
-- `--font-sans` (UI, headings) and `--font-serif` (Elio's answers, CV prose) are system stacks until
-  ROADMAP 1.3 adds the self-hosted OFL fonts (planned: Schibsted Grotesk, Newsreader).
+- `--font-sans`: Schibsted Grotesk (UI, headings). `--font-serif`: Newsreader (Elio's answers, CV prose).
+  Self-hosted OFL fonts via the Astro Fonts API (`astro.config.mjs`, `docs/CREDITS.md`); only the UI face
+  is preloaded. Coverage: the UI face has Latin, the serif Latin and Latin Extended. Neither family has
+  Cyrillic, so Russian text (and symbols outside the subsets, such as →) uses the system fonts.
 - Type scale after _The Elements of Typographic Style_ (12 14 16 18 21 24 36 48 px), in `rem`:
   `--font-size-xs` 0.75 · `sm` 0.875 · `md` 1 · `lg` 1.125 · `xl` 1.3125→1.5 · `2xl` 1.5→2.25 ·
   `3xl` 2→3 (fluid steps use `clamp()` with `rem` bounds).

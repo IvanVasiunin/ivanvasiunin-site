@@ -1,6 +1,7 @@
 ---
 // Page shell for every route (ROADMAP 1.1): document head, skip link, backdrop, header, main, footer.
 // Global styles are imported first so the cascade layer order is established before component CSS.
+import { Font } from 'astro:assets';
 import '../styles/global.scss';
 import './BaseLayout.scss';
 import Backdrop from '../components/Backdrop/Backdrop.astro';
@@ -47,6 +48,12 @@ const SPECULATION_RULES = {
       content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
     />
     <title>{title}</title>
+    {/* Self-hosted fonts (astro.config.mjs, ADR-0010). Only the UI face is preloaded: it sets every
+    line of the first screen. The serif loads when text first uses it (Elio's answers, CV prose). The
+    components emit inline style elements (@font-face and two :root variables, unlayered and conflict-free),
+    so the future CSP needs their hashes in style-src, plus font-src 'self'. */}
+    <Font cssVariable="--font-schibsted-grotesk" preload={[{ weight: '400', style: 'normal' }]} />
+    <Font cssVariable="--font-newsreader" />
     <meta name="description" content={description} />
     <meta name="color-scheme" content="light dark" />
     <meta
