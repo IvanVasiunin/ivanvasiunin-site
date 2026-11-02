@@ -133,6 +133,11 @@
     0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent),
     0 1px 4px color-mix(in srgb, var(--color-accent) 22%, transparent);
 
+  // A segmented control's track (the mode switch): a faint accent tint with a hairline inner edge,
+  // so the group reads as one control without a border on every segment.
+  --color-track: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  --shadow-track: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 18%, transparent);
+
   // Accent washes for icon-control highlights (hover: soft, pressed: strong); follow the theme's accent.
   --color-highlight-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
   --color-highlight-strong: color-mix(in srgb, var(--color-accent) 26%, transparent);
