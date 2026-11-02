@@ -1,6 +1,6 @@
 # ADR-0007: Mentor mode for the AI core
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0011 (the mentor workflow; the zones below still apply)
 - **Date:** 2026-11-01
 - **Deciders:** Ivan Vasiunin
 

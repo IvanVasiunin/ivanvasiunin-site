@@ -52,11 +52,11 @@ The full list is in `docs/TESTING.md` §2. Names are finalized when the skeleton
 | Docker, CI, deploy, config, API glue (`core`, `routers`, `schemas`, `services`, `db`, `migrations`) | Claude | automated checks + `security-reviewer` + an explanation of each file |
 | **AI core:** `apps/api/src/site_api/{ingestion,rag,graph,prompts,evals}/` | **Ivan** (Claude mentors) | Claude reviews Ivan's code |
 
-**In the mentor zone, Claude does not write the implementation** unless Ivan explicitly asks. Use the `mentor-task` skill and suggest `/output-style mentor`.
+**In the mentor zone, Ivan writes the implementation and Claude dictates it** ([ADR-0011](docs/adr/0011-guided-mentor-mode.md), guided mode): Claude gives the code in small blocks, each with «Почему так», and never edits mentor-zone implementation files itself. Use the `mentor-task` skill and suggest `/output-style mentor`.
 
 ## Workflow (zones where Claude writes)
 1. **Plan:** a short plan, then wait for Ivan's OK.
-2. **One small step:** one logical change, ≤ ~300 diff lines, reviewable in 10–15 minutes, **with its tests**.
+2. **One step:** one logical change **with its tests**. Size: code (TS, Python, scripts, tests) ≤ ~600 diff lines; markup and styles (HTML / Astro markup, SCSS) ≤ ~1200.
 3. **Checks:** the Stop hook runs fast checks automatically. Run the extra checks for the change type with the `run-checks` skill. Use reviewer subagents (`frontend-reviewer`, `python-reviewer`, `security-reviewer`) where relevant.
 4. **Report:** use the `step-report` skill (what and why, alternatives, «Что проверить», «Проверки»). Then wait for Ivan's OK before the next step.
 5. **Before any commit:** the `pre-pr-check` skill. Commit only when Ivan asks. **Never push.**

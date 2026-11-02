@@ -4,7 +4,7 @@ This rule has no `paths:`, so it always loads. Verification tags: `[hook]`, `[se
 
 - **Conventional Commits:** `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `build:`, `perf:`, `style:`. Optional scope: `feat(web):`, `fix(api):`. `[hook]` (lefthook `commit-msg` check)
 - **Branches:** `feat/…`, `fix/…`, `chore/…`, `docs/…`. Never commit directly to `main` once the remote exists. `[review]`
-- **Small PRs:** one logical change, ≤ ~300 changed lines where possible. `[review]`
+- **PR size:** one logical change; code (incl. tests) ≤ ~600 changed lines, markup and styles (HTML / Astro markup, SCSS) ≤ ~1200, where possible. `[review]`
 - Commit only when Ivan asks. **No `git push`, force-push, history rewrite** (`rebase -i`, `commit --amend` on pushed commits, `reset --hard` on shared branches) without Ivan's explicit request. `[settings]` (deny rules for `git push`, `git push --force`, `git reset --hard`, `git rebase`)
 - **Pre-commit hooks** (lefthook):
   - formatting;

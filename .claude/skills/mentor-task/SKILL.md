@@ -1,17 +1,17 @@
 ---
 name: mentor-task
-description: Formulates a learning task in the AI-core mentor zone (ingestion, chunking, embeddings, projection, retrieval, router, LangGraph graph, prompts, evals) — goal, context with official docs, failing tests marked mentor_pending, the next step, hint ladder, review checklist and explain-back questions. Use when starting any ROADMAP task marked M.
+description: Runs a task in the AI-core mentor zone (ingestion, chunking, embeddings, projection, retrieval, router, LangGraph graph, prompts, evals) in guided mode — goal, context with official docs, failing tests marked mentor_pending, then the code dictated step by step with «Почему так» explanations, a check of Ivan's result and short check questions. Use when starting any ROADMAP task marked M.
 argument-hint: "<ROADMAP task id, e.g. 3.3>"
 ---
 
 # Mentor task
 
-Ivan implements this himself ([ADR-0007](../../../docs/adr/0007-mentor-mode.md), `.claude/rules/mentor-mode.md`). You prepare the task, write failing tests, then mentor. **Do not write the implementation.**
+Ivan writes the code into the files himself; you dictate it and explain every decision (guided mode, [ADR-0011](../../../docs/adr/0011-guided-mentor-mode.md), `.claude/rules/mentor-mode.md`). **Never edit mentor-zone implementation files yourself.**
 
 ## 1. Prepare (silently)
 1. Read the ROADMAP task, the relevant SPEC section, ADRs and existing code in the zone.
 2. Verify the library APIs you will reference with **Context7** (current versions in `uv.lock`). Never rely on memory for LangChain / LangGraph / langchain-postgres signatures.
-3. Split the task into steps of ~30–80 lines of code that Ivan writes. One step at a time.
+3. Split the task into steps of ~30–80 lines of code. One step at a time.
 
 ## 2. Present the task to Ivan (Russian)
 
@@ -32,8 +32,18 @@ Ivan implements this himself ([ADR-0007](../../../docs/adr/0007-mentor-mode.md),
 - …
 Запуск: `uv run --directory apps/api pytest tests/<zone>/test_x.py -m mentor_pending -q`
 
-### Шаг 1 из N
-<the smallest piece to implement now>
+### Шаг 1 из N: <what this step does>
+**Файл:** `<path>`, <where in the file>
+
+```python
+<block 1: the exact code>
+```
+**Почему так:** <what the non-obvious lines do; what the library call returns; why these parameters; rejected alternative>
+
+```python
+<block 2>
+```
+**Почему так:** …
 
 ### Чек-лист самопроверки
 - [ ] тесты шага зелёные
@@ -49,22 +59,17 @@ Ivan implements this himself ([ADR-0007](../../../docs/adr/0007-mentor-mode.md),
 - Show the tests to Ivan and explain what each checks. He may adjust them before starting.
 - You may also add signatures + docstrings + `raise NotImplementedError` stubs so imports resolve.
 
-## 4. While Ivan works
-Use the hint ladder from the mentor-mode rule. Move one level at a time:
-1. question;
-2. direction + docs;
-3. analogous example on different code;
-4. full solution only on explicit request.
+## 4. While Ivan writes
+- Answer questions about the dictated code directly and concretely.
+- If Ivan wants to phrase a name or a comment differently, that is fine as long as the behaviour stays the same.
 
-## 5. Review (when Ivan says a step is ready)
+## 5. Check (when Ivan says a step is written)
 - Run the step's tests and the fast checks, or delegate to `test-runner`.
-- Delegate the review to `python-reviewer` (mentor mode), or follow its format:
-  - what's good;
-  - issues with the "why";
-  - no rewriting.
+- Compare with the dictated code. Explain any difference (a typo, a missed line, a deliberate change) and how to fix it.
+- For a fuller review, delegate to `python-reviewer` (mentor mode).
 - Next step, or finish.
 
 ## 6. Finish
-- Ask **2–3 explain-back questions** (concepts, trade-offs, "what would break if…"). Wait for answers and correct gently.
+- Ask **one or two short check questions** (concepts, trade-offs, "what would break if…"). Wait for the answers and correct concretely.
 - When Ivan confirms the task is done, remove `mentor_pending` from that task's tests **only on his explicit word**. Run the fast checks.
 - Write the step report with the `step-report` skill. Include "Что изучено" in 1–2 lines.

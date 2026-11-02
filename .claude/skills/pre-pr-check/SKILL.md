@@ -23,6 +23,6 @@ Commands that do not exist yet (empty skeleton) are reported as "n/a", never as 
 
 ## Then
 - Check the commit message proposal against Conventional Commits.
-- Check the diff size: if it is > ~300 lines, propose a split.
+- Check the diff size: if code is > ~600 lines or markup / styles > ~1200, propose a split.
 - Report with the `step-report` **Проверки** table.
 - **Do not commit or push** unless Ivan asked for it. Never `--no-verify`.
