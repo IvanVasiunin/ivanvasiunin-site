@@ -212,3 +212,76 @@ test('primary and secondary buttons meet the 44 px touch target', async ({ page 
     expect(box?.height, name).toBeGreaterThanOrEqual(44);
   }
 });
+
+test('the brand mark planet orbits while the brand link is hovered', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'Touch devices have no hover state.');
+  await page.goto('/');
+  const brand = page.getByRole('banner').getByRole('link', { name: 'Ivan Vasiunin' });
+  const planet = () =>
+    brand.evaluate((element) => {
+      const node = element.querySelector('.site-header__planet');
+      if (!node) return null;
+      const style = getComputedStyle(node);
+      return { state: style.animationPlayState, transform: style.transform };
+    });
+
+  expect(await planet()).toMatchObject({ state: 'paused' });
+  await brand.hover();
+  expect(await planet()).toMatchObject({ state: 'running' });
+  const first = (await planet())?.transform;
+  await expect.poll(async () => (await planet())?.transform).not.toBe(first);
+});
+
+test('the brand mark planet stays still with reduced motion', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'Touch devices have no hover state.');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const brand = page.getByRole('banner').getByRole('link', { name: 'Ivan Vasiunin' });
+  await brand.hover();
+
+  expect(
+    await brand.evaluate((element) => {
+      const node = element.querySelector('.site-header__planet');
+      return node ? getComputedStyle(node).animationName : 'missing';
+    }),
+  ).toBe('none');
+});
+
+test('the brand mark planet also orbits on keyboard focus', async ({ page, browserName }) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit does not Tab to links by default (Safari behaviour).',
+  );
+  await page.goto('/');
+  await page.keyboard.press('Tab'); // skip link
+  await page.keyboard.press('Tab'); // brand
+  const brand = page.getByRole('banner').getByRole('link', { name: 'Ivan Vasiunin' });
+  await expect(brand).toBeFocused();
+
+  expect(
+    await brand.evaluate((element) => {
+      const node = element.querySelector('.site-header__planet');
+      return node ? getComputedStyle(node).animationPlayState : 'missing';
+    }),
+  ).toBe('running');
+});
+
+test('the brand mark is drawn in system colours in forced colors', async ({ page }) => {
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('/');
+  const paint = await page
+    .getByRole('banner')
+    .getByRole('link', { name: 'Ivan Vasiunin' })
+    .evaluate((element) => {
+      const reticle = element.querySelector('.site-header__reticle');
+      const planet = element.querySelector('.site-header__planet');
+      return {
+        stroke: reticle ? getComputedStyle(reticle).stroke : 'missing',
+        fill: planet ? getComputedStyle(planet).fill : 'missing',
+      };
+    });
+
+  // Plain system colours instead of the gradient paint server.
+  expect(paint.stroke).not.toContain('url(');
+  expect(paint.fill).not.toContain('url(');
+});

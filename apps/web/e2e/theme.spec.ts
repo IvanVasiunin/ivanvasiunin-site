@@ -5,8 +5,8 @@ import { expect, expectNoSeriousA11yViolations, test } from './fixtures';
 // Theme toggle and the no-flash head script (SPEC US-X1, ROADMAP 1.1).
 
 const STORAGE_KEY = 'theme';
-const BG = { light: 'rgb(232, 236, 245)', dark: 'rgb(14, 20, 48)' } as const;
-const THEME_COLOR = { light: '#e8ecf5', dark: '#0e1430' } as const;
+const BG = { light: 'rgb(244, 239, 229)', dark: 'rgb(14, 20, 48)' } as const;
+const THEME_COLOR = { light: '#f4efe5', dark: '#0e1430' } as const;
 
 const toggleOf = (page: Page) => page.getByRole('button', { name: 'Dark theme' });
 

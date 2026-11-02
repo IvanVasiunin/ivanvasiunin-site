@@ -49,7 +49,7 @@ export function findEntries(html) {
 
 /**
  * Gzip size of the JS written inline in a page (`<script>` without `src`), e.g. the theme head script
- * and small module scripts that Astro inlines. JSON data blocks (JSON-LD, import maps) are not JS.
+ * and small module scripts that Astro inlines. JSON data blocks (JSON-LD, import maps, speculation rules) are not JS.
  * @param {string} html
  * @returns {number}
  */
@@ -58,7 +58,11 @@ export function inlineScriptsSize(html) {
   for (const [tag, code = ''] of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) {
     const opening = tag.slice(0, tag.indexOf('>') + 1);
     const type = attr(opening, 'type') ?? '';
-    if (attr(opening, 'src') !== undefined || /json|importmap/.test(type) || code.trim() === '')
+    if (
+      attr(opening, 'src') !== undefined ||
+      /json|importmap|speculationrules/.test(type) ||
+      code.trim() === ''
+    )
       continue;
     total += gzipSync(code).length;
   }

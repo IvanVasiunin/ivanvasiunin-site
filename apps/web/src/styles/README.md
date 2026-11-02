@@ -14,7 +14,7 @@ Rules: [`.claude/rules/css-scss.md`](../../../../.claude/rules/css-scss.md).
 ## Visual direction: "Celestial atlas"
 
 The vector space is a star chart of Ivan's experience. The chat sits on the chart; the source-type
-legend reads like a chart key. Star-chart paper and navy ink in light, deep space in dark, a cobalt
+legend reads like a chart key. Warm star-chart paper and navy ink in light, deep space in dark, a cobalt
 accent, star gold for relevance. The chart is the one bold element; everything else stays quiet.
 
 ## Themes
@@ -64,12 +64,12 @@ each with the native keyword as fallback.
 
 | Token                       | Light     | Dark      | Use                                         |
 | --------------------------- | --------- | --------- | ------------------------------------------- |
-| `--color-bg`                | `#e8ecf5` | `#0e1430` | Page background (star-chart paper / space)  |
-| `--color-surface`           | `#f5f7fb` | `#161e40` | Raised panels, chat input                   |
+| `--color-bg`                | `#f4efe5` | `#0e1430` | Page background (warm chart paper / space)  |
+| `--color-surface`           | `#fcf9f3` | `#161e40` | Raised panels, chat input                   |
 | `--color-text`              | `#182036` | `#dde4f5` | Body text (navy ink)                        |
-| `--color-text-muted`        | `#4a5470` | `#a3aecb` | Secondary text                              |
-| `--color-grid`              | `#bfc7da` | `#232c52` | Decorative lines only (no contrast floor)   |
-| `--color-border`            | `#646e8a` | `#7c88b0` | UI boundaries (inputs, toggles)             |
+| `--color-text-muted`        | `#454a62` | `#a3aecb` | Secondary text                              |
+| `--color-grid`              | `#d8cfbf` | `#232c52` | Decorative lines only (no contrast floor)   |
+| `--color-border`            | `#5f6274` | `#7c88b0` | UI boundaries (inputs, toggles)             |
 | `--color-accent`            | `#2b54b0` | `#8db2ff` | Links, primary actions (cobalt)             |
 | `--color-accent-2`          | `#6a4fb0` | `#bba6ff` | Second gradient stop (violet)               |
 | `--color-accent-3`          | `#1f7373` | `#6ed3c8` | Third gradient stop (teal)                  |

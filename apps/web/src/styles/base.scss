@@ -1,10 +1,49 @@
 // Element defaults built on the tokens. Loaded into the `base` layer by global.scss.
 // Never redefine custom properties here: `tokens` is a later layer and would win anyway.
 
+@use 'mixins' as *;
+
+// Scrolling to a target (focus, anchors, the skip link) keeps it clear of the sticky header and, below
+// `md`, of the floating mode switch at the bottom (WCAG 2.4.11 Focus Not Obscured).
+:where(html) {
+  scroll-padding-block: calc(var(--size-bar) + var(--space-xl))
+    calc(var(--size-bar) + var(--offset-bar-bottom) + var(--space-md));
+
+  @include mq(md) {
+    scroll-padding-block-end: 0;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   :where(html) {
     scroll-behavior: smooth;
   }
+}
+
+// Cross-document view transitions (SPEC §2, ADR-0009): the page cross-fades as one root image (the
+// header and the backdrop are the same on both sides, so they look still) while the mode switch pill
+// slides from one tab to the other. Every same-origin navigation gets the cross-fade. Only without a
+// reduced-motion preference; browsers without support simply navigate.
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-in-out);
+}
+
+// Groups otherwise stack in the old page's paint order, where the pill can come after a tab label and
+// cover it. The tab labels (src/components/ModeSwitch/) always stay above the sliding pill.
+::view-transition-group(mode-switch-indicator) {
+  z-index: var(--z-base);
+}
+
+::view-transition-group(mode-switch-ai),
+::view-transition-group(mode-switch-text) {
+  z-index: var(--z-raised);
 }
 
 :where(body) {

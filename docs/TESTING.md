@@ -104,6 +104,12 @@ All commands run from the repository root.
 
 **Real devices:** iPhone 17 Pro Max, checked manually before release. There is no physical weak Android, so it is emulated at 6× CPU.
 
+**Known gaps in automated checks** (manual checks on real devices, ROADMAP 7.5):
+- Mode switch view transitions (ADR-0009). Under CDP CPU + network throttling, Chromium reveals the new page without a view transition even though it loads in about 1.4 s (cause UNVERIFIED), so the throttled Android profile skips the "runs a transition" test.
+- The prerender → activation path. Playwright init scripts do not run in prerendered pages, so it is not observed.
+
+Check on a real Android Chrome and on iOS Safari 18.2+.
+
 **Cloud real-device services:** free or trial options to evaluate in Phase 7. Their current free tiers are UNVERIFIED:
 - BrowserStack (free for open source on application);
 - LambdaTest (free plan with limited minutes).

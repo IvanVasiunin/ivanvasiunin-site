@@ -11,7 +11,7 @@ export const THEME_STORAGE_KEY = 'theme';
 export type Theme = 'light' | 'dark';
 
 /** Must match `--color-bg` in src/styles/tokens.scss: mobile browsers paint their UI in this colour. */
-export const THEME_COLOR: Readonly<Record<Theme, string>> = { light: '#e8ecf5', dark: '#0e1430' };
+export const THEME_COLOR: Readonly<Record<Theme, string>> = { light: '#f4efe5', dark: '#0e1430' };
 
 /** A stored value (untrusted) as a theme: anything other than `light` / `dark` means no choice yet. */
 export function parseTheme(value: string | null): Theme | null {

@@ -39,6 +39,7 @@ describe('inlineScriptsSize', () => {
       <script type="module" src="/_astro/page.js"></script>
       <script type="application/ld+json">{"@type":"Person","name":"Ivan"}</script>
       <script type="importmap">{"imports":{}}</script>
+      <script type="speculationrules">{"prerender":[]}</script>
       <script>  </script>`;
 
     expect(inlineScriptsSize(html)).toBe(gzipSync(head).length + gzipSync(module).length);

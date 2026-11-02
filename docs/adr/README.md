@@ -12,3 +12,4 @@ Each ADR records one decision: its context, the options considered, the decision
 | [0006](0006-2d-projection.md) | 2D projection of embeddings | Accepted |
 | [0007](0007-mentor-mode.md) | Mentor mode for the AI core | Accepted |
 | [0008](0008-langchain-langgraph-roles.md) | Roles of LangChain and LangGraph | Accepted |
+| [0009](0009-mode-switch-navigation.md) | Mode switch navigation — cross-document View Transitions with prerender on intent | Accepted |

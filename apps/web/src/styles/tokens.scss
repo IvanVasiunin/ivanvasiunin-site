@@ -39,24 +39,24 @@
 :root {
   color-scheme: light dark;
 
-  // Colour. Light: star-chart paper, navy ink, cobalt, star gold.
-  --color-bg: #e8ecf5;
-  --color-surface: #f5f7fb;
+  // Colour. Light: warm star-chart paper, navy ink, cobalt, star gold.
+  --color-bg: #f4efe5;
+  --color-surface: #fcf9f3;
   --color-text: #182036;
-  --color-text-muted: #4a5470;
-  --color-grid: #bfc7da; // decoration only, no contrast requirement
-  --color-border: #646e8a; // UI boundaries, ≥ 3:1 against bg
+  --color-text-muted: #454a62;
+  --color-grid: #d8cfbf; // decoration only, no contrast requirement
+  --color-border: #5f6274; // UI boundaries, ≥ 3:1 against bg
   --color-accent: #2b54b0; // links, primary actions; < 3:1 against text, so inline links keep an underline
   --color-accent-2: #6a4fb0; // violet, second gradient stop
   --color-accent-3: #1f7373; // teal, third gradient stop
   --color-on-accent: #fff; // text on accent gradients
   --color-focus: #2b54b0;
   --color-highlight: #8f5d00; // relevance highlight on the map (graphic, not text)
-  // Backdrop nebulae: pastel tints that colour the paper without darkening it. Alphas are capped so
-  // text keeps its contrast where all three overlap (tested).
-  --color-glow-1: rgb(160 140 255 / 22%);
-  --color-glow-2: rgb(127 176 255 / 20%);
-  --color-glow-3: rgb(127 224 210 / 16%);
+  // Backdrop nebulae: cool violet, blue and teal washes that read clearly on the warm paper. Alphas are
+  // capped so text keeps its contrast where all three overlap (tested).
+  --color-glow-1: rgb(165 140 255 / 22%);
+  --color-glow-2: rgb(125 170 255 / 15%);
+  --color-glow-3: rgb(95 205 190 / 14%);
   --color-star: #4a5a8a; // printed stars on a paper chart
   --color-chart-line: #7d8ab0; // celestial chart rings and meridians (decoration)
   // Map key: one colour per RAG source type (.claude/rules/visualization.md).
@@ -105,7 +105,14 @@
   // Sizes.
   --size-touch: 44px; // minimum touch target (SPEC US-X2)
   --size-icon: 24px;
+  --size-icon-sm: 18px; // icons next to small text (mode switch)
   --size-container: 75rem; // max width of the page frame
+  // Height of a floating bar (the header bar, the mode switch below `md`): a touch-size control inside
+  // the bar's padding and border. The page reserves this space (BaseLayout.scss, scroll-padding).
+  --size-bar: calc(var(--size-touch) + 2 * var(--space-2xs) + 2 * var(--border-width));
+
+  // Distance of the bottom bar from the screen edge, clear of the home indicator.
+  --offset-bar-bottom: max(var(--space-md), env(safe-area-inset-bottom));
 
   // Shape.
   --radius-sm: 4px; // chips, inputs
@@ -118,7 +125,12 @@
   // Accent glow for primary controls and focused panels; follows the theme's accent.
   --shadow-glow:
     0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent),
-    0 8px 32px color-mix(in srgb, var(--color-accent) 30%, transparent);
+    0 4px 14px color-mix(in srgb, var(--color-accent) 26%, transparent);
+
+  // A tight glow for controls inside a bar (the mode switch pill): stays within the bar.
+  --shadow-glow-sm:
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 25%, transparent),
+    0 2px 8px color-mix(in srgb, var(--color-accent) 25%, transparent);
 
   // Accent washes for icon-control highlights (hover: soft, pressed: strong); follow the theme's accent.
   --color-highlight-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
@@ -165,6 +177,7 @@
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --duration-slow: 320ms;
+  --duration-orbit: 2400ms; // one lap of the brand mark's planet (a looping hover animation)
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 

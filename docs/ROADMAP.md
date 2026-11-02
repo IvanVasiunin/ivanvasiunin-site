@@ -58,7 +58,7 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 | 3.6 | Hybrid retrieval (vector + FTS, RRF) + per-project deduplication | **M** | Retrieval tests on a fixture corpus |
 | 3.7 | Generation node with streaming; provider switch via config (test) | **M** | OpenAI ↔ Anthropic switch test (mocked) green |
 | 3.8 | `/api/chat` SSE endpoint wiring `route` → `token` → `done` / `error`. Until the router exists (4.2), `route` is always `about_ivan` | C | SSE contract tests for every event type |
-| 3.9 | Chat UI island: input, Enter / Shift+Enter, streaming, Stop, Retry, Copy, autoscroll, example questions, empty / loading / error states, AI disclosure, mobile keyboard handling | C | Vitest component states; e2e on a mocked LLM (desktop + mobile); axe green; JS budget checked |
+| 3.9 | Chat UI island: input, Enter / Shift+Enter, streaming, Stop, Retry, Copy, autoscroll, example questions, empty / loading / error states, AI disclosure, mobile keyboard handling; below `md` the input coexists with the floating mode switch at the bottom (input above the bar, or the bar hidden while the input has focus / the keyboard is open); `/` may be prerendered (ADR-0009), so API calls, analytics, autofocus and the `?q=` prefill wait until `document.prerendering` is false | C | Vitest component states; e2e on a mocked LLM (desktop + mobile); axe green; JS budget checked |
 
 ## Phase 4 — Guardrails, evals, tracing
 

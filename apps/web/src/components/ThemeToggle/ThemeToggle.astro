@@ -77,10 +77,13 @@ import './ThemeToggle.scss';
     // The explicit choice; `null` until the first click (or while nothing is stored): follow the system.
     let stored: Theme | null = readStoredTheme(getStorage, THEME_STORAGE_KEY);
 
-    const render = (): void => {
-      applyTheme(document, stored, THEME_COLOR);
+    const renderPressed = (): void => {
       const visible = resolveTheme(stored, systemDark.matches);
       button.setAttribute('aria-pressed', String(visible === 'dark'));
+    };
+    const render = (): void => {
+      applyTheme(document, stored, THEME_COLOR);
+      renderPressed();
     };
 
     render();
@@ -89,24 +92,29 @@ import './ThemeToggle.scss';
       storeTheme(getStorage, THEME_STORAGE_KEY, stored);
       render();
     });
-    // The system theme changed while there is no explicit choice: the CSS follows it, the state too.
-    systemDark.addEventListener('change', render);
+    // The system theme changed: the CSS and the metas follow it by themselves; only the pressed state
+    // can change (when there is no explicit choice). The theme itself is not re-applied.
+    systemDark.addEventListener('change', renderPressed);
     // Another tab changed the choice (`key === null`: that tab cleared all storage).
     window.addEventListener('storage', (event) => {
       if (event.key !== THEME_STORAGE_KEY && event.key !== null) return;
       stored = parseTheme(event.key === null ? null : event.newValue);
       render();
     });
-    // Back from bfcache: the choice may have changed in another page meanwhile. With blocked storage
-    // the stored value cannot be read, so keep the choice made on this page instead of resetting it.
-    window.addEventListener('pageshow', (event) => {
-      if (!event.persisted) return;
+    // Re-read the choice when a page is shown after it was prepared: back from bfcache, or activated
+    // after a prerender (speculation rules in BaseLayout), when the choice may have changed meanwhile.
+    // With blocked storage the stored value cannot be read, so keep the choice made on this page.
+    const syncFromStorage = (): void => {
       try {
         stored = parseTheme(getStorage().getItem(THEME_STORAGE_KEY));
       } catch {
         return;
       }
       render();
+    };
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) syncFromStorage();
     });
+    document.addEventListener('prerenderingchange', syncFromStorage);
   }
 </script>
