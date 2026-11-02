@@ -290,7 +290,11 @@ Validation and limit errors that happen **before** streaming return a JSON body 
 { "error": { "code": "rate_limited", "message": "…", "retry_after_s": 30 } }
 ```
 
-The codes are the same as for `error` events. Stack traces are never returned.
+The codes are the same as for `error` events, plus two that only occur before a stream:
+- `invalid_request` — 400 / 405 / 422: malformed request or failed validation;
+- `not_found` — 404: unknown route.
+
+Stack traces and internal messages are never returned; an unexpected failure is `internal` (500) with a generic message. A 429 also carries a `Retry-After` header.
 
 ### 4.4 `points.json`
 
@@ -308,7 +312,7 @@ The codes are the same as for `error` events. Stack traces are never returned.
 
 ### 4.5 `GET /api/health`
 
-`200 {"status":"ok","db":"ok","version":"<git sha>"}`, or `503` with `"db":"down"`.
+`200 {"status":"ok","db":"ok","version":"<git sha>"}`, or `503 {"status":"unavailable","db":"down","version":"<git sha>"}` when the database does not answer within the configured timeout.
 
 ---
 

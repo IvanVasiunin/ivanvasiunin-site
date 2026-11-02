@@ -75,4 +75,5 @@ Mentor zone: `ingestion/`, `rag/`, `graph/`, `prompts/`, `evals/`. `[review]`
   - IP addresses.
 
   `[review]` `[test]` (log-capture test)
+- Log **messages are static text**. Anything variable goes into an allow-listed `extra` field of `core/logging.py`, never into the message (`logger.info("request", extra={...})`, not an f-string or `%s` with user data). The allow-list only filters `extra`. `[review]` `[test]` (the chat endpoint gets a guard test with a marker question, ROADMAP 1.5)
 - Healthcheck `GET /api/health` returns status + DB status + version. `[test]`

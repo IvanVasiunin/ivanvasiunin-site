@@ -31,7 +31,7 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 | 1.3 | Self-hosted OFL fonts via the Astro Fonts API; `docs/CREDITS.md` entries | C | No third-party requests (e2e asserts); CLS < 0.1 |
 | 1.4 | FastAPI app: `/api/health`, settings, structured logging, unified error format, CORS | C | pytest + httpx contract tests; 80% coverage of `core/` |
 | 1.5 | OpenAPI → TS type generation + CI staleness check | C | CI fails on stale types (demonstrated) |
-| 1.6 | Dockerfiles (multi-stage, non-root, pinned, healthchecks), Compose `web` / `api` / `db`, Caddyfile (headers, compression, SSE flush) | C | `docker compose up` locally green; `security-reviewer` passed |
+| 1.6 | Dockerfiles (multi-stage, non-root, pinned, healthchecks), Compose `web` / `api` / `db`, Caddyfile (headers, compression, SSE flush). From the 1.4 security review: build `psycopg[c]` against the image's libpq instead of `psycopg[binary]` (or record the choice in an ADR); uvicorn with `--proxy-headers --forwarded-allow-ips=<compose subnet> --no-server-header`, `api` port not published; decide whether `/api/health` is exposed through Caddy or only used by the Compose healthcheck | C | `docker compose up` locally green; `security-reviewer` passed |
 | 1.7 | VPS rented, DNS (or a temporary subdomain), deploy job from GHCR | I + C | Hello-world page on HTTPS; health endpoint reachable; RUNBOOK deploy section filled |
 | 1.8 | Replace `@lhci/cli` with `lighthouse` 13 + a small budget script (ADR-0001 fallback; removes 7 of 8 dev-dependency advisories); add e2e + Lighthouse jobs to CI | C | `pnpm audit` (dev) clean of LHCI advisories; mobile / desktop budgets enforced in CI; ADR-0001 updated |
 

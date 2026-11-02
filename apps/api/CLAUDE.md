@@ -11,7 +11,7 @@ src/site_api/prompts/     versioned prompt files and localized templates
 src/site_api/evals/       eval datasets and metrics
 tests/{ingestion,rag,graph,evals}/
 ```
-In these folders Claude **does not write the implementation** unless Ivan explicitly asks. Claude writes failing tests marked `@pytest.mark.mentor_pending`, gives hints by levels, reviews as a mentor (`python-reviewer`) and asks explain-back questions. Use the `mentor-task` skill; suggest `/output-style mentor`. Never remove `mentor_pending` yourself.
+In these folders **Ivan writes the implementation; Claude dictates it** (guided mode, [ADR-0011](../../docs/adr/0011-guided-mentor-mode.md)): Claude writes failing tests marked `@pytest.mark.mentor_pending`, then gives the code step by step in small blocks with «Почему так», checks Ivan's result (tests, ruff, pyright, `python-reviewer`) and asks one or two short check questions. Claude never edits mentor-zone implementation files itself. Use the `mentor-task` skill; suggest `/output-style mentor`. Never remove `mentor_pending` yourself.
 
 ## Claude zone
 ```
