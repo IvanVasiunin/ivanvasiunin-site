@@ -97,6 +97,66 @@ test('the header stays at the top while a long page scrolls', async ({ page }) =
   expect(box?.y).toBeCloseTo(0, 0);
 });
 
+test('the header scrim is invisible at the top of the page and fades in on scroll', async ({
+  page,
+}) => {
+  await page.goto('/cv');
+  const scrim = () =>
+    page.evaluate(() => ({
+      supported: CSS.supports('animation-timeline: scroll()'),
+      opacity: getComputedStyle(document.querySelector('.site-header') ?? document.body, '::before')
+        .opacity,
+    }));
+
+  // A tint over the bare backdrop read as a flat stripe across the top (Ivan, 2026-11-03), so at the
+  // top the sky shows through untouched; without scroll-driven animations the scrim is always on.
+  // Polled: the scroll timeline becomes active a frame after load.
+  const { supported } = await scrim();
+  await expect.poll(async () => (await scrim()).opacity).toBe(supported ? '0' : '1');
+
+  await page.evaluate(() => {
+    window.scrollTo({ top: 800, behavior: 'instant' });
+  });
+  await expect.poll(async () => (await scrim()).opacity).toBe('1');
+});
+
+test('the header scrim covers only the bar and its soft edges, not the whole width', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/cv');
+  const { scrim, bar, viewport } = await page.evaluate(() => {
+    const header = document.querySelector('.site-header') ?? document.body;
+    return {
+      scrim: Number.parseFloat(getComputedStyle(header, '::before').width),
+      bar: document.querySelector('.site-header__bar')?.getBoundingClientRect().width ?? 0,
+      viewport: document.documentElement.clientWidth,
+    };
+  });
+
+  // Ivan, 2026-11-03: a full-width blurred band was too heavy; the side fades are 24 px each.
+  expect(scrim).toBeGreaterThanOrEqual(bar);
+  expect(scrim).toBeLessThanOrEqual(bar + 2 * 24);
+  expect(scrim).toBeLessThan(viewport - 100);
+});
+
+test('the header scrim stays hidden on a page too short to scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 2000 });
+  await page.goto('/');
+  const state = () =>
+    page.evaluate(() => ({
+      supported: CSS.supports('animation-timeline: scroll()'),
+      scrolls: document.documentElement.scrollHeight > window.innerHeight,
+      opacity: getComputedStyle(document.querySelector('.site-header') ?? document.body, '::before')
+        .opacity,
+    }));
+  const { supported, scrolls } = await state();
+  test.skip(!supported, 'Needs scroll-driven animations.');
+
+  expect(scrolls).toBe(false);
+  await expect.poll(async () => (await state()).opacity).toBe('0');
+});
+
 for (const colorScheme of ['light', 'dark'] as const) {
   test(`theme-color matches --color-bg in the ${colorScheme} theme`, async ({ page }) => {
     await page.emulateMedia({ colorScheme });
@@ -166,7 +226,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     test.skip(isMobile, 'Touch devices have no hover state.');
     await page.emulateMedia({ colorScheme });
     await page.goto('/cv');
-    const button = page.getByRole('link', { name: 'Back to the home page' });
+    const button = page.getByRole('link', { name: 'Download PDF' });
     const colours = () =>
       button.evaluate((element) => ({
         label: getComputedStyle(element).color,
@@ -205,7 +265,7 @@ test('the brand mark sits at equal distances from the bar edges', async ({ page 
 test('primary and secondary buttons meet the 44 px touch target', async ({ page }) => {
   for (const [path, name] of [
     ['/', 'Read the CV'],
-    ['/cv', 'Back to the home page'],
+    ['/cv', 'Download PDF'],
   ] as const) {
     await page.goto(path);
     const box = await page.getByRole('link', { name }).boundingBox();
@@ -284,4 +344,43 @@ test('the brand mark is drawn in system colours in forced colors', async ({ page
   // Plain system colours instead of the gradient paint server.
   expect(paint.stroke).not.toContain('url(');
   expect(paint.fill).not.toContain('url(');
+});
+
+test('the content and the backdrop do not shift sideways between a short page and a long one', async ({
+  playwright,
+  browserName,
+  isMobile,
+  baseURL,
+}) => {
+  // Mobile browsers draw scrollbars over the page, so they never take layout space there.
+  test.skip(isMobile || browserName !== 'chromium', 'Needs classic scrollbars (desktop Chromium).');
+  // Headless Chromium hides scrollbars by default; this test needs real ones.
+  const browser = await playwright.chromium.launch({ ignoreDefaultArgs: ['--hide-scrollbars'] });
+  try {
+    // Tall enough that "/" fits without scrolling, while "/cv" scrolls.
+    const page = await browser.newPage({
+      ...(baseURL ? { baseURL } : {}),
+      viewport: { width: 1280, height: 1100 },
+    });
+    const measure = async (path: string) => {
+      await page.goto(path);
+      return page.evaluate(() => ({
+        scrolls: document.documentElement.scrollHeight > window.innerHeight,
+        scrollbar: window.innerWidth - document.documentElement.clientWidth,
+        h1: document.querySelector('h1')?.getBoundingClientRect().left ?? Number.NaN,
+        chart:
+          document.querySelector('.backdrop__chart')?.getBoundingClientRect().left ?? Number.NaN,
+      }));
+    };
+    const home = await measure('/');
+    const cv = await measure('/cv');
+
+    expect(home.scrolls).toBe(false);
+    expect(cv.scrolls).toBe(true);
+    expect(cv.scrollbar).toBeGreaterThan(0);
+    expect(cv.h1).toBeCloseTo(home.h1, 0);
+    expect(cv.chart).toBeCloseTo(home.chart, 0);
+  } finally {
+    await browser.close();
+  }
 });

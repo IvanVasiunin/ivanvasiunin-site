@@ -1,0 +1,15 @@
+---
+// Running CV text: rendered Markdown (Full view) or Brief bullets. Serif, a comfortable measure.
+import './CvProse.scss';
+
+interface Props {
+  /** Show only in one CV view (styles/utilities.scss, src/lib/cv/view-mode.ts). */
+  readonly only?: 'brief' | 'full';
+}
+
+const { only } = Astro.props;
+---
+
+<div class="cv-prose" data-cv-only={only}>
+  <slot />
+</div>

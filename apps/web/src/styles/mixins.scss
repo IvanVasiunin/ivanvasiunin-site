@@ -35,12 +35,53 @@ $breakpoints: (
   }
 }
 
-@mixin mq($name) {
+// Scroll-driven motion (css-scss.md → Motion, ROADMAP 2.6): only where scroll-driven animations exist,
+// only on screen (print and the PDF never see it) and only without a reduced-motion preference. Elsewhere
+// the block's base styles are the final, fully drawn state, so the page reads the same without it.
+@mixin scroll-motion {
+  @supports (animation-timeline: view()) {
+    @media screen and (prefers-reduced-motion: no-preference) {
+      @content;
+    }
+  }
+}
+
+// A block that fades in and rises a little as it enters the viewport. Blocks already on screen at load
+// are past their entry, so they start in the final state (no flash on the first screen).
+@mixin reveal-on-scroll {
+  @include scroll-motion {
+    animation-name: reveal-on-scroll;
+    animation-timing-function: var(--ease-out);
+    animation-fill-mode: both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 40%;
+  }
+}
+
+// Hidden on screen, still read by screen readers (extra link context, labels).
+@mixin visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  inline-size: 1px;
+  block-size: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// `$print: true` also applies the block in print. An A4 page is about 680 px wide, so without it the
+// printed CV would get the narrow-screen layout; layouts that suit paper opt in (the CV date rail).
+@mixin mq($name, $print: false) {
   @if not map.has-key($breakpoints, $name) {
     @error 'Unknown breakpoint "#{$name}". Use one of: #{map.keys($breakpoints)}.';
   }
 
-  @media (width >= map.get($breakpoints, $name)) {
-    @content;
+  @if $print {
+    @media print, (width >= map.get($breakpoints, $name)) {
+      @content;
+    }
+  } @else {
+    @media (width >= map.get($breakpoints, $name)) {
+      @content;
+    }
   }
 }

@@ -21,7 +21,12 @@ const GRADIENT_STOP_TOKENS = [
   '--color-accent-active',
   '--color-accent-2-active',
 ] as const;
-const TEXT_TOKENS = ['--color-text', '--color-text-muted', '--color-accent'] as const;
+const TEXT_TOKENS = [
+  '--color-text',
+  '--color-text-muted',
+  '--color-accent',
+  '--color-danger',
+] as const;
 const GRAPHIC_TOKENS = [
   '--color-border',
   '--color-focus',

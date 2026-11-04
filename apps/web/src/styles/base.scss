@@ -6,6 +6,13 @@
 // Scrolling to a target (focus, anchors, the skip link) keeps it clear of the sticky header and, below
 // `md`, of the floating mode switch at the bottom (WCAG 2.4.11 Focus Not Obscured).
 :where(html) {
+  // Classic (non-overlay) scrollbars take space only on long pages, which would shift the centred
+  // content sideways when switching between a short page (/) and a long one (/cv). The start margin
+  // equals the scrollbar width (0 without one), so the content stays centred in the whole window.
+  // Not `scrollbar-gutter: stable`: its empty gutter shows as a stripe without the backdrop.
+  // Cost: with a classic scrollbar the column is two scrollbar widths narrower (one on each side),
+  // and a Brief / Full switch that adds or removes the scrollbar re-wraps the text once.
+  margin-inline-start: calc(100vw - 100%);
   scroll-padding-block: calc(var(--size-bar) + var(--space-xl))
     calc(var(--size-bar) + var(--offset-bar-bottom) + var(--space-md));
 
@@ -20,10 +27,24 @@
   }
 }
 
-// Cross-document view transitions (SPEC §2, ADR-0009): the page cross-fades as one root image (the
-// header and the backdrop are the same on both sides, so they look still) while the mode switch pill
-// slides from one tab to the other. Every same-origin navigation gets the cross-fade. Only without a
-// reduced-motion preference; browsers without support simply navigate.
+// Print and the build-time PDF (css-scss.md → Print, scripts/build-pdf.mjs): A4 with fixed margins; the
+// type is set smaller than on screen (every rem font size follows the root; spacing is in px).
+@page {
+  size: a4;
+  margin: 12mm 14mm;
+}
+
+@media print {
+  :where(html) {
+    font-size: var(--font-size-root-print);
+  }
+}
+
+// Cross-document view transitions (SPEC §2, ADR-0009): the header, the backdrop and the footer stay in
+// the root image (the same on both sides, so they look still), the mode switch pill slides from one tab
+// to the other, and the main content (`page-main`, BaseLayout.scss) leaves upwards while the new one
+// rises into place (ROADMAP 2.6). Only without a reduced-motion preference; browsers without support
+// simply navigate.
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;
@@ -44,6 +65,35 @@
 ::view-transition-group(mode-switch-ai),
 ::view-transition-group(mode-switch-text) {
   z-index: var(--z-raised);
+}
+
+// The content swap: the old page fades out quickly while lifting a little, the new one fades in from
+// slightly below. The group does not morph (the two pages differ in height): both images stay anchored
+// at the top. Opacity and translate only.
+::view-transition-group(page-main) {
+  animation: none;
+}
+
+::view-transition-old(page-main) {
+  animation: page-main-out var(--duration-base) var(--ease-in-out) both;
+}
+
+::view-transition-new(page-main) {
+  animation: page-main-in var(--duration-slow) var(--ease-out) var(--duration-fast) both;
+}
+
+@keyframes page-main-out {
+  to {
+    opacity: 0;
+    translate: 0 calc(-1 * var(--distance-reveal));
+  }
+}
+
+@keyframes page-main-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--distance-reveal);
+  }
 }
 
 :where(body) {
@@ -134,6 +184,53 @@
 :where(:focus-visible) {
   outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: var(--focus-ring-width);
+}
+
+// The page scrollbar, for a mouse or trackpad only (touch devices keep their overlay scrollbars).
+// Only the root's: inner scrollers (the chat, code blocks) keep the system scrollbar until they opt in.
+// The thumb is the accent gradient: ≥ 3:1 against both backgrounds (WCAG 1.4.11), like the accent.
+// Chromium and Safari: a gradient pill thumb on a transparent track, so the sky shows through; that
+// needs the `::-webkit-scrollbar` pseudo-elements, which browsers ignore once `scrollbar-color` is set,
+// so the standard property is given only to browsers without them (Firefox: accent thumb, no
+// gradient). Forced colours keep the system scrollbar.
+@media (hover: hover) and (pointer: fine) and (forced-colors: none) {
+  @supports selector(::-webkit-scrollbar) {
+    :root::-webkit-scrollbar {
+      inline-size: var(--size-scrollbar);
+      block-size: var(--size-scrollbar);
+      background-color: transparent;
+    }
+
+    :root::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+
+    // The transparent border insets the pill from the edges (the background stops at the padding box).
+    :root::-webkit-scrollbar-thumb {
+      border: var(--space-3xs) solid transparent;
+      border-radius: var(--radius-pill);
+      background-image: var(--gradient-accent);
+      background-clip: padding-box;
+    }
+
+    :root::-webkit-scrollbar-thumb:hover {
+      background-image: var(--gradient-accent-hover);
+    }
+
+    :root::-webkit-scrollbar-thumb:active {
+      background-image: var(--gradient-accent-active);
+    }
+
+    :root::-webkit-scrollbar-corner {
+      background-color: transparent;
+    }
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    :where(html) {
+      scrollbar-color: var(--color-accent) transparent;
+    }
+  }
 }
 
 // Pseudo-elements are not allowed inside `:where()`; the layer already keeps this below components.

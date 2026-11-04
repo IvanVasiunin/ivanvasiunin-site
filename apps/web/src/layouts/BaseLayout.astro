@@ -6,19 +6,32 @@ import '../styles/global.scss';
 import './BaseLayout.scss';
 import Backdrop from '../components/Backdrop/Backdrop.astro';
 import ModeSwitch from '../components/ModeSwitch/ModeSwitch.astro';
+import ScrollTop from '../components/ScrollTop/ScrollTop.astro';
 import SiteFooter from '../components/SiteFooter/SiteFooter.astro';
 import SiteHeader from '../components/SiteHeader/SiteHeader.astro';
 import SkipLink from '../components/SkipLink/SkipLink.astro';
 import ThemeToggle from '../components/ThemeToggle/ThemeToggle.astro';
 import { cspHash } from '../lib/csp';
+import { canonicalUrl as toCanonicalUrl } from '../lib/seo';
 import { THEME_COLOR, themeHeadScript } from '../lib/theme/theme';
 
 interface Props {
   readonly title: string;
   readonly description: string;
+  /** Open Graph type: `profile` for the CV, `website` elsewhere. */
+  readonly ogType?: 'website' | 'profile';
+  /**
+   * The "Back to top" rocket. Off on the chat: a conversation is read from the bottom, and the rocket
+   * would sit on the docked input.
+   */
+  readonly scrollTop?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, ogType = 'website', scrollTop = true } = Astro.props;
+
+// Canonical and Open Graph URLs (html-a11y.md → Structure) from `site` in astro.config.mjs.
+const SITE_NAME = 'Ivan Vasiunin';
+const canonicalUrl = toCanonicalUrl(Astro.url.pathname, Astro.site);
 
 // The two inline blocks Astro does not hash itself. Their exact text is rendered from these
 // constants and hashed into the page's CSP <meta> (security.csp in astro.config.mjs).
@@ -61,6 +74,18 @@ const SPECULATION_RULES = {
     <Font cssVariable="--font-schibsted-grotesk" preload={[{ weight: '400', style: 'normal' }]} />
     <Font cssVariable="--font-newsreader" />
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {/* Page-specific head content, e.g. the JSON-LD on /cv. */}
+    <slot name="head" />
     <meta name="color-scheme" content="light dark" />
     <meta
       name="theme-color"
@@ -95,5 +120,6 @@ const SPECULATION_RULES = {
       <slot />
     </main>
     <SiteFooter />
+    {scrollTop && <ScrollTop />}
   </body>
 </html>

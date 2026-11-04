@@ -3,7 +3,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { composeProblems, dockerfileProblems, dockerignoreProblems } from './check-infra.mjs';
+import {
+  composeProblems,
+  devComposeProblems,
+  dockerfileProblems,
+  dockerignoreProblems,
+} from './check-infra.mjs';
 
 const hardened = {
   read_only: true,
@@ -88,4 +93,32 @@ test('a deny-list .dockerignore fails', () => {
   const problems = dockerignoreProblems('node_modules\n!data/raw\n').join('\n');
   assert.match(problems, /must start with \*\*/);
   assert.match(problems, /must not include data/);
+});
+
+/** A development compose config that passes: the db on loopback, the production image. */
+function goodDevCompose() {
+  return {
+    services: {
+      db: {
+        image: 'pgvector/pgvector:0.8.7-pg18-trixie',
+        ports: [{ host_ip: '127.0.0.1', published: '5432', target: 5432 }],
+      },
+    },
+  };
+}
+
+test('a loopback-only development database passes', () => {
+  assert.deepEqual(devComposeProblems(goodDevCompose(), goodCompose()), []);
+});
+
+test('the development database must not publish to the network', () => {
+  const dev = goodDevCompose();
+  dev.services.db.ports = [{ published: '5432', target: 5432 }];
+  assert.match(devComposeProblems(dev, goodCompose()).join('\n'), /must bind 127\.0\.0\.1 only/);
+});
+
+test('the development database runs the production image', () => {
+  const dev = goodDevCompose();
+  dev.services.db.image = 'postgres:18';
+  assert.match(devComposeProblems(dev, goodCompose()).join('\n'), /must match production/);
 });

@@ -1,0 +1,274 @@
+// The timeline: a gradient meridian with a star for each job. Narrow screens: the line runs along the
+// inline start and the period sits above the details. From `md`: a date rail on the left, the line
+// between the rail and the content. The current job's star is gold.
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .cv-job {
+    position: relative;
+    padding-block-end: var(--space-2xl);
+    padding-inline-start: var(--space-xl);
+
+    &:last-child {
+      padding-block-end: 0;
+    }
+
+    @media print {
+      padding-block-end: var(--space-lg);
+    }
+
+    // The meridian and its stars are the CV's one graphic: they print even with background graphics
+    // off (thin lines and dots, little ink).
+    &::before,
+    &::after {
+      print-color-adjust: exact;
+    }
+
+    // The meridian (decoration). The last job's line fades out.
+    &::before {
+      content: '';
+      position: absolute;
+      inset-block: var(--space-sm) 0;
+      inset-inline-start: calc(var(--space-xs) / 2);
+      inline-size: var(--border-width);
+      background-image: linear-gradient(
+        to bottom,
+        var(--color-accent),
+        var(--color-accent-2) 60%,
+        var(--color-accent-3)
+      );
+    }
+
+    &:last-child::before {
+      background-image: linear-gradient(to bottom, var(--color-chart-line), transparent);
+    }
+
+    // The star on the meridian (decoration).
+    &::after {
+      content: '';
+      position: absolute;
+      inset-block-start: var(--space-xs);
+      inset-inline-start: calc(var(--space-xs) / 2 - var(--size-cv-star) / 2);
+      inline-size: var(--size-cv-star);
+      block-size: var(--size-cv-star);
+      background-color: var(--color-accent);
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-glow-sm);
+    }
+
+    // Scroll (ROADMAP 2.6): the meridian is drawn down to a reading line two thirds down the viewport,
+    // and each star lights up when the line reaches it. A view timeline inset to that line: `cover 0%`
+    // is the job's top crossing it, `cover 100%` its bottom. Transform and opacity only.
+    @include scroll-motion {
+      &::before {
+        transform-origin: top;
+        animation-name: cv-job-draw;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: view(
+          block var(--timeline-draw-line) calc(100% - var(--timeline-draw-line))
+        );
+        animation-range: cover 0% cover 100%;
+      }
+
+      &::after {
+        animation-name: cv-job-star;
+        animation-timing-function: var(--ease-out);
+        animation-fill-mode: both;
+        animation-timeline: view(
+          block var(--timeline-draw-line) calc(100% - var(--timeline-draw-line))
+        );
+        animation-range: cover 0% cover var(--space-xl);
+      }
+    }
+
+    &[data-current]::after {
+      background-color: var(--color-highlight);
+      box-shadow: var(--shadow-glow);
+    }
+
+    // From `md` the meridian runs through the middle of the gap after the date rail.
+    @include mq(md, $print: true) {
+      padding-inline-start: 0;
+
+      &::before {
+        inset-inline-start: calc(var(--size-cv-rail) + var(--space-lg));
+      }
+
+      &::after {
+        inset-inline-start: calc(var(--size-cv-rail) + var(--space-lg) - var(--size-cv-star) / 2);
+      }
+    }
+  }
+
+  // The comet (decoration): rides the tip of the meridian while it is drawn, its tail trailing up the
+  // line it has just drawn. Only where the line is drawn on scroll; elsewhere the line is static and
+  // there is no comet. The track box runs along the line; its tail (::before) and head (::after) are
+  // as tall as the track and paint at their top, so `translateY(100%)` carries them down the whole
+  // track. Not container units: Chrome resolves `cqb` in composited keyframes against the viewport,
+  // not the container.
+  .cv-job__comet {
+    display: none;
+
+    @include scroll-motion {
+      position: absolute;
+      inset-block: var(--space-sm) 0;
+      inset-inline-start: calc(
+        var(--space-xs) / 2 + var(--border-width) / 2 - var(--size-cv-comet) / 2
+      );
+      display: block;
+      inline-size: var(--size-cv-comet);
+      pointer-events: none;
+
+      // A named timeline on the track (the same reading line as the meridian), shared with ::before.
+      view-timeline-name: --cv-job-comet;
+      view-timeline-axis: block;
+      view-timeline-inset: var(--timeline-draw-line) calc(100% - var(--timeline-draw-line));
+
+      @include mq(md) {
+        inset-inline-start: calc(
+          var(--size-cv-rail) + var(--space-lg) + var(--border-width) / 2 - var(--size-cv-comet) / 2
+        );
+      }
+
+      // Both parts are as tall as the track and move by their own height, so they ride the tip.
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        inset-inline: 0;
+        block-size: 100%;
+        background-repeat: no-repeat;
+        animation-name: cv-job-comet;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: --cv-job-comet;
+        animation-range: cover 0% cover 100%;
+      }
+
+      // Tail: a slim cone that widens towards the head, fading to nothing up the line. The cone is a
+      // static `clip-path` (never animated).
+      &::before {
+        inset-block-start: calc(-1 * var(--size-cv-comet-tail));
+        background-image: linear-gradient(
+          to bottom,
+          transparent,
+          color-mix(in srgb, var(--color-highlight) 55%, transparent) 60%,
+          var(--color-comet-core)
+        );
+        background-position: center top;
+        background-size: var(--size-cv-comet-tail-width) var(--size-cv-comet-tail);
+        clip-path: polygon(
+          50% 0,
+          calc(50% + var(--size-cv-comet-tail-width) / 2) var(--size-cv-comet-tail),
+          calc(50% - var(--size-cv-comet-tail-width) / 2) var(--size-cv-comet-tail)
+        );
+      }
+
+      // Head: a white-hot core in a gold coma, its centre on the track's top edge.
+      &::after {
+        inset-block-start: calc(-1 * var(--size-cv-comet) / 2);
+        background-image: radial-gradient(
+          circle closest-side,
+          var(--color-comet-core) 18%,
+          var(--color-highlight) 36%,
+          color-mix(in srgb, var(--color-highlight) 35%, transparent) 62%,
+          transparent
+        );
+        background-position: center top;
+        background-size: var(--size-cv-comet) var(--size-cv-comet);
+      }
+    }
+  }
+
+  .cv-job__article {
+    @include reveal-on-scroll;
+
+    display: grid;
+    gap: var(--space-2xs);
+
+    @include mq(md, $print: true) {
+      grid-template-columns: var(--size-cv-rail) minmax(0, 1fr);
+      column-gap: calc(var(--space-lg) * 2);
+    }
+  }
+
+  // From `md` everything but the period sits in the content column.
+  .cv-job__company,
+  .cv-job__title,
+  .cv-job__meta,
+  .cv-job__details,
+  .cv-job__stack {
+    @include mq(md, $print: true) {
+      grid-column: 2;
+    }
+  }
+
+  // A page break never leaves the company name alone at the bottom of a page.
+  .cv-job__company {
+    font-size: var(--font-size-xl);
+    break-after: avoid;
+  }
+
+  .cv-job__title {
+    font-weight: var(--font-weight-medium);
+  }
+
+  .cv-job__period {
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+
+    @include mq(md, $print: true) {
+      grid-row: 1 / span 2;
+      grid-column: 1;
+      padding-block-start: var(--space-2xs);
+      text-align: end;
+    }
+  }
+
+  .cv-job__meta {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  .cv-job__details {
+    margin-block-start: var(--space-sm);
+  }
+
+  .cv-job__stack {
+    margin-block-start: var(--space-sm);
+  }
+
+  @keyframes cv-job-draw {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  // The comet appears as the line starts, rides its tip, and fades out as this job's line completes
+  // (the next job's comet takes over).
+  @keyframes cv-job-comet {
+    0% {
+      opacity: 0;
+      transform: translateY(0);
+    }
+
+    6%,
+    94% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes cv-job-star {
+    from {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+  }
+}

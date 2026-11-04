@@ -19,6 +19,11 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
 RUN pnpm install --frozen-lockfile
 
+# The build prints the CV PDF in Chromium (apps/web/scripts/build-pdf.mjs, ROADMAP 2.5): the headless
+# shell at the version pinned by @playwright/test, with its system libraries. Build stage only; the
+# runtime image below copies just dist/. A separate layer, so source changes do not re-download it.
+RUN pnpm --dir apps/web exec playwright install --with-deps --only-shell chromium
+
 COPY apps/web apps/web
 RUN pnpm --dir apps/web run build
 

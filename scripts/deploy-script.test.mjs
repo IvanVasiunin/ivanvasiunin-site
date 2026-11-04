@@ -20,13 +20,14 @@ const NEW = 'b'.repeat(40);
 let dir = '';
 
 /**
- * A stub `docker`: logs each call with the IMAGE_TAG it saw; `pull` / `up` fail for tags listed in
- * FAIL_PULL / FAIL_UP.
+ * A stub `docker`: logs each call with the IMAGE_TAG it saw; `pull` / migrations / `up` fail for tags
+ * listed in FAIL_PULL / FAIL_MIGRATE / FAIL_UP.
  */
 const DOCKER_STUB = `#!/bin/sh
 echo "$* IMAGE_TAG=\${IMAGE_TAG:-}" >> "$(dirname "$0")/calls.log"
 case "$*" in
   "compose pull --quiet") case " \${FAIL_PULL:-} " in *" \${IMAGE_TAG:-} "*) exit 1;; esac ;;
+  "compose run --rm -T api python -m site_api.db.migrate") case " \${FAIL_MIGRATE:-} " in *" \${IMAGE_TAG:-} "*) exit 1;; esac ;;
   "compose up --detach --wait --wait-timeout 180") case " \${FAIL_UP:-} " in *" \${IMAGE_TAG:-} "*) exit 1;; esac ;;
 esac
 exit 0
@@ -108,6 +109,31 @@ for (const [name, tag] of [
     assert.equal(calls(), '');
   });
 }
+
+test('migrations of the new release run before it starts', () => {
+  const result = deploy(NEW);
+  assert.equal(result.status, 0, result.stderr);
+  const log = calls();
+  const migrate = log.indexOf(
+    `compose run --rm -T api python -m site_api.db.migrate IMAGE_TAG=${NEW}`,
+  );
+  assert.notEqual(migrate, -1, log);
+  assert.ok(
+    migrate < log.indexOf(`compose up --detach --wait --wait-timeout 180 IMAGE_TAG=${NEW}`),
+  );
+});
+
+test('the deploy never downgrades the database (a downgrade can drop data)', () => {
+  assert.doesNotMatch(readFileSync('infra/deploy.sh', 'utf8'), /downgrade/);
+});
+
+test('failed migrations change nothing: no start, no new tag', () => {
+  const result = deploy(NEW, { FAIL_MIGRATE: NEW });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /migrations for .* failed/);
+  assert.match(envFile(), new RegExp(`^IMAGE_TAG=${OLD}$`, 'm'));
+  assert.doesNotMatch(calls(), /compose up/);
+});
 
 test('a failed pull changes nothing', () => {
   const result = deploy(NEW, { FAIL_PULL: NEW });

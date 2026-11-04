@@ -1,0 +1,18 @@
+---
+// A compact list of short labels (a tech stack, a skills group). Static, no interaction.
+import './TagList.scss';
+
+interface Props {
+  readonly items: readonly string[];
+  /** Names the list for screen readers, e.g. "BrainRocket stack". */
+  readonly label?: string;
+}
+
+const { items, label } = Astro.props;
+---
+
+<ul class="tag-list" aria-label={label}>
+  {items.map((item) => (
+    <li class="tag-list__item">{item}</li>
+  ))}
+</ul>

@@ -5,10 +5,13 @@
 @layer components {
   // Sized to the large viewport (`lvh`), not `inset: 0`: when the mobile address bar collapses, the
   // layer keeps its size, so the percentage-based gradients and the SVG pattern are not re-rasterized.
+  // The width is the whole window (`100vw` includes a classic scrollbar), so the layer is the same on a
+  // short page and a long one and does not jump when switching modes; the scrollbar covers its edge.
   .backdrop {
     position: fixed;
     inset-block-start: 0;
-    inset-inline: 0;
+    inset-inline-start: 0;
+    inline-size: 100vw;
     block-size: 100lvh;
     contain: strict;
     z-index: var(--z-backdrop);

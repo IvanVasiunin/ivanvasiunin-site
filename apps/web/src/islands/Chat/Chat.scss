@@ -1,0 +1,224 @@
+// AI mode's chat (layout A "Logbook"): the introduction, the conversation in a reading column, the
+// input docked at the bottom of the screen, then the example questions and the AI disclosure.
+
+// The conversation scrolls with the page. The dock is `position: sticky` to the bottom: below `md`
+// it sits above the floating mode switch; when the virtual keyboard opens, `--keyboard-inset`
+// (islands/Chat/useKeyboardInset.ts) lifts it above the keyboard instead.
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .chat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    inline-size: 100%;
+    max-inline-size: var(--size-chat);
+  }
+
+  .chat__intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .chat__title {
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  // Sans, not the answers' serif: the serif file then loads only with Elio's first answer, which
+  // keeps it off the first screen (e2e/fonts.spec.ts).
+  .chat__lede {
+    max-inline-size: var(--measure);
+    margin: 0;
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-body);
+    color: var(--color-text-muted);
+  }
+
+  .chat__cv {
+    display: flex;
+    margin-block-start: var(--space-xs);
+  }
+
+  .chat__log {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    padding-block-start: var(--space-md);
+  }
+
+  .chat__dock {
+    position: sticky;
+    z-index: var(--z-raised);
+
+    // Above the floating mode switch (below `md`), or above the keyboard when it is open. While the
+    // keyboard is open the switch is hidden and --bottom-bar-space is 0 (useKeyboardInset.ts).
+    inset-block-end: max(
+      calc(var(--keyboard-inset, 0px) + var(--space-sm)),
+      calc(
+        var(--bottom-bar-space, calc(var(--size-bar) + var(--offset-bar-bottom))) + var(--space-sm)
+      )
+    );
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    align-items: center;
+
+    @include mq(md) {
+      inset-block-end: max(
+        calc(var(--keyboard-inset, 0px) + var(--space-sm)),
+        calc(env(safe-area-inset-bottom) + var(--space-md))
+      );
+    }
+  }
+
+  // "Jump to latest": a small frosted pill centred above the input.
+  .chat__jump {
+    @include gradient-border($fill: var(--color-scrim-solid));
+
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+    min-block-size: var(--size-touch);
+    padding-inline: var(--space-md);
+    border-radius: var(--radius-pill);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    box-shadow: var(--shadow-raised);
+    cursor: pointer;
+    animation: chat-jump-in var(--duration-base) var(--ease-out);
+
+    &::before {
+      position: absolute;
+      inset: 0;
+      z-index: var(--z-below);
+      border-radius: inherit;
+      background-image: var(--gradient-surface-hover);
+      content: '';
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    @media (hover: hover) {
+      &:hover::before {
+        opacity: 1;
+      }
+    }
+
+    &:active::before {
+      background-image: var(--gradient-surface-active);
+      opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      animation-name: chat-jump-fade;
+    }
+  }
+
+  .chat__jump-icon {
+    inline-size: var(--size-icon-sm);
+    block-size: var(--size-icon-sm);
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @keyframes chat-jump-in {
+    from {
+      opacity: 0;
+      transform: translateY(var(--distance-reveal));
+    }
+  }
+
+  @keyframes chat-jump-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .chat__examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // An example question: a chip with the gradient border; hover / press on a ::before layer.
+  .chat__example {
+    @include gradient-border;
+
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--size-touch);
+    padding-inline: var(--space-md);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-snug);
+    color: var(--color-text);
+    text-decoration-line: none;
+
+    &::before {
+      position: absolute;
+      inset: 0;
+      z-index: var(--z-below);
+      border-radius: inherit;
+      background-image: var(--gradient-surface-hover);
+      content: '';
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    @media (hover: hover) {
+      &:hover::before {
+        opacity: 1;
+      }
+    }
+
+    &:active::before {
+      background-image: var(--gradient-surface-active);
+      opacity: 1;
+    }
+  }
+
+  .chat__disclosure {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-body);
+    color: var(--color-text-muted);
+  }
+
+  .chat__disclosure-link {
+    color: var(--color-accent);
+    text-decoration-line: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .chat__fallback {
+    margin: 0;
+  }
+
+  // Read by screen readers only (the live region).
+  .chat__status {
+    @include visually-hidden;
+  }
+}

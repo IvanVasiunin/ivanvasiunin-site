@@ -6,9 +6,13 @@ license = "MIT"
 # 3.13 only: langgraph, umap-learn and langchain-postgres do not declare 3.14 yet (ADR-0001).
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "alembic==1.20.1",
     "fastapi==0.162.0",
+    "langchain-core==1.7.0",
+    "pgvector==0.5.1",
     "psycopg==3.3.6",
     "pydantic-settings==2.16.2",
+    "pyyaml==6.0.3",
     "sqlalchemy[asyncio]==2.1.6",
     "uvicorn[standard]==0.54.0",
 ]
@@ -28,6 +32,7 @@ dev = [
     "pytest-asyncio==1.4.1",
     "pytest-cov==7.1.0",
     "ruff==0.17.3",
+    "types-pyyaml==6.0.12.20260906",
 ]
 
 # --- ruff: lint + format (.claude/rules/python.md) ---------------------------
@@ -100,8 +105,15 @@ asyncio_mode = "auto"
 # Explicit: each async test / fixture gets its own event loop (pytest-asyncio's future default).
 asyncio_default_fixture_loop_scope = "function"
 markers = [
+    "db: needs a live Postgres + pgvector at TEST_DATABASE_URL (a throwaway `*_test` database); run with `pytest -m db`. Excluded from fast checks; CI runs them in the `api-db` job.",
     "mentor_pending: failing test for a mentor task Ivan has not finished; excluded from fast checks, the Stop hook and blocking CI (ADR-0007). Only Ivan removes it.",
 ]
+
+# --- alembic: the `alembic` CLI from apps/api (deploys use `python -m site_api.db.migrate`) --------
+
+[tool.alembic]
+# Inside the package, so the migrations ship in the API image (site_api/db/migrate.py).
+script_location = "site_api.db:migrations"
 
 [tool.coverage.run]
 source = ["site_api"]

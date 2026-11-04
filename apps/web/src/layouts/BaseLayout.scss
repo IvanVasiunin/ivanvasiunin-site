@@ -14,6 +14,12 @@
     @include mq(md) {
       padding-block-end: 0;
     }
+
+    // Paper: the page margins come from `@page` (styles/base.scss).
+    @media print {
+      min-block-size: 0;
+      padding-block-end: 0;
+    }
   }
 
   // The main area is a left-aligned reading column inside a centred frame (src/styles/README.md).
@@ -30,8 +36,21 @@
     padding-inline: max(var(--gutter), env(safe-area-inset-left))
       max(var(--gutter), env(safe-area-inset-right));
 
+    // Its own view-transition group (styles/base.scss) while a transition runs: on a mode switch only
+    // the content moves; the header, the backdrop and the footer stay in the root image. Only during
+    // the transition: a named element is a backdrop root, so a permanent name would stop any
+    // `backdrop-filter` inside main (the chat composer, Phase 3) from blurring the sky behind it.
+    :root:active-view-transition & {
+      view-transition-name: page-main;
+    }
+
     > :where(p, ul, ol) {
       max-inline-size: var(--measure);
+    }
+
+    @media print {
+      gap: var(--space-md);
+      padding: 0;
     }
   }
 }

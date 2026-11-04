@@ -1,0 +1,35 @@
+---
+// Brief / Full switch for the CV (SPEC §3.2 US-T1), styled like the mode switch in the header: a track
+// with a gradient pill that slides to the chosen view. Two toggle buttons with `aria-pressed` in a
+// <fieldset> (the native group); the view is kept in `?view=`. Hidden in the HTML and revealed by its
+// script, so visitors without JS (who always get the Full view) never see controls that do nothing.
+// Logic: src/lib/cv/view-mode.ts.
+import './CvViewSwitch.scss';
+
+const OPTIONS = [
+  { view: 'brief', label: 'Brief' },
+  { view: 'full', label: 'Full' },
+] as const;
+---
+
+<fieldset class="cv-view-switch" data-cv-view-switch data-view="full" hidden>
+  <legend class="cv-view-switch__legend">CV view</legend>
+  <span class="cv-view-switch__indicator" aria-hidden="true"></span>
+  {OPTIONS.map(({ view, label }) => (
+    <button
+      class="cv-view-switch__option"
+      type="button"
+      data-cv-view-option={view}
+      aria-pressed={view === 'full' ? 'true' : 'false'}
+    >
+      {label}
+    </button>
+  ))}
+</fieldset>
+
+<script>
+  import { initCvViewSwitch } from '../../lib/cv/view-mode';
+
+  const group = document.querySelector<HTMLElement>('[data-cv-view-switch]');
+  if (group) initCvViewSwitch(group, document.documentElement, window);
+</script>

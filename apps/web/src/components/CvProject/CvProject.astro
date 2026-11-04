@@ -1,0 +1,50 @@
+---
+// One project card (an item of CvSection list="cards"). Study projects are always labelled as such.
+import './CvProject.scss';
+import TagList from '../TagList/TagList.astro';
+import { formatDate, printableUrl, projectKindLabel, type CvData } from '../../lib/cv/view';
+
+interface Props {
+  /** Unique within the page; used for the heading id. */
+  readonly id: string;
+  readonly project: CvData<'project'>;
+}
+
+const { id, project } = Astro.props;
+const headingId = `project-${id}`;
+const links = [
+  { href: project.repo, text: 'Code on GitHub' },
+  { href: project.demo, text: 'Live demo' },
+].filter((link): link is { href: string; text: string } => link.href !== undefined);
+---
+
+<li class="cv-project">
+  <article class="cv-project__article" aria-labelledby={headingId}>
+    <h3 class="cv-project__name" id={headingId}>
+      {project.name}
+    </h3>
+    <p class="cv-project__kind" data-kind={project.kind}>
+      {projectKindLabel(project.kind)}
+      {project.date && <time datetime={project.date}>{formatDate(project.date)}</time>}
+    </p>
+    {project.brief.map((line) => (
+      <p class="cv-project__text">{line}</p>
+    ))}
+    <TagList items={project.stack} label={`${project.name} stack`} />
+    {links.length > 0 && (
+      <ul class="cv-project__links">
+        {links.map((link) => (
+          <li>
+            <a class="cv-project__link" href={link.href}>
+              {link.text}
+              <span class="cv-project__link-context">for {project.name}</span>
+              {/* On paper the link cannot be followed: its address prints under the text (and stays
+              a live link in the PDF). Hidden on screen, so it is not part of the link's name. */}
+              <span class="cv-project__link-url">{printableUrl(link.href)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </article>
+</li>

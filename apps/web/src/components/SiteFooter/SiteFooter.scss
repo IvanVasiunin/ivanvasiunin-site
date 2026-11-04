@@ -10,6 +10,11 @@
     padding-block: var(--space-lg) max(var(--space-lg), env(safe-area-inset-bottom));
     border-block-start: var(--border-width) solid;
     border-image: var(--gradient-border) 1;
+
+    // Navigation and page chrome stay off paper (css-scss.md → Print).
+    @media print {
+      display: none;
+    }
   }
 
   .site-footer__copyright {

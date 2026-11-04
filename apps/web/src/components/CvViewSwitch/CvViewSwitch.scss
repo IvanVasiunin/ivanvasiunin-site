@@ -1,0 +1,127 @@
+@use '../../styles/mixins' as *;
+
+// Styled like the mode switch (ModeSwitch.scss): a recessed track, a gradient pill under the chosen
+// view, soft washes on hover / press. The pill slides with `transform` (the group's `data-view`, set by
+// the script); the washes fade with `opacity`. Nothing else animates.
+@layer components {
+  .cv-view-switch {
+    position: relative;
+    isolation: isolate; // keeps the pill under the labels
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-track);
+    box-shadow: var(--shadow-track);
+
+    // `hidden` until the script runs (no JS: Full view, no switch); `display` above would override it.
+    &[hidden] {
+      display: none;
+    }
+
+    // Forced colours drop the tint and the inset shadow; an outline keeps the group visible.
+    @media (forced-colors: active) {
+      outline: var(--border-width) solid CanvasText;
+      outline-offset: calc(-1 * var(--border-width));
+    }
+
+    @media print {
+      display: none;
+    }
+  }
+
+  .cv-view-switch__legend {
+    @include visually-hidden;
+  }
+
+  // The chosen view's pill: one element that moves between the two equal halves of the track.
+  // Brief is the first half; Full moves it by its own width. `translateX` is physical: the site is LTR.
+  .cv-view-switch__indicator {
+    position: absolute;
+    inset-block: var(--space-3xs);
+    inset-inline-start: var(--space-3xs);
+    z-index: var(--z-below);
+    inline-size: calc(50% - var(--space-3xs));
+    border-radius: var(--radius-pill);
+    background-image: var(--gradient-accent);
+    box-shadow: var(--shadow-glow-sm);
+    transition: transform var(--duration-slow) var(--ease-in-out);
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+
+    @media (forced-colors: active) {
+      background-image: none;
+      background-color: Highlight;
+      forced-color-adjust: none;
+    }
+  }
+
+  .cv-view-switch[data-view='full'] .cv-view-switch__indicator {
+    transform: translateX(100%);
+  }
+
+  .cv-view-switch__option {
+    position: relative;
+    isolation: isolate; // keeps the washes under the label
+    min-inline-size: var(--size-touch);
+    min-block-size: var(--size-touch);
+    padding-inline: var(--space-lg);
+    border: var(--border-width) solid transparent; // invisible, but drawn in forced colors
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-snug);
+    color: var(--color-text);
+    background-color: transparent;
+
+    // Hover (::before) and press (::after) washes, inset like the pill.
+    &::before,
+    &::after {
+      position: absolute;
+      inset: var(--space-3xs);
+      z-index: var(--z-below);
+      border-radius: inherit;
+      content: '';
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    &::before {
+      background-color: var(--color-highlight-soft);
+    }
+
+    &::after {
+      background-color: var(--color-highlight-strong);
+      transition-duration: var(--duration-fast);
+    }
+
+    &[aria-pressed='true'] {
+      color: var(--color-on-accent);
+
+      @media (forced-colors: active) {
+        color: HighlightText;
+        forced-color-adjust: none;
+      }
+    }
+
+    &[aria-pressed='false']:active::after {
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    @media (hover: hover) {
+      &[aria-pressed='false']:hover::before {
+        opacity: 1;
+      }
+    }
+  }
+}

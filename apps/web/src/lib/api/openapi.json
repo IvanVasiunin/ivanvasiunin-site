@@ -1,6 +1,125 @@
 {
   "components": {
     "schemas": {
+      "ChatEvent": {
+        "discriminator": {
+          "mapping": {
+            "done": "#/components/schemas/DoneEvent",
+            "error": "#/components/schemas/ErrorEvent",
+            "route": "#/components/schemas/RouteEvent",
+            "sources": "#/components/schemas/SourcesEvent",
+            "token": "#/components/schemas/TokenEvent",
+            "usage": "#/components/schemas/UsageEvent"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/RouteEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SourcesEvent"
+          },
+          {
+            "$ref": "#/components/schemas/TokenEvent"
+          },
+          {
+            "$ref": "#/components/schemas/UsageEvent"
+          },
+          {
+            "$ref": "#/components/schemas/DoneEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ErrorEvent"
+          }
+        ]
+      },
+      "ChatRequest": {
+        "description": "A visitor's question with the client's session and recent history.",
+        "properties": {
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ChatTurn"
+            },
+            "maxItems": 40,
+            "title": "History",
+            "type": "array"
+          },
+          "message": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid4",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "session_id"
+        ],
+        "title": "ChatRequest",
+        "type": "object"
+      },
+      "ChatTurn": {
+        "description": "One earlier message of the conversation. Untrusted: it is passed to the model as data.",
+        "properties": {
+          "content": {
+            "maxLength": 4000,
+            "title": "Content",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatTurn",
+        "type": "object"
+      },
+      "DoneEvent": {
+        "description": "The successful end of the stream.",
+        "properties": {
+          "finish_reason": {
+            "enum": [
+              "stop",
+              "length",
+              "templated",
+              "no_info"
+            ],
+            "title": "Finish Reason",
+            "type": "string"
+          },
+          "message_id": {
+            "format": "uuid4",
+            "title": "Message Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "done",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "message_id",
+          "finish_reason"
+        ],
+        "title": "DoneEvent",
+        "type": "object"
+      },
       "ErrorBody": {
         "description": "What went wrong, in terms that are safe to show to a visitor.",
         "properties": {
@@ -41,6 +160,55 @@
           "message"
         ],
         "title": "ErrorBody",
+        "type": "object"
+      },
+      "ErrorEvent": {
+        "description": "A failure during the stream; terminal, no `done` follows.",
+        "properties": {
+          "code": {
+            "enum": [
+              "invalid_request",
+              "not_found",
+              "input_too_long",
+              "rate_limited",
+              "session_limit",
+              "budget_exceeded",
+              "upstream_unavailable",
+              "timeout",
+              "internal"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "retry_after_s": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Retry After S"
+          },
+          "type": {
+            "const": "error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "code",
+          "message"
+        ],
+        "title": "ErrorEvent",
         "type": "object"
       },
       "ErrorResponse": {
@@ -86,6 +254,269 @@
           "version"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "NodeUsage": {
+        "description": "Time and tokens of one graph step (Under the hood, SPEC US-A9).",
+        "properties": {
+          "cached_input_tokens": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cached Input Tokens"
+          },
+          "embedding_tokens": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Embedding Tokens"
+          },
+          "input_tokens": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Input Tokens"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "ms": {
+            "minimum": 0,
+            "title": "Ms",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "output_tokens": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Output Tokens"
+          }
+        },
+        "required": [
+          "name",
+          "ms"
+        ],
+        "title": "NodeUsage",
+        "type": "object"
+      },
+      "RouteEvent": {
+        "description": "The router's decision; always the first event.",
+        "properties": {
+          "language": {
+            "maxLength": 8,
+            "minLength": 2,
+            "title": "Language",
+            "type": "string"
+          },
+          "route": {
+            "enum": [
+              "about_ivan",
+              "greeting",
+              "off_topic",
+              "injection"
+            ],
+            "title": "Route",
+            "type": "string"
+          },
+          "type": {
+            "const": "route",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "route",
+          "language"
+        ],
+        "title": "RouteEvent",
+        "type": "object"
+      },
+      "SourceItem": {
+        "description": "One retrieved chunk above the relevance threshold.",
+        "properties": {
+          "chunk_id": {
+            "title": "Chunk Id",
+            "type": "string"
+          },
+          "score": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Score",
+            "type": "number"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Section"
+          },
+          "snippet": {
+            "maxLength": 200,
+            "title": "Snippet",
+            "type": "string"
+          },
+          "source_type": {
+            "enum": [
+              "cv",
+              "experience",
+              "personal",
+              "site_docs",
+              "github_readme"
+            ],
+            "title": "Source Type",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Url"
+          }
+        },
+        "required": [
+          "chunk_id",
+          "score",
+          "source_type",
+          "title",
+          "snippet"
+        ],
+        "title": "SourceItem",
+        "type": "object"
+      },
+      "SourcesEvent": {
+        "description": "Retrieved sources, by score descending.\n\nAn empty list means nothing was relevant; a templated \"no information\" answer follows.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SourceItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "type": {
+            "const": "sources",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "items"
+        ],
+        "title": "SourcesEvent",
+        "type": "object"
+      },
+      "TokenEvent": {
+        "description": "The next piece of the answer, in Markdown.",
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "type": {
+            "const": "token",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "text"
+        ],
+        "title": "TokenEvent",
+        "type": "object"
+      },
+      "UsageEvent": {
+        "description": "Per-step timings and tokens; sent once, right before `done`.",
+        "properties": {
+          "estimated_cost_usd": {
+            "minimum": 0,
+            "title": "Estimated Cost Usd",
+            "type": "number"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/NodeUsage"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "total_ms": {
+            "minimum": 0,
+            "title": "Total Ms",
+            "type": "integer"
+          },
+          "type": {
+            "const": "usage",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "nodes",
+          "total_ms",
+          "estimated_cost_usd"
+        ],
+        "title": "UsageEvent",
         "type": "object"
       }
     }

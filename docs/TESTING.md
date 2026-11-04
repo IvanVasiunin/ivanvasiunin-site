@@ -26,17 +26,18 @@ All commands run from the repository root.
 |---|---|
 | Fast checks, all targets | `node scripts/check-fast.mjs` (`web`, `api`, `scripts`; `--changed` for uncommitted changes only; `--strict` in CI). The Stop hook runs `--changed` |
 | Fast checks, web | `node scripts/check-fast.mjs web` = `pnpm --dir apps/web run check:fast` (Prettier check, ESLint, Stylelint, `astro check` + `tsc`, Vitest) |
-| Fast checks, api | `node scripts/check-fast.mjs api` (ruff format --check, ruff check, pyright, `pytest -m "not mentor_pending"`) |
+| Fast checks, api | `node scripts/check-fast.mjs api` (ruff format --check, ruff check, pyright, `pytest -m "not mentor_pending and not db"`) |
+| Migrations on a live DB (from ROADMAP 3.1) | `docker compose -f infra/docker-compose.dev.yml up -d --wait`, then `TEST_DATABASE_URL=postgresql+psycopg://site:<POSTGRES_PASSWORD>@127.0.0.1:5432/site_test uv run --directory apps/api pytest -m db` (up → down → up, indexes, constraints; the database name must end in `_test`). The offline SQL of every migration is checked by the fast checks (`tests/db/test_migration_sql.py`) |
 | E2E (+ axe) | `pnpm --dir apps/web run e2e` (all projects) / `pnpm --dir apps/web run e2e --project=mobile-android` (no `--` before Playwright flags: pnpm forwards it and Playwright then ignores the flags) |
 | Visual snapshots (from ROADMAP 1.1) | run as part of `e2e` in the `visual-chromium` project (`apps/web/e2e/visual.spec.ts`); update: `pnpm --dir apps/web run e2e --project=visual-chromium --update-snapshots` (only with Ivan's OK). Baselines are per platform: `-win32` locally; the Linux ones (CI job `visual`) are made in the Playwright image with `pnpm --dir apps/web run e2e:visual:linux --update-snapshots` (needs Docker) |
 | API types (from ROADMAP 1.5) | regenerate: `pnpm --dir apps/web run gen:api`; staleness check (CI job `contract`): `pnpm --dir apps/web run gen:api:check` |
 | Infrastructure (from ROADMAP 1.6) | `node scripts/check-infra.mjs` (Compose / Dockerfile / .dockerignore rules, needs the Docker CLI); against a running stack: `node scripts/check-headers.mjs https://localhost` (CI job `infra` runs both, plus the image build, image scan and `docker compose up`) |
-| Build + JS budgets | `pnpm --dir apps/web run build` then `pnpm --dir apps/web run budget` |
+| Build (+ CV PDF, needs Playwright Chromium) + JS budgets | `pnpm --dir apps/web run build` then `pnpm --dir apps/web run budget` |
 | Lighthouse budgets | `pnpm --dir apps/web run lighthouse` (build, then mobile + desktop; CI job `lighthouse`) |
 | Performance, long frames (from ROADMAP 6.4) | skill `perf-check` |
 | Evals | `uv run --directory apps/api python -m site_api.evals --estimate` then `… --run` |
 | Mentor-pending report | `uv run --directory apps/api pytest -m mentor_pending --co -q` |
-| CI (`.github/workflows/ci.yml`) | Jobs `web` (fast checks, build, budgets), `api` (fast checks + non-blocking mentor-pending report), `security` (gitleaks over the whole history, repo scripts, `pnpm audit --prod` blocking / dev report-only, pip-audit). Fast checks run with `--strict`, so a missing app fails instead of being skipped |
+| CI (`.github/workflows/ci.yml`) | Jobs `web` (fast checks, build, budgets), `api` (fast checks + non-blocking mentor-pending report), `api-db` (migration tests on a Postgres + pgvector service container), `security` (gitleaks over the whole history, repo scripts, `pnpm audit --prod` blocking / dev report-only, pip-audit). Fast checks run with `--strict`, so a missing app fails instead of being skipped |
 | Fast checks, repo scripts and hooks | `node scripts/check-fast.mjs scripts` (Prettier + `node --test scripts/*.test.mjs .claude/hooks/*.test.mjs`) |
 | Git hooks (lefthook) | pre-commit: gitleaks on the staged diff, Prettier, ESLint, Stylelint, ruff (fix + re-stage); commit-msg: `scripts/check-commit-msg.mjs`. Dry run: `pnpm exec lefthook run pre-commit` |
 | Full pre-PR | skill `pre-pr-check` |
@@ -50,6 +51,7 @@ All commands run from the repository root.
 | Chat streaming / SSE client | ✔ | Chat e2e on a mocked LLM (desktop + mobile); API contract tests |
 | Visualization | ✔ | Long-frame measurement at 4× / 6×; screenshots both themes; JS / JSON budget |
 | API (non-AI) | ✔ | Contract tests; TS type regeneration |
+| Database migrations | ✔ (offline SQL) | `pytest -m db` on the dev database (CI job `api-db`); `security-reviewer` for compose / deploy changes |
 | Prompts, retrieval, graph | ✔ | **Evals: cost estimate first, run only with Ivan's consent** |
 | Ingestion / projection | ✔ | Re-ingest on fixtures; `points.json` contract + size |
 | Docker / Caddy / CI | ✔ | `docker compose up` smoke + healthchecks; `security-reviewer` |

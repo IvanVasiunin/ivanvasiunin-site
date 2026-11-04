@@ -5,7 +5,7 @@ Static Astro 7 site with two React islands (Chat, VectorSpace). TypeScript **6.0
 ## Layout
 ```
 src/pages/          index.astro (AI mode, SSR'd intro + islands), cv.astro, privacy.astro
-src/content/cv/     CV source: one Markdown file per job/section, Zod schema in src/content.config.ts
+src/content/cv/     CV source: one Markdown file per job/section; Zod schema in src/lib/cv/schema.ts
 src/components/     one folder per component (Astro or React)
 src/islands/        Chat/, VectorSpace/ — the only hydrated code
 src/lib/api/        schema.d.ts GENERATED from FastAPI OpenAPI — never edit by hand
@@ -33,6 +33,7 @@ e2e/                Playwright tests (desktop, iPhone/WebKit, Android/Chromium w
 - Chat island `client:load`, VectorSpace `client:idle`/`client:visible`. Islands talk via typed DOM `CustomEvent`s, no global store.
 - Mode switcher is `<nav>` + links with `aria-current="page"`, not ARIA tabs. Mode switching uses native cross-document View Transitions (no `<ClientRouter>`).
 - Mobile chat keyboard: `visualViewport` handling is the primary mechanism (iOS Safari lacks `interactive-widget`).
+- Until the real `/api/chat` exists (ROADMAP 3.8), `astro dev` serves a mocked one (`src/lib/chat/mock/`): the question picks the scenario (`hello`, `google`, `fail`, `limit`, `markdown`, anything else). `CHAT_MOCK=off` disables it. E2E mocks the same scenarios with `page.route`.
 - Fonts are self-hosted OFL via the Astro Fonts API; add every asset to `docs/CREDITS.md`.
 - New components: use the `new-ui-component` skill; review with `frontend-reviewer`.
 - Browser checks: Playwright CLI (snapshots to files) rather than an MCP; performance traces via Chrome DevTools MCP.

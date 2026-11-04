@@ -1,0 +1,54 @@
+---
+// One job on the CV timeline (an item of CvSection list="timeline"). The period sits in the date rail
+// on wide screens and above the details on narrow ones; the DOM keeps the heading first.
+// The default slot takes the Full text (rendered Markdown).
+import './CvJob.scss';
+import CvProse from '../CvProse/CvProse.astro';
+import TagList from '../TagList/TagList.astro';
+import { employmentLabel, formatDate, PRESENT_LABEL, type CvData } from '../../lib/cv/view';
+
+interface Props {
+  /** Unique within the page; used for the heading id. */
+  readonly id: string;
+  readonly job: CvData<'job'>;
+}
+
+const { id, job } = Astro.props;
+const headingId = `job-${id}`;
+const current = job.end === 'present';
+const meta = [employmentLabel(job.employment), job.location].filter(Boolean).join(' · ');
+---
+
+<li class="cv-job" data-current={current ? '' : undefined}>
+  {/* Decoration: the comet at the tip of the meridian while it is drawn on scroll (CvJob.scss). */}
+  <span class="cv-job__comet" aria-hidden="true"></span>
+  <article class="cv-job__article" aria-labelledby={headingId}>
+    <h3 class="cv-job__company" id={headingId}>
+      {job.company}
+    </h3>
+    <p class="cv-job__title">{job.title}</p>
+    <p class="cv-job__period">
+      <time datetime={job.start}>{formatDate(job.start)}</time>–
+      {current ? PRESENT_LABEL : <time datetime={job.end}>{formatDate(job.end)}</time>}
+    </p>
+    <p class="cv-job__meta">{meta}</p>
+    {/* Brief: the frontmatter bullets; Full: the Markdown body (SPEC §3.2 US-T1). */}
+    <div class="cv-job__details">
+      <CvProse only="brief">
+        <ul>
+          {job.brief.map((line) => (
+            <li>{line}</li>
+          ))}
+        </ul>
+      </CvProse>
+      <CvProse only="full">
+        <slot />
+      </CvProse>
+    </div>
+    {job.stack && (
+      <div class="cv-job__stack">
+        <TagList items={job.stack} label={`${job.company} stack`} />
+      </div>
+    )}
+  </article>
+</li>

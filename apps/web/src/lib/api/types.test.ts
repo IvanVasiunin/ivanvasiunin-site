@@ -1,5 +1,13 @@
 import { describe, expectTypeOf, test } from 'vitest';
-import type { ErrorCode, ErrorResponse, HealthResponse } from './types';
+import type {
+  ChatEvent,
+  ChatEventType,
+  ChatRequest,
+  ErrorCode,
+  ErrorResponse,
+  HealthResponse,
+  SourceType,
+} from './types';
 
 // Type-level checks on the generated contract. `expectTypeOf` is checked by the typecheck
 // (`tsc --noEmit` in check:fast), not at runtime: when the API changes a shape the frontend relies
@@ -29,5 +37,25 @@ describe('API contract types', () => {
     expectTypeOf<HealthResponse['status']>().toEqualTypeOf<'ok' | 'unavailable'>();
     expectTypeOf<HealthResponse['db']>().toEqualTypeOf<'ok' | 'down'>();
     expectTypeOf<HealthResponse['version']>().toEqualTypeOf<string>();
+  });
+
+  test('chat events are the six types of SPEC §4.2', () => {
+    expectTypeOf<ChatEventType>().toEqualTypeOf<
+      'route' | 'sources' | 'token' | 'usage' | 'done' | 'error'
+    >();
+    expectTypeOf<Extract<ChatEvent, { type: 'token' }>['text']>().toEqualTypeOf<string>();
+    expectTypeOf<Extract<ChatEvent, { type: 'error' }>['code']>().toEqualTypeOf<ErrorCode>();
+  });
+
+  test('a source has one of the five source types of the map key', () => {
+    expectTypeOf<SourceType>().toEqualTypeOf<
+      'cv' | 'experience' | 'personal' | 'site_docs' | 'github_readme'
+    >();
+  });
+
+  test('a chat request carries the message, the session and optional history', () => {
+    expectTypeOf<ChatRequest['message']>().toEqualTypeOf<string>();
+    expectTypeOf<ChatRequest['session_id']>().toEqualTypeOf<string>();
+    expectTypeOf<ChatRequest>().toHaveProperty('history');
   });
 });

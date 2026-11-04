@@ -38,6 +38,10 @@ jobs:
           node-version-file: .node-version
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: node scripts/check-fast.mjs --strict web
+      # The build prints the CV PDF in Chromium (apps/web/scripts/build-pdf.mjs); the headless shell
+      # is enough and smaller than the full browser.
+      - name: Chromium headless shell for the CV PDF (the version pinned by @playwright/test)
+        run: pnpm --dir apps/web exec playwright install --with-deps --only-shell chromium
       - run: pnpm --dir apps/web run build
       - name: JS / points.json budgets (docs/TESTING.md §5)
         run: pnpm --dir apps/web run budget
@@ -139,6 +143,43 @@ jobs:
           # NotImplementedError rather than tests importing missing modules.
           if [ "$code" -le 1 ] || [ "$code" -eq 5 ]; then exit 0; fi
           exit "$code"
+
+  api-db:
+    name: API — migrations up / down / up on Postgres + pgvector
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # The production database image as a throwaway service container. `trust` auth inside this
+    # job's private network only: no password to keep out of the repository and the logs. Never
+    # copy this block into a job that has secrets.
+    services:
+      db:
+        image: pgvector/pgvector:0.8.7-pg18-trixie
+        env:
+          POSTGRES_USER: site
+          POSTGRES_DB: site_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U site -d site_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://site@localhost:5432/site_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.6'
+          enable-cache: ${{ github.ref == 'refs/heads/main' }}
+          cache-dependency-glob: apps/api/uv.lock
+      - run: uv sync --locked --directory apps/api
+      - name: Migration tests (marker `db`)
+        working-directory: apps/api
+        run: uv run pytest -m db -q
 
   contract:
     name: Contract — generated API types match the OpenAPI schema

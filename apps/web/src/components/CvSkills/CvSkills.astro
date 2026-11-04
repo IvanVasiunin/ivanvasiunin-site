@@ -1,0 +1,23 @@
+---
+// Skills groups as a description list: the group name, then its skills as tags.
+import './CvSkills.scss';
+import TagList from '../TagList/TagList.astro';
+import type { CvData } from '../../lib/cv/view';
+
+interface Props {
+  readonly skills: CvData<'skills'>;
+}
+
+const { groups } = Astro.props.skills;
+---
+
+<dl class="cv-skills">
+  {groups.map((group) => (
+    <div class="cv-skills__group">
+      <dt class="cv-skills__name">{group.name}</dt>
+      <dd class="cv-skills__items">
+        <TagList items={group.items} />
+      </dd>
+    </div>
+  ))}
+</dl>

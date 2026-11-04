@@ -174,10 +174,91 @@
     flex-shrink: 0;
     inline-size: var(--size-icon-sm);
     block-size: var(--size-icon-sm);
-    fill: currentcolor;
 
     @media (width < 20em) {
       display: none;
+    }
+  }
+
+  // "Frosted glass" icon parts (tokens: --color-icon-*). On the current mode's accent pill the glass
+  // turns to its on-accent variant, so it stands out from the pill in both themes.
+  .mode-switch__stop-glass-start {
+    stop-color: var(--color-icon-glass-1);
+
+    .mode-switch__link[aria-current='page'] & {
+      stop-color: var(--color-icon-glass-on-accent-1);
+    }
+  }
+
+  .mode-switch__stop-glass-end {
+    stop-color: var(--color-icon-glass-2);
+
+    .mode-switch__link[aria-current='page'] & {
+      stop-color: var(--color-icon-glass-on-accent-2);
+    }
+  }
+
+  .mode-switch__stop-sheen {
+    stop-color: var(--color-icon-sheen);
+  }
+
+  .mode-switch__stop-sheen-fade {
+    stop-color: var(--color-icon-sheen);
+    stop-opacity: 0;
+  }
+
+  .mode-switch__rim {
+    fill: none;
+    stroke: var(--color-icon-rim);
+    stroke-width: 0.8;
+  }
+
+  // On the accent pill the white rim and sheen blur the small glyph against the gradient: the current
+  // mode's icon is a plain, crisp glass fill with its detail.
+  .mode-switch__rim,
+  .mode-switch__sheen {
+    .mode-switch__link[aria-current='page'] & {
+      display: none;
+    }
+  }
+
+  .mode-switch__glyph {
+    fill: var(--color-icon-detail);
+
+    .mode-switch__link[aria-current='page'] & {
+      fill: var(--color-icon-detail-on-accent);
+    }
+  }
+
+  .mode-switch__lines {
+    fill: none;
+    stroke: var(--color-icon-detail);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+
+    .mode-switch__link[aria-current='page'] & {
+      stroke: var(--color-icon-detail-on-accent);
+    }
+  }
+
+  // Forced colours drop the gradients: a solid glyph in the link's text colour, the detail in the
+  // background colour, no sheen or rim.
+  @media (forced-colors: active) {
+    .mode-switch__glass {
+      fill: currentcolor;
+    }
+
+    .mode-switch__sheen,
+    .mode-switch__rim {
+      display: none;
+    }
+
+    .mode-switch__glyph {
+      fill: Canvas;
+    }
+
+    .mode-switch__lines {
+      stroke: Canvas;
     }
   }
 }

@@ -43,7 +43,7 @@ const VIZ_RAF_MESSAGE =
   'No per-frame JS in the visualization: animate transform / opacity with CSS transitions.';
 
 export default defineConfig(
-  globalIgnores(['dist/', '.astro/', 'node_modules/', 'src/lib/api/schema.d.ts']),
+  globalIgnores(['dist/', '**/.astro/', '**/node_modules/', 'src/lib/api/schema.d.ts']),
 
   {
     linterOptions: { reportUnusedDisableDirectives: 'error' },

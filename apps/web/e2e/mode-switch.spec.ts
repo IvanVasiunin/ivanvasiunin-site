@@ -126,8 +126,9 @@ test('the floating switch never covers the footer at the end of the page', async
     !viewport || viewport.width >= MD,
     'From md the switch is in the header, not at the bottom.',
   );
+  // Instant: the site scrolls smoothly, and the long /cv page would still be moving when measured.
   await page.evaluate(() => {
-    window.scrollTo(0, document.documentElement.scrollHeight);
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
   });
   const nav = await modeNav(page).boundingBox();
   const footer = await page.getByRole('contentinfo').boundingBox();

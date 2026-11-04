@@ -13,3 +13,21 @@ export type ErrorResponse = Schemas['ErrorResponse'];
 
 /** Every error code the API can return; the UI maps each one to a message (SPEC §3, error states). */
 export type ErrorCode = Schemas['ErrorBody']['code'];
+
+/** `POST /api/chat` request body (SPEC §4.1). */
+export type ChatRequest = Schemas['ChatRequest'];
+
+/** One earlier message sent back as `history`. */
+export type ChatTurn = Schemas['ChatTurn'];
+
+/** One event of the chat stream (SPEC §4.2), discriminated by `type`. */
+export type ChatEvent = Schemas['ChatEvent'];
+
+/** The `type` of a chat event: `route`, `sources`, `token`, `usage`, `done` or `error`. */
+export type ChatEventType = ChatEvent['type'];
+
+/** One retrieved source of an answer (the `sources` event). */
+export type SourceItem = Schemas['SourceItem'];
+
+/** The kind of a source; each has its colour on the map and in the source list. */
+export type SourceType = SourceItem['source_type'];

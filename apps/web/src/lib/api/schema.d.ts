@@ -29,6 +29,56 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ChatEvent: components["schemas"]["RouteEvent"] | components["schemas"]["SourcesEvent"] | components["schemas"]["TokenEvent"] | components["schemas"]["UsageEvent"] | components["schemas"]["DoneEvent"] | components["schemas"]["ErrorEvent"];
+        /**
+         * ChatRequest
+         * @description A visitor's question with the client's session and recent history.
+         */
+        ChatRequest: {
+            /** History */
+            history?: components["schemas"]["ChatTurn"][];
+            /** Message */
+            message: string;
+            /**
+             * Session Id
+             * Format: uuid4
+             */
+            session_id: string;
+        };
+        /**
+         * ChatTurn
+         * @description One earlier message of the conversation. Untrusted: it is passed to the model as data.
+         */
+        ChatTurn: {
+            /** Content */
+            content: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+        };
+        /**
+         * DoneEvent
+         * @description The successful end of the stream.
+         */
+        DoneEvent: {
+            /**
+             * Finish Reason
+             * @enum {string}
+             */
+            finish_reason: "stop" | "length" | "templated" | "no_info";
+            /**
+             * Message Id
+             * Format: uuid4
+             */
+            message_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "done";
+        };
         /**
          * ErrorBody
          * @description What went wrong, in terms that are safe to show to a visitor.
@@ -43,6 +93,29 @@ export interface components {
             message: string;
             /** Retry After S */
             retry_after_s?: number | null;
+        };
+        /**
+         * ErrorEvent
+         * @description A failure during the stream; terminal, no `done` follows.
+         */
+        ErrorEvent: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "invalid_request" | "not_found" | "input_too_long" | "rate_limited" | "session_limit" | "budget_exceeded" | "upstream_unavailable" | "timeout" | "internal";
+            /** Message */
+            message: string;
+            /**
+             * Retry After S
+             * @default null
+             */
+            retry_after_s: number | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "error";
         };
         /**
          * ErrorResponse
@@ -68,6 +141,133 @@ export interface components {
             status: "ok" | "unavailable";
             /** Version */
             version: string;
+        };
+        /**
+         * NodeUsage
+         * @description Time and tokens of one graph step (Under the hood, SPEC US-A9).
+         */
+        NodeUsage: {
+            /**
+             * Cached Input Tokens
+             * @default null
+             */
+            cached_input_tokens: number | null;
+            /**
+             * Embedding Tokens
+             * @default null
+             */
+            embedding_tokens: number | null;
+            /**
+             * Input Tokens
+             * @default null
+             */
+            input_tokens: number | null;
+            /**
+             * Model
+             * @default null
+             */
+            model: string | null;
+            /** Ms */
+            ms: number;
+            /** Name */
+            name: string;
+            /**
+             * Output Tokens
+             * @default null
+             */
+            output_tokens: number | null;
+        };
+        /**
+         * RouteEvent
+         * @description The router's decision; always the first event.
+         */
+        RouteEvent: {
+            /** Language */
+            language: string;
+            /**
+             * Route
+             * @enum {string}
+             */
+            route: "about_ivan" | "greeting" | "off_topic" | "injection";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "route";
+        };
+        /**
+         * SourceItem
+         * @description One retrieved chunk above the relevance threshold.
+         */
+        SourceItem: {
+            /** Chunk Id */
+            chunk_id: string;
+            /** Score */
+            score: number;
+            /**
+             * Section
+             * @default null
+             */
+            section: string | null;
+            /** Snippet */
+            snippet: string;
+            /**
+             * Source Type
+             * @enum {string}
+             */
+            source_type: "cv" | "experience" | "personal" | "site_docs" | "github_readme";
+            /** Title */
+            title: string;
+            /**
+             * Url
+             * @default null
+             */
+            url: string | null;
+        };
+        /**
+         * SourcesEvent
+         * @description Retrieved sources, by score descending.
+         *
+         *     An empty list means nothing was relevant; a templated "no information" answer follows.
+         */
+        SourcesEvent: {
+            /** Items */
+            items: components["schemas"]["SourceItem"][];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "sources";
+        };
+        /**
+         * TokenEvent
+         * @description The next piece of the answer, in Markdown.
+         */
+        TokenEvent: {
+            /** Text */
+            text: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "token";
+        };
+        /**
+         * UsageEvent
+         * @description Per-step timings and tokens; sent once, right before `done`.
+         */
+        UsageEvent: {
+            /** Estimated Cost Usd */
+            estimated_cost_usd: number;
+            /** Nodes */
+            nodes: components["schemas"]["NodeUsage"][];
+            /** Total Ms */
+            total_ms: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "usage";
         };
     };
     responses: never;

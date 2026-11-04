@@ -54,6 +54,18 @@ if ! IMAGE_TAG="$tag" docker compose pull --quiet; then
 	exit 1
 fi
 
+# Database migrations (ADR-0003), before the new release starts: a one-off container of the new API
+# image (Compose starts a stopped db first and waits until it is healthy). Each migration runs in one
+# transaction, so a failure leaves the schema as it was; a lock or statement that waits too long
+# fails (timeouts in site_api/db/migrations/env.py), and the whole step is capped at 5 minutes so
+# a stuck run cannot hold the deploy lock. `-T`: no TTY (the CI's forced SSH command has none).
+# Migrations stay backward-compatible (add first, remove in a later release), so a rollback below
+# still runs on the migrated schema. Downgrades never run here: they can drop data.
+if ! IMAGE_TAG="$tag" timeout 300 docker compose run --rm -T api python -m site_api.db.migrate; then
+	echo "deploy: migrations for $tag failed; nothing changed" >&2
+	exit 1
+fi
+
 if IMAGE_TAG="$tag" docker compose up --detach --wait --wait-timeout 180; then
 	set_tag "$tag"
 	# Images older than a week that no container uses (-a: tagged releases too, not only dangling).

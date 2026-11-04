@@ -1,0 +1,361 @@
+@use '../../styles/mixins' as *;
+
+// "Back to top": the rocket is the control (no frame around it), standing in the bottom corner (an
+// overlay control, so `position: fixed` is allowed). Below `md` it stands above the floating mode
+// switch, clear of it; from `md` it is larger. Hovered or focused, the engine idles (a small flickering
+// flame). A click launches it (src/lib/scroll-top/launch.ts): `data-state="ignition"` lights the engine,
+// raises smoke and shakes the rocket on the pad; `data-state="ascent"` keeps the engine at full thrust
+// while the script moves the rocket and the page. Everything moves with `transform` / `opacity` only.
+@layer components {
+  .scroll-top {
+    position: fixed;
+    inset-block-end: calc(var(--offset-bar-bottom) + var(--size-bar) + var(--space-xs));
+    inset-inline-end: max(var(--gutter), env(safe-area-inset-right));
+    z-index: var(--z-launch);
+    display: grid;
+    place-items: center;
+
+    // The rocket is narrower than a touch target: the link keeps 44 px of width around it.
+    min-inline-size: var(--size-touch);
+    border-radius: var(--radius-md);
+
+    // Room below for the plume and the smoke, which reach under the rocket.
+    @include mq(md) {
+      inset-block-end: max(var(--space-xl), env(safe-area-inset-bottom));
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-2xs);
+    }
+
+    // Hovered or focused: the engine idles (only without a reduced-motion preference).
+    @media (prefers-reduced-motion: no-preference) {
+      @media (hover: hover) {
+        &:hover .scroll-top__flame {
+          animation: scroll-top-idle var(--duration-fast) var(--ease-in-out) infinite alternate;
+        }
+      }
+
+      &:focus-visible .scroll-top__flame {
+        animation: scroll-top-idle var(--duration-fast) var(--ease-in-out) infinite alternate;
+      }
+    }
+
+    // Shown from 40% of a screen of scrolling, fully by 60%; hidden (and out of the tab
+    // order, via `visibility`) at the top and on pages too short to scroll, whose timeline is inactive.
+    // Scroll-linked opacity, not a timed motion, so it also runs with reduced motion. Where scroll-driven
+    // animations do not exist, the rocket is simply always there. Longhands: the minifier would fold
+    // `animation-timeline` into the shorthand, where browsers reject it.
+    @supports (animation-timeline: scroll()) {
+      visibility: hidden;
+      opacity: 0;
+      animation-name: scroll-top-show;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: scroll(root block);
+      animation-range: var(--distance-scroll-top-start) var(--distance-scroll-top-end);
+    }
+
+    // During the launch the control ignores the scroll position (the page is scrolling up under it).
+    &[data-state] {
+      visibility: visible;
+      opacity: 1;
+      animation: none;
+    }
+
+    @media print {
+      display: none;
+    }
+  }
+
+  .scroll-top__label {
+    @include visually-hidden;
+  }
+
+  // The plume is drawn below the view box: the SVG does not clip it.
+  .scroll-top__rocket {
+    overflow: visible;
+    inline-size: var(--size-rocket);
+    block-size: auto;
+    aspect-ratio: 48 / 104;
+
+    @include mq(md) {
+      inline-size: var(--size-rocket-md);
+    }
+
+    // Forced colours: the rocket in the text colour (gradients are dropped there anyway).
+    @media (forced-colors: active) {
+      color: CanvasText;
+    }
+  }
+
+  // The engine. At rest it is off; hovered or focused it idles with a small flicker; on ignition it
+  // lights and grows to full thrust, and it roars through the ascent. Scaled from the nozzle (its top).
+  .scroll-top__flame {
+    transform-box: fill-box;
+    transform-origin: top;
+    opacity: 0;
+    transform: scaleY(0.3);
+  }
+
+  // Exhaust smoke (decoration): puffs at the pad that billow outwards and clear. Each grows away from
+  // the rocket: the scale's origin is on its inner side.
+  .scroll-top__smoke {
+    position: absolute;
+    inset-block-end: calc(-1 * var(--space-md));
+    inset-inline-start: calc(50% - var(--size-smoke) / 2);
+    z-index: var(--z-below);
+    inline-size: var(--size-smoke);
+    block-size: var(--size-smoke);
+    pointer-events: none;
+    background-image: radial-gradient(circle closest-side, var(--color-smoke), transparent);
+    border-radius: var(--radius-pill);
+    opacity: 0;
+  }
+
+  .scroll-top__smoke--far-left {
+    transform-origin: 140% 60%;
+  }
+
+  .scroll-top__smoke--left {
+    transform-origin: 100% 40%;
+  }
+
+  .scroll-top__smoke--centre {
+    transform-origin: 50% 0%;
+  }
+
+  .scroll-top__smoke--right {
+    transform-origin: 0% 40%;
+  }
+
+  .scroll-top__smoke--far-right {
+    transform-origin: -40% 60%;
+  }
+
+  // The launch, only without a reduced-motion preference (the script skips it then too).
+  @media (prefers-reduced-motion: no-preference) {
+    // Ignition: the engine lights and builds to full thrust, the rocket shudders on the pad.
+    .scroll-top[data-state='ignition'] .scroll-top__flame {
+      animation: scroll-top-ignite var(--duration-ignition) var(--ease-out) both;
+    }
+
+    .scroll-top[data-state='ignition'] .scroll-top__rocket {
+      animation: scroll-top-shudder var(--duration-fast) linear infinite;
+    }
+
+    // Ascent: full thrust with a fast flicker. The rocket itself is moved by the script.
+    .scroll-top[data-state='ascent'] .scroll-top__flame {
+      opacity: 1;
+      animation: scroll-top-thrust var(--duration-fast) linear infinite alternate;
+    }
+
+    // Smoke billows from ignition on and clears while the rocket climbs; puffs start one after another.
+    .scroll-top[data-state] .scroll-top__smoke {
+      animation: scroll-top-billow var(--duration-smoke) var(--ease-out) both;
+    }
+
+    .scroll-top[data-state] .scroll-top__smoke--left,
+    .scroll-top[data-state] .scroll-top__smoke--right {
+      animation-delay: var(--duration-fast);
+    }
+
+    .scroll-top[data-state] .scroll-top__smoke--far-left,
+    .scroll-top[data-state] .scroll-top__smoke--far-right {
+      animation-delay: calc(2 * var(--duration-fast));
+    }
+  }
+
+  // The rocket's materials (tokens.scss): silver hull, dark machined metal, accent livery.
+  .scroll-top__edge {
+    fill: none;
+    stroke: var(--color-rocket-edge);
+    stroke-width: 0.6;
+  }
+
+  .scroll-top__seam {
+    fill: var(--color-rocket-seam);
+  }
+
+  .scroll-top__sheen,
+  .scroll-top__glint {
+    fill: var(--color-sheen);
+  }
+
+  .scroll-top__rim {
+    fill: var(--color-rocket-metal-mid);
+  }
+
+  .scroll-top__stop-hull-light {
+    stop-color: var(--color-rocket-hull-light);
+  }
+
+  .scroll-top__stop-hull-mid {
+    stop-color: var(--color-rocket-hull-mid);
+  }
+
+  .scroll-top__stop-hull-low {
+    stop-color: var(--color-rocket-hull-low);
+  }
+
+  .scroll-top__stop-hull-shade {
+    stop-color: var(--color-rocket-hull-shade);
+  }
+
+  .scroll-top__stop-paint-shade {
+    stop-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-rocket-metal-deep));
+  }
+
+  .scroll-top__stop-paint-light {
+    stop-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-rocket-hull-light));
+  }
+
+  .scroll-top__stop-paint-mid {
+    stop-color: var(--color-accent);
+  }
+
+  .scroll-top__stop-paint-deep {
+    stop-color: color-mix(in srgb, var(--color-accent-2) 60%, var(--color-rocket-metal-deep));
+  }
+
+  .scroll-top__stop-metal-light {
+    stop-color: var(--color-rocket-metal-light);
+  }
+
+  .scroll-top__stop-metal-mid {
+    stop-color: var(--color-rocket-metal-mid);
+  }
+
+  .scroll-top__stop-metal-deep {
+    stop-color: var(--color-rocket-metal-deep);
+  }
+
+  .scroll-top__stop-glass-light {
+    stop-color: var(--color-rocket-glass-light);
+  }
+
+  .scroll-top__stop-glass-dark {
+    stop-color: var(--color-rocket-glass-dark);
+  }
+
+  .scroll-top__stop-flame-white {
+    stop-color: var(--color-flame-white);
+  }
+
+  .scroll-top__stop-flame-hot {
+    stop-color: var(--color-flame-hot);
+  }
+
+  .scroll-top__stop-flame-edge {
+    stop-color: var(--color-flame-edge);
+  }
+
+  .scroll-top__stop-flame-fade {
+    stop-color: var(--color-flame-edge);
+    stop-opacity: 0;
+  }
+
+  .scroll-top__stop-flame-blue {
+    stop-color: var(--color-flame-blue);
+  }
+
+  .scroll-top__stop-flame-blue-fade {
+    stop-color: var(--color-flame-blue);
+    stop-opacity: 0;
+  }
+
+  @keyframes scroll-top-show {
+    from {
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    to {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+
+  @keyframes scroll-top-idle {
+    from {
+      opacity: 0.85;
+      transform: scaleY(0.28);
+    }
+
+    to {
+      opacity: 1;
+      transform: scaleY(0.38);
+    }
+  }
+
+  @keyframes scroll-top-ignite {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.1);
+    }
+
+    15% {
+      opacity: 1;
+      transform: scaleY(0.45);
+    }
+
+    35% {
+      transform: scaleY(0.35);
+    }
+
+    60% {
+      transform: scaleY(0.8);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes scroll-top-thrust {
+    from {
+      transform: scaleY(1);
+    }
+
+    to {
+      transform: scaleY(1.18);
+    }
+  }
+
+  @keyframes scroll-top-shudder {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+
+    25% {
+      transform: translate(-0.5px, 0.5px);
+    }
+
+    50% {
+      transform: translate(0.5px, 0);
+    }
+
+    75% {
+      transform: translate(-0.3px, 0.5px);
+    }
+  }
+
+  @keyframes scroll-top-billow {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+
+    20% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0;
+      transform: scale(3);
+    }
+  }
+}

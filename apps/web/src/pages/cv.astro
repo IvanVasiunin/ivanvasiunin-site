@@ -1,13 +1,134 @@
 ---
-// Placeholder for text mode (SPEC §2). The CV content collection arrives in Phase 2.
+// Text mode: the CV (SPEC §2, §3.2; ROADMAP 2.3–2.4). Static HTML, no framework JS. Content comes from
+// the `cv` collection (src/content/cv), validated at build time. Brief / Full: src/lib/cv/view-mode.ts.
+import { render } from 'astro:content';
 import Button from '../components/Button/Button.astro';
+import CvHeader from '../components/CvHeader/CvHeader.astro';
+import CvJob from '../components/CvJob/CvJob.astro';
+import CvProject from '../components/CvProject/CvProject.astro';
+import CvProse from '../components/CvProse/CvProse.astro';
+import CvRecords from '../components/CvRecords/CvRecords.astro';
+import CvSection from '../components/CvSection/CvSection.astro';
+import CvSkills from '../components/CvSkills/CvSkills.astro';
+import CvViewSwitch from '../components/CvViewSwitch/CvViewSwitch.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { cspHash } from '../lib/csp';
+import { loadCvEntries } from '../lib/cv/load';
+import { CV_PDF_PATH } from '../lib/cv/pdf';
+import { cvViewHeadScript } from '../lib/cv/view-mode';
+import { canonicalUrl } from '../lib/seo';
+import {
+  formatDate,
+  jsonLdText,
+  languageLevelLabel,
+  personJsonLd,
+  sectionEntries,
+  singleEntry,
+} from '../lib/cv/view';
+
+const entries = await loadCvEntries();
+const profile = singleEntry(entries, 'profile');
+const jobs = sectionEntries(entries, 'job');
+const projects = sectionEntries(entries, 'project');
+const skills = singleEntry(entries, 'skills').data;
+const education = singleEntry(entries, 'education').data;
+const certifications = singleEntry(entries, 'certifications').data;
+const languages = singleEntry(entries, 'languages').data;
+
+const { Content: Summary } = await render(profile);
+const jobContents = await Promise.all(
+  jobs.map(async (job) => ({ job, Content: (await render(job)).Content })),
+);
+
+const person = personJsonLd({
+  profile: profile.data,
+  jobs: jobs.map((job) => job.data),
+  education,
+  languages,
+  url: canonicalUrl(Astro.url.pathname, Astro.site),
+});
+
+const year = (value: number) => ({ label: String(value), value: String(value) });
+
+const educationRecords = education.entries.map((entry) => ({
+  title: entry.institution,
+  detail: [entry.degree, entry.field].filter(Boolean).join(', '),
+  dates: [year(entry.start), year(entry.end)],
+}));
+const certificationRecords = certifications.entries.map((entry) => ({
+  title: entry.name,
+  detail: entry.issuer,
+  dates: [{ label: formatDate(entry.date), value: entry.date }],
+}));
+const languageRecords = languages.entries.map((entry) => ({
+  title: entry.name,
+  detail: languageLevelLabel(entry.level),
+}));
+
+const { name, headline } = profile.data;
+
+// Brief / Full before first paint (no flash): sets data-cv-view on <html> from ?view=. Inline, so its
+// hash goes into the page's CSP, like the theme script in BaseLayout.
+const VIEW_SCRIPT = cvViewHeadScript();
+Astro.csp?.insertScriptHash(cspHash(VIEW_SCRIPT));
 ---
 
-<BaseLayout title="CV — Ivan Vasiunin" description="CV of Ivan Vasiunin, Senior Markup Developer.">
-  <h1>Ivan Vasiunin — CV</h1>
-  <p>The CV is coming soon.</p>
-  <Button href="/" variant="secondary">
-    Back to the home page
-  </Button>
+<BaseLayout
+  title={`CV — ${name}`}
+  description={`CV of ${name}, ${headline}: experience, projects, skills, education and contacts.`}
+  ogType="profile"
+>
+  {/* Structured data for search engines (SPEC §3.2 US-T2). A data block, never executed. */}
+  <script type="application/ld+json" slot="head" is:inline set:html={jsonLdText(person)} />
+  <script slot="head" is:inline set:html={VIEW_SCRIPT} />
+  <CvHeader profile={profile.data}>
+    <CvViewSwitch />
+    {/* The build-time PDF (scripts/build-pdf.mjs): always the Full view, printed from this page. */}
+    <Button href={CV_PDF_PATH} variant="secondary" download type="application/pdf">
+      Download PDF
+    </Button>
+  </CvHeader>
+
+  <CvSection id="summary" title="Summary">
+    <CvProse only="brief">
+      <ul>
+        {profile.data.brief.map((line) => (
+          <li>{line}</li>
+        ))}
+      </ul>
+    </CvProse>
+    <CvProse only="full">
+      <Summary />
+    </CvProse>
+  </CvSection>
+
+  <CvSection id="experience" title="Experience" list="timeline">
+    {jobContents.map(({ job, Content }) => (
+      <CvJob id={job.id.replace('jobs/', '')} job={job.data}>
+        <Content />
+      </CvJob>
+    ))}
+  </CvSection>
+
+  <CvSection id="projects" title="Projects" list="cards">
+    {projects.map((project) => (
+      <CvProject id={project.id.replace('projects/', '')} project={project.data} />
+    ))}
+  </CvSection>
+
+  <CvSection id="skills" title="Skills">
+    <CvSkills skills={skills} />
+  </CvSection>
+
+  <CvSection id="education" title="Education">
+    <CvRecords records={educationRecords} />
+  </CvSection>
+
+  <CvSection id="certifications" title="Certifications and courses">
+    <CvRecords records={certificationRecords} />
+  </CvSection>
+
+  <CvSection id="languages" title="Languages">
+    <CvRecords records={languageRecords} />
+  </CvSection>
 </BaseLayout>

@@ -29,5 +29,10 @@
     @media (prefers-reduced-motion: reduce) {
       transition: opacity var(--duration-fast) linear;
     }
+
+    // Navigation and page chrome stay off paper (css-scss.md → Print).
+    @media print {
+      display: none;
+    }
   }
 }

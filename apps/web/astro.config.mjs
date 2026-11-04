@@ -2,6 +2,7 @@
 import { defineConfig, fontProviders } from 'astro/config';
 import react from '@astrojs/react';
 import { fontsourceVariants } from './scripts/fontsource-variants.mjs';
+import { chatMockIntegration } from './src/lib/chat/mock/dev-server.ts';
 
 // Subsets. The UI face is Latin only: it is preloaded, and Astro cannot tell subsets apart in local files,
 // so a second subset would be preloaded too. The serif also gets Latin Extended for names in CV prose and
@@ -12,9 +13,13 @@ const PROSE_SUBSETS = ['latin', 'latin-ext'];
 
 // https://astro.build/config
 export default defineConfig({
-  // Static output (ADR-0002). The production domain is set in Phase 8.
+  // Static output (ADR-0002).
   output: 'static',
-  integrations: [react()],
+  // The production origin: canonical URLs, Open Graph URLs and the JSON-LD `url` are built from it
+  // (BaseLayout, /cv). The domain goes live in ROADMAP 1.7 / Phase 8.
+  site: 'https://ivanvasiunin.com',
+  // chatMockIntegration: a mocked /api/chat on `astro dev` only (src/lib/chat/mock/dev-server.ts).
+  integrations: [react(), chatMockIntegration()],
   // The dev toolbar is dev-only (never in the build); disabled because it overlaps the page bottom
   // during visual review. Accessibility audits run via axe in e2e instead.
   devToolbar: { enabled: false },

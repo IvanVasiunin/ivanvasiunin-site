@@ -45,3 +45,15 @@ for (const { path, name } of PAGES) {
     }
   }
 }
+
+// The CV on paper (TESTING.md §1, css-scss.md → Print): an A4-wide page (794 px at 96 dpi) in print
+// media, in the dark theme on screen, which print must ignore (light, Full view). The PDF itself is
+// checked in e2e/cv-print.spec.ts.
+test('cv print version', async ({ page }) => {
+  await page.setViewportSize({ width: 794, height: 1123 });
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+  await page.goto('/cv?view=brief');
+  await page.emulateMedia({ media: 'print', colorScheme: 'dark', reducedMotion: 'reduce' });
+
+  await expect(page).toHaveScreenshot('cv-print.png', { fullPage: true });
+});

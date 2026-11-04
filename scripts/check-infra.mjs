@@ -12,6 +12,7 @@ const BUILT_HERE = ['web', 'api'];
 const DOCKERFILES = ['apps/web/Dockerfile', 'apps/api/Dockerfile'];
 
 /**
+ * @typedef {{ host_ip?: string, published?: string | number, target?: number }} Port
  * @typedef {{ image?: string, ports?: unknown[], networks?: Record<string, unknown>,
  *   read_only?: boolean, security_opt?: string[], cap_drop?: string[],
  *   environment?: Record<string, string | null>, healthcheck?: unknown }} Service
@@ -110,14 +111,57 @@ export function dockerignoreProblems(text) {
   return problems;
 }
 
-function main() {
+/**
+ * Problems in the resolved development Compose config (infra/docker-compose.dev.yml): its database
+ * may publish a port to this machine only (127.0.0.1), never to the network, and runs the same
+ * image as production.
+ * @param {Compose} dev
+ * @param {Compose} production
+ * @returns {string[]}
+ */
+export function devComposeProblems(dev, production) {
+  /** @type {string[]} */
+  const problems = [];
+  const db = dev.services.db;
+  if (!db) return ['dev db: service missing'];
+  for (const port of /** @type {Port[]} */ (db.ports ?? [])) {
+    if (port.host_ip !== '127.0.0.1') {
+      problems.push(`dev db: port ${String(port.published)} must bind 127.0.0.1 only`);
+    }
+  }
+  const image = production.services.db?.image;
+  if (db.image !== image) {
+    problems.push(`dev db: image ${String(db.image)} must match production (${String(image)})`);
+  }
+  return problems;
+}
+
+/**
+ * `docker compose config --format json` for one file, with placeholder secrets.
+ * @param {string} file
+ * @returns {Compose}
+ */
+function resolvedCompose(file) {
   const json = execFileSync(
     'docker',
-    ['compose', '-f', path.join(ROOT, 'infra/docker-compose.yml'), 'config', '--format', 'json'],
-    { encoding: 'utf8', env: { ...process.env, POSTGRES_PASSWORD: 'check-infra-placeholder' } },
+    ['compose', '-f', path.join(ROOT, file), 'config', '--format', 'json'],
+    {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        POSTGRES_PASSWORD: 'check-infra-placeholder',
+        POSTGRES_MCP_PASSWORD: 'check-infra-placeholder',
+      },
+    },
   );
+  return JSON.parse(json);
+}
+
+function main() {
+  const production = resolvedCompose('infra/docker-compose.yml');
   const problems = [
-    ...composeProblems(JSON.parse(json)),
+    ...composeProblems(production),
+    ...devComposeProblems(resolvedCompose('infra/docker-compose.dev.yml'), production),
     ...DOCKERFILES.flatMap((file) =>
       dockerfileProblems(file, readFileSync(path.join(ROOT, file), 'utf8')),
     ),

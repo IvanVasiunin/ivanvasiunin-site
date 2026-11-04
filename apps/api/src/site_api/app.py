@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from site_api.core.config import Settings
 from site_api.core.errors import install_error_handlers
+from site_api.core.openapi import register_contract_models
 from site_api.core.request_context import REQUEST_ID_HEADER, RequestContextMiddleware
 from site_api.db.engine import create_engine
 from site_api.routers import health
@@ -83,6 +84,7 @@ def create_app(settings: Settings) -> FastAPI:
     install_error_handlers(app)
     _add_middleware(app, settings)
     app.include_router(health.router)
+    register_contract_models(app)
     return app
 
 

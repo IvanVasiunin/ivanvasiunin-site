@@ -75,12 +75,69 @@
     overflow: visible;
   }
 
-  .theme-toggle__stop-start {
-    stop-color: var(--color-accent);
+  // "Frosted glass" sun and moon (tokens: --color-sun-*, --color-moon-*, --color-icon-*).
+  .theme-toggle__stop-sun-1 {
+    stop-color: var(--color-sun-1);
   }
 
-  .theme-toggle__stop-end {
-    stop-color: var(--color-accent-2);
+  .theme-toggle__stop-sun-2 {
+    stop-color: var(--color-sun-2);
+  }
+
+  .theme-toggle__stop-sun-3 {
+    stop-color: var(--color-sun-3);
+  }
+
+  .theme-toggle__stop-moon-1 {
+    stop-color: var(--color-moon-1);
+  }
+
+  .theme-toggle__stop-moon-2 {
+    stop-color: var(--color-moon-2);
+  }
+
+  .theme-toggle__stop-moon-3 {
+    stop-color: var(--color-moon-3);
+  }
+
+  // The sun's outline keeps the icon-only button's glyph at ≥ 3:1 on the light bar (WCAG 1.4.11).
+  .theme-toggle__sun-core {
+    stroke: var(--color-sun-edge);
+    stroke-width: 0.8;
+  }
+
+  .theme-toggle__glint {
+    fill: none;
+    stroke: var(--color-icon-sheen);
+    stroke-width: 1.1;
+    stroke-linecap: round;
+  }
+
+  .theme-toggle__rim {
+    fill: none;
+    stroke: var(--color-icon-rim);
+    stroke-width: 0.8;
+  }
+
+  .theme-toggle__star {
+    fill: var(--color-icon-star);
+  }
+
+  // Forced colours drop the gradients: solid glyphs in the button text colour, no sheen or rim.
+  @media (forced-colors: active) {
+    .theme-toggle__shape,
+    .theme-toggle__star {
+      fill: ButtonText;
+    }
+
+    .theme-toggle__sun-core {
+      stroke: none;
+    }
+
+    .theme-toggle__glint,
+    .theme-toggle__rim {
+      display: none;
+    }
   }
 
   // Both icons are stacked; only the visible theme's icon is shown (sun in light, moon in dark).
@@ -96,10 +153,6 @@
     // Reduced motion: a plain cross-fade.
     @media (prefers-reduced-motion: reduce) {
       transform: none;
-    }
-
-    @media (forced-colors: active) {
-      fill: ButtonText;
     }
   }
 

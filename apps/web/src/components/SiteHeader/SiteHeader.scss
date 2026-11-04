@@ -14,6 +14,79 @@
     @include mq(md) {
       padding-block-start: max(var(--space-md), env(safe-area-inset-top));
     }
+
+    // Navigation and page chrome stay off paper (css-scss.md → Print).
+    @media print {
+      display: none;
+    }
+
+    // Scrim (decoration): only around the bar, not across the page (Ivan, 2026-11-03): as wide as the
+    // bar, from the top of the screen to a band below it. Content passing under the bar is tinted and
+    // blurred; the scrim fades out softly below the bar and at both sides, so it has no hard edge.
+    // `backdrop-filter` and `mask-image` (css-scss.md → Performance): one small element per page, and
+    // the fades need the mask, because a blur alone would end at a hard edge. The blur is the costly
+    // part (it re-samples on scroll), so it is an enhancement: only where supported and not for readers
+    // who ask for less transparency; there the scrim is a more opaque tint instead.
+    // At the top of the page nothing is under the bar but the sky, so the scrim is invisible there (a
+    // tint over the backdrop read as a flat stripe). It fades in gradually over the first
+    // `--distance-scrim-fade` of scrolling where scroll-driven animations exist, and stays hidden on a
+    // page too short to scroll. Elsewhere it is always on.
+    &::before {
+      content: '';
+      position: absolute;
+      inset-block: 0 calc(-1 * var(--space-lg));
+
+      // The bar's box widened by the side fades, so the bar itself is fully covered (content that lines
+      // up with the bar's edge is blurred too); centred by the auto margins. It never reaches past the
+      // screen edge (no horizontal scroll), so on narrow screens the fades start at the edge.
+      inset-inline: max(0px, max(var(--gutter), env(safe-area-inset-left)) - var(--space-lg))
+        max(0px, max(var(--gutter), env(safe-area-inset-right)) - var(--space-lg));
+      z-index: var(--z-below);
+      max-inline-size: calc(var(--size-container) - 2 * var(--gutter) + 2 * var(--space-lg));
+      margin-inline: auto;
+      pointer-events: none;
+      background-color: var(--color-scrim-solid);
+      mask-image:
+        linear-gradient(to bottom, #000 calc(100% - var(--space-lg)), transparent),
+        linear-gradient(
+          to right,
+          transparent,
+          #000 var(--space-lg),
+          #000 calc(100% - var(--space-lg)),
+          transparent
+        );
+      mask-composite: intersect;
+
+      @supports (backdrop-filter: blur(1px)) {
+        @media (prefers-reduced-transparency: no-preference) {
+          background-color: var(--color-scrim);
+          backdrop-filter: blur(var(--blur-scrim));
+        }
+      }
+
+      // Opacity only, linked to the scroll position (not a timed motion). Longhands, not the
+      // `animation` shorthand: the minifier folds a following `animation-timeline` into the shorthand,
+      // where browsers reject it (it is a reset-only part of the shorthand) and drop the whole rule.
+      // A page that does not scroll has an inactive timeline (no animation): it keeps opacity 0.
+      @supports (animation-timeline: scroll()) {
+        opacity: 0;
+        animation-name: site-header-scrim-in;
+        animation-timing-function: var(--ease-in-out);
+        animation-fill-mode: both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 var(--distance-scrim-fade);
+      }
+    }
+  }
+
+  @keyframes site-header-scrim-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 
   .site-header__bar {

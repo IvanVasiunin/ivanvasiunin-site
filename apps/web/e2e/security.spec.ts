@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import type { Page } from '@playwright/test';
 
 import { expect, test } from './fixtures';
@@ -6,7 +8,8 @@ import { expect, test } from './fixtures';
 // (astro.config.mjs → security.csp). These tests load the real build and fail on any violation, so
 // a new inline script or style without a hash is caught here, in every browser.
 
-const PATHS = ['/', '/cv'] as const;
+// `/cv?view=brief` also runs the CV view head script (ROADMAP 2.4).
+const PATHS = ['/', '/cv', '/cv?view=brief'] as const;
 
 /** Records CSP violations from the first byte of every document the page loads. */
 async function recordViolations(page: Page): Promise<() => Promise<string[]>> {
@@ -34,6 +37,33 @@ for (const path of PATHS) {
     expect(csp).not.toContain('unsafe-inline');
     expect(csp).not.toContain('unsafe-eval');
     expect(await violations()).toEqual([]);
+  });
+}
+
+// A <meta> CSP only governs what comes after it, and Astro puts it at the end of <head>, after the
+// inline head scripts (theme, CV view). So a missing hash would not show up as a violation in the
+// browser; it would only break once the policy is sent as a header. Check the hashes directly.
+for (const path of PATHS) {
+  test(`${path}: every inline script's hash is in the CSP`, async ({ page }) => {
+    await page.goto(path);
+    const csp =
+      (await page.locator('meta[http-equiv="content-security-policy"]').getAttribute('content')) ??
+      '';
+    const inlineScripts = await page.locator('script:not([src])').evaluateAll((scripts) =>
+      scripts
+        .filter((script) => {
+          const type = script.getAttribute('type');
+          // Data blocks (JSON-LD) and speculation rules are not executed as scripts.
+          return type === null || type === 'module' || type === 'text/javascript';
+        })
+        .map((script) => script.textContent),
+    );
+
+    expect(inlineScripts.length).toBeGreaterThan(0);
+    for (const source of inlineScripts) {
+      const hash = `'sha256-${createHash('sha256').update(source).digest('base64')}'`;
+      expect(csp, source.slice(0, 80)).toContain(hash);
+    }
   });
 }
 

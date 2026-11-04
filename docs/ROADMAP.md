@@ -43,7 +43,7 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 | 2.2 | Draft the structured CV from the Word CV + `experience-notes.md`; **no phone number** | C → I review | Ivan approved the content; a test asserts no phone pattern in the sources |
 | 2.3 | `/cv` page: semantic markup, JSON-LD `Person`, meta / OG | C | axe green; Lighthouse mobile ≥ 95 in all four categories |
 | 2.4 | Brief / Full switch (`aria-pressed`, `?view=`), Full without JS | C | Vitest + e2e (with JS disabled too) |
-| 2.5 | Print styles + build-time PDF via Playwright | C | Print visual snapshot; PDF generated in CI |
+| 2.5 | Print styles + build-time PDF via Playwright | C | Print visual snapshot; PDF generated in CI; the secondary-button e2e checks in `e2e/layout.spec.ts` restored on the "Download PDF" link |
 | 2.6 | Layout details: scroll-driven animations, View Transitions polish (`@supports`) | C | Works and degrades in Firefox / older Safari profiles; reduced motion respected |
 
 ## Phase 3 — RAG MVP
@@ -111,6 +111,7 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 | 8.3 | Backups (`pg_dump` schedule) + restore drill | C + I | Restore tested and documented |
 | 8.4 | OpenAI spend limit + Langfuse alerts verified; key rotation procedure | I | RUNBOOK updated |
 | 8.5 | README for the public repo; this repo added to the GitHub allow-list and re-ingested | C + I | Repo public; the assistant can answer "how is this site built?" |
+| 8.6 | Open Graph image (1200×630, `og:image` + `twitter:image`, `twitter:card` → `summary_large_image`) for `/` and `/cv` | C, Ivan reviews | Link previews show the image in the Telegram / LinkedIn debuggers |
 
 ## Backlog
 

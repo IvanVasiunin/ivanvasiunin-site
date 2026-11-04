@@ -1,0 +1,39 @@
+// Markdown output has no classes, so this block styles its descendants by element, at zero extra
+// specificity (`:where`), the way a typographic prose block does.
+@layer components {
+  .cv-prose {
+    max-inline-size: var(--measure);
+    font-family: var(--font-serif);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-prose);
+
+    :where(p, ul, ol) + :where(p, ul, ol) {
+      margin-block-start: var(--space-sm);
+    }
+
+    :where(ul, ol) {
+      padding-inline-start: var(--space-lg);
+    }
+
+    :where(li) + :where(li) {
+      margin-block-start: var(--space-2xs);
+    }
+
+    :where(li)::marker {
+      color: var(--color-chart-line);
+    }
+
+    :where(strong) {
+      font-weight: var(--font-weight-medium);
+    }
+
+    // Links inside running text keep a resting underline (WCAG 1.4.1, styles/base.scss).
+    :where(a) {
+      text-decoration-line: underline;
+    }
+
+    :where(code) {
+      font-size: var(--font-size-md);
+    }
+  }
+}
