@@ -37,3 +37,7 @@ apps/api/artifacts/
 # OS / editors
 .DS_Store
 Thumbs.db
+
+# DeepEval's local state (evals, ROADMAP 4.5) and eval reports written outside the repository.
+.deepeval/
+eval-results/
