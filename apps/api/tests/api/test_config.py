@@ -81,3 +81,49 @@ async def test_docs_and_schema_are_served_only_outside_production(
 
     assert docs.status_code == expected_status
     assert schema.status_code == expected_status
+
+
+def test_the_answer_model_defaults_follow_adr_0001() -> None:
+    settings = IsolatedSettings(database_url=SecretStr(UNREACHABLE_DATABASE_URL))
+
+    assert settings.answer_provider == "openai"
+    assert settings.answer_model == "gpt-6.1-terra"
+    assert settings.answer_reasoning_effort == "none"
+
+
+def test_only_known_answer_providers_are_accepted() -> None:
+    with pytest.raises(ValidationError, match="answer_provider"):
+        IsolatedSettings(
+            database_url=SecretStr(UNREACHABLE_DATABASE_URL),
+            answer_provider="mistral",  # pyright: ignore[reportArgumentType] -- the bad value is the point
+        )
+
+
+def test_the_answer_model_must_have_a_price() -> None:
+    # Checked at startup, so no answer ever goes out without a cost estimate.
+    with pytest.raises(ValidationError, match="no price for the answer model"):
+        IsolatedSettings(
+            database_url=SecretStr(UNREACHABLE_DATABASE_URL),
+            answer_model="claude-opus-5-5",
+        )
+
+
+def test_a_model_price_comes_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ANSWER_MODEL", "claude-opus-5-5")
+    # The variable replaces the whole table: the router's model must be listed too.
+    monkeypatch.setenv(
+        "MODEL_PRICES",
+        '{"claude-opus-5-5": {"input": 4, "cached_input": 0.2, "output": 20},'
+        ' "gpt-6-luna": {"input": 0.1, "cached_input": 0.01, "output": 0.5}}',
+    )
+
+    settings = IsolatedSettings(database_url=SecretStr(UNREACHABLE_DATABASE_URL))
+
+    assert settings.model_prices["claude-opus-5-5"].output == 20
+
+
+def test_the_chat_limits_default_to_spec() -> None:
+    settings = IsolatedSettings(database_url=SecretStr(UNREACHABLE_DATABASE_URL))
+
+    assert settings.max_question_chars == 500
+    assert settings.history_max_turns == 6

@@ -30,6 +30,8 @@ _ALLOWED_FIELDS: tuple[str, ...] = (
     "error_code",
     "error_type",
     "stack",
+    # A number of things a job handled (rows purged); never anything a visitor typed.
+    "count",
 )
 
 # uvicorn's line for an exception that escaped the app (written with a trailing newline). Our

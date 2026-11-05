@@ -1,10 +1,10 @@
-"""Add contract models that no route references (yet) to the OpenAPI schema.
+"""Add the chat contract models to the OpenAPI schema as named components.
 
-FastAPI documents only the models its routes use. The chat models (`schemas/chat.py`) are part of
-the contract before `/api/chat` exists (ROADMAP 3.8): the chat UI (3.9) is built against the
-generated types. ADR-0001 names this fallback: register the models as components explicitly. It
-also guarantees one named `ChatEvent` union for the frontend, however FastAPI names the stream's
-item type once the route exists.
+The chat models (`schemas/chat.py`) were part of the contract before `/api/chat` existed, and the
+chat UI was built against the generated types; ADR-0001 names this fallback: register the models as
+components explicitly. Now that the route exists, it still guarantees one named `ChatEvent` union
+(and `ChatRequest`) for the frontend: FastAPI inlines the stream's item type under a generated
+title.
 """
 
 from typing import Literal
@@ -47,9 +47,9 @@ def register_contract_models(app: FastAPI) -> None:
     """Make `app.openapi()` also include the contract models as components.
 
     Replacing `app.openapi` is FastAPI's documented way to extend the schema
-    (https://fastapi.tiangolo.com/how-to/extending-openapi/). When ROADMAP 3.8 adds `/api/chat`,
-    FastAPI generates components with the same names; 3.8 adds a test that they equal these ones,
-    so this registration can never hide a difference.
+    (https://fastapi.tiangolo.com/how-to/extending-openapi/). FastAPI generates the event
+    components of `/api/chat` under the same names; a test (tests/api/test_chat.py) checks that
+    they equal these ones, so this registration can never hide a difference.
     """
     build = app.openapi
 

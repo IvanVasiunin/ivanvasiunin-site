@@ -27,6 +27,10 @@ class Candidate:
     section: str
     project: str | None
     url: str | None
+    # Cosine similarity to the question (1 = same direction), from the vector search; `None` for a
+    # chunk only the full-text search found. The relevance gate reads it (ROADMAP 4.3): unlike the
+    # rank-based RRF score, it says how close the best chunk really is to the question.
+    similarity: float | None = None
 
 
 class ChunkSearch(Protocol):
@@ -76,7 +80,9 @@ class PostgresChunkSearch:
         # `<=>` is pgvector's cosine distance, the operator the HNSW index (vector_cosine_ops)
         # was built for; ORDER BY distance + LIMIT lets Postgres use that index.
         distance = CHUNKS.c.embedding.cosine_distance(embedding)
-        query = sa.select(*_COLUMNS).order_by(distance).limit(limit)
+        # Cosine similarity = 1 - cosine distance; selected so the relevance gate can read it.
+        similarity = (1 - distance).label("similarity")
+        query = sa.select(*_COLUMNS, similarity).order_by(distance).limit(limit)
         return await self._fetch(query)
 
     async def by_text(self, question: str, limit: int) -> list[Candidate]:
@@ -107,6 +113,12 @@ class PostgresChunkSearch:
                     section=row["section"],
                     project=row["project"],
                     url=row["url"],
+                    similarity=_similarity(row.get("similarity")),
                 )
                 for row in result.mappings()
             ]
+
+
+def _similarity(value: object) -> float | None:
+    """The row's similarity as a float, or `None` when the query did not select one."""
+    return float(value) if isinstance(value, (int, float)) else None

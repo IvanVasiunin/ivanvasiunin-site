@@ -5,6 +5,7 @@ and fakes. `site_api.main` calls it once for the real server.
 """
 
 import asyncio
+import contextlib
 import logging
 import sys
 from collections.abc import AsyncGenerator
@@ -18,9 +19,13 @@ from site_api.core.errors import install_error_handlers
 from site_api.core.openapi import register_contract_models
 from site_api.core.request_context import REQUEST_ID_HEADER, RequestContextMiddleware
 from site_api.db.engine import create_engine
-from site_api.routers import health
+from site_api.routers import chat, health
 from site_api.schemas.errors import ErrorResponse
+from site_api.services.chat import ChatObservers, create_chat_service
 from site_api.services.health import database_probe
+from site_api.services.limits import ChatLimits, DailySpend
+from site_api.services.stats import PostgresStats, retention_loop
+from site_api.services.tracing import create_tracing
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -51,6 +56,9 @@ def create_app(settings: Settings) -> FastAPI:
     The database engine is created at startup and disposed of at shutdown (the lifespan), so
     importing or building the app never opens a connection.
     """
+    # The day's estimated spend: the chat service adds every answer's cost, and the limits check it
+    # before every answer. In memory, so it resets on restart (the OpenAI spend limit backs it up).
+    spend = DailySpend(settings.daily_budget_usd)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
@@ -59,9 +67,33 @@ def create_app(settings: Settings) -> FastAPI:
         app.state.database_probe = database_probe(
             engine, settings.db_health_timeout_s, settings.health_cache_ttl_s
         )
+        stats = PostgresStats(engine)
+        # Masked traces to Langfuse EU, when its keys are set (services/tracing.py).
+        tracing = create_tracing(settings)
+        callbacks = [tracing.handler] if tracing is not None else []
+        # Built once: the model clients keep their HTTP connection pools between requests.
+        chat_service = create_chat_service(
+            settings, engine, spend, ChatObservers(stats=stats, callbacks=callbacks)
+        )
+        app.state.chat_service = chat_service
+        # Deletes chat statistics past their retention period, now and then periodically.
+        retention = asyncio.create_task(
+            retention_loop(
+                stats, settings.chat_stats_retention_days, settings.chat_stats_purge_interval_s
+            )
+        )
         try:
             yield
         finally:
+            retention.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await retention
+            if chat_service is not None:
+                # The last answers' statistics rows, before the pool closes.
+                await chat_service.drain()
+            if tracing is not None:
+                # Send the buffered traces before the process ends.
+                tracing.shutdown()
             await engine.dispose()
 
     app = FastAPI(
@@ -81,9 +113,13 @@ def create_app(settings: Settings) -> FastAPI:
         },
     )
     app.state.settings = settings
+    # In memory and free to create, so the limits exist even when a test skips the lifespan.
+    app.state.daily_spend = spend
+    app.state.chat_limits = ChatLimits(settings, spend)
     install_error_handlers(app)
     _add_middleware(app, settings)
     app.include_router(health.router)
+    app.include_router(chat.router)
     register_contract_models(app)
     return app
 

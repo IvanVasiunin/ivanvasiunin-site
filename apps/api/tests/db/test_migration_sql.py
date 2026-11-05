@@ -97,3 +97,25 @@ def test_downgrade_drops_the_table_and_the_extension() -> None:
     assert "DROP TABLE chunks" in sql
     assert "DROP EXTENSION IF EXISTS vector" in sql
     assert sql.index("DROP TABLE chunks") < sql.index("DROP EXTENSION")
+
+
+def test_chat_answers_keeps_statistics_without_personal_data() -> None:
+    # Migration 0002 (ROADMAP 4.6, SPEC §6.6): counts, classes, outcomes, cost and the masked
+    # question; never an IP address or a session id.
+    sql = render("upgrade", "0001:0002")
+
+    assert "CREATE TABLE chat_answers" in sql
+    for column in ("route TEXT", "language TEXT", "finish_reason TEXT", "error_code TEXT"):
+        assert column in sql
+    assert "question_masked TEXT" in sql
+    assert "cost_usd NUMERIC(10, 6) DEFAULT '0' NOT NULL" in sql
+    assert "ip" not in sql.split("CREATE TABLE chat_answers", 1)[1].split(";", 1)[0].lower().split()
+    assert "session" not in sql.split("CREATE TABLE chat_answers", 1)[1].split(";", 1)[0].lower()
+    assert "CREATE INDEX ix_chat_answers_created_at ON chat_answers (created_at)" in sql
+
+
+def test_chat_answers_downgrade_drops_only_that_table() -> None:
+    sql = render("downgrade", "0002:0001")
+
+    assert "DROP TABLE chat_answers" in sql
+    assert "chunks" not in sql

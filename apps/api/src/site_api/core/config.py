@@ -12,8 +12,22 @@ from urllib.parse import urlsplit
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# The chat-model providers the API can use (ADR-0001); which one is a setting, never code.
+type ModelProvider = Literal["openai", "anthropic"]
+
 # A GitHub `owner/name`, the form the README API takes.
 GITHUB_REPO_PATTERN = r"^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$"
+
+
+class ModelPrice(BaseModel):
+    """What one model costs, in USD per 1M tokens (for the `usage` event's cost estimate)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    input: float = Field(ge=0)
+    # Input tokens the provider read from its prompt cache (cheaper than fresh input).
+    cached_input: float = Field(ge=0)
+    output: float = Field(ge=0)
 
 
 class GithubReadmeSource(BaseModel):
@@ -127,6 +141,102 @@ class Settings(BaseSettings):
     # The RRF constant: 60 is the value of the original paper (Cormack et al., 2009); a larger k
     # flattens the difference between ranks.
     retrieval_rrf_k: int = Field(default=60, ge=1, le=1000)
+    # Evals (ROADMAP 4.5, docs/TESTING.md): a cheap judge model scores in-scope answers
+    # (faithfulness to the sources, relevancy to the question); a run below any threshold fails.
+    eval_judge_provider: ModelProvider = "openai"
+    eval_judge_model: str = Field(default="gpt-6-luna", min_length=1)
+    eval_judge_max_output_tokens: int = Field(default=1500, ge=100, le=8000)
+    eval_judge_timeout_s: float = Field(default=60.0, gt=0, le=300)
+    eval_judge_max_retries: int = Field(default=1, ge=0, le=3)
+    eval_judge_reasoning_effort: Literal["none", "low", "medium", "high"] = "none"
+    # A run stops before its next case once it has cost this many times its estimate.
+    eval_max_cost_factor: float = Field(default=3.0, ge=1, le=20)
+    eval_min_router_accuracy: float = Field(default=0.9, ge=0, le=1)
+    eval_min_rule_pass_rate: float = Field(default=0.85, ge=0, le=1)
+    eval_min_faithfulness: float = Field(default=0.8, ge=0, le=1)
+    eval_min_answer_relevancy: float = Field(default=0.7, ge=0, le=1)
+
+    # The relevance gate (ROADMAP 4.3, rag/relevance.py): below this cosine similarity between the
+    # question and its closest chunk, Elio answers with the "no information" template instead of
+    # calling the answer model. A starting value for text-embedding-3-large (unrelated text scores
+    # roughly 0.1-0.25 with it, related text noticeably more); UNVERIFIED for this corpus until
+    # the evals of ROADMAP 4.5 calibrate it.
+    relevance_min_similarity: float = Field(default=0.3, ge=0, le=1)
+
+    # The answer model (ROADMAP 3.7, ADR-0001 / ADR-0008). Provider and model are config only:
+    # switching OpenAI ↔ Anthropic is ANSWER_PROVIDER + ANSWER_MODEL (e.g. `anthropic` +
+    # `claude-haiku-5-5`) and the matching API key, with no code change.
+    answer_provider: ModelProvider = "openai"
+    answer_model: str = Field(default="gpt-6.1-terra", min_length=1)
+    # OpenAI only (ignored for Anthropic): `none` keeps the time to the first token low (SPEC: TTFT
+    # p50 < 2 s); the model's own default is `medium`.
+    answer_reasoning_effort: Literal["none", "low", "medium", "high"] = "none"
+    # A cap on one answer: Elio's answers are short (SPEC §5), and a runaway answer costs money.
+    # An answer cut by it ends with `finish_reason: "length"`.
+    answer_max_output_tokens: int = Field(default=800, ge=50, le=4000)
+    # How long one model request may take, and how many times the client retries a failed one.
+    answer_timeout_s: float = Field(default=30.0, gt=0, le=120)
+    answer_max_retries: int = Field(default=1, ge=0, le=3)
+    # Anthropic key, needed only when a provider setting is `anthropic`.
+    anthropic_api_key: SecretStr | None = None
+
+    # The router (ROADMAP 4.2, ADR-0004 layer 2): a cheap, fast model that sorts every question
+    # into one of the SPEC §5 classes and detects its language, before any retrieval or answer.
+    # Its output is a few tokens of structured data, so the cap is small.
+    router_provider: ModelProvider = "openai"
+    router_model: str = Field(default="gpt-6-luna", min_length=1)
+    router_reasoning_effort: Literal["none", "low", "medium", "high"] = "none"
+    router_max_output_tokens: int = Field(default=60, ge=20, le=500)
+    router_timeout_s: float = Field(default=10.0, gt=0, le=60)
+    router_max_retries: int = Field(default=1, ge=0, le=3)
+    # Earlier turns the router sees, so a follow-up ("and his skills?") keeps its topic.
+    router_history_turns: int = Field(default=2, ge=0, le=10)
+    # Chat model prices, by model ID. OpenAI: ADR-0001, Standard tier as of 2026-11-01.
+    # Anthropic: first-party API rates as of 2026-10-06 (Haiku 5.5 for prompts up to 100K tokens;
+    # a cache read costs 0.1x input). The answer model must be listed (checked at startup), so
+    # every answer has a cost estimate and the provider switch stays a config change. Another
+    # model is added with MODEL_PRICES='{"<id>": {"input": …, "cached_input": …, "output": …}}'
+    # (JSON; it replaces the whole table, so repeat the models still in use).
+    model_prices: dict[str, ModelPrice] = Field(
+        default_factory=lambda: {
+            "gpt-6.1-terra": ModelPrice(input=1.0, cached_input=0.05, output=5.0),
+            "gpt-6-luna": ModelPrice(input=0.10, cached_input=0.01, output=0.50),
+            "claude-haiku-5-5": ModelPrice(input=0.10, cached_input=0.01, output=0.50),
+            "claude-sonnet-5-5": ModelPrice(input=2.0, cached_input=0.20, output=10.0),
+        }
+    )
+
+    # Chat request limits (SPEC §4.1). A longer question is rejected with `input_too_long`; only
+    # the last `history_max_turns` turns of the client's history reach the model, each cut to
+    # `history_turn_max_chars` (the history is untrusted: without a cap it multiplies the cost).
+    max_question_chars: int = Field(default=500, ge=1, le=4000)
+    history_max_turns: int = Field(default=6, ge=0, le=40)
+    history_turn_max_chars: int = Field(default=2000, ge=1, le=4000)
+    # The longest one answer may take, retrieval included; then it ends with `timeout`. The model's
+    # own timeout covers one request only, and a slowly trickling stream could last much longer.
+    chat_total_timeout_s: float = Field(default=60.0, gt=0, le=300)
+
+    # Abuse and spend limits (ROADMAP 4.1, ADR-0004), all checked before any model call. Per IP is
+    # the real enforcement; per session is a UX nicety (the client makes the session ID). A rough
+    # scale: one answer costs about $0.0065 (ADR-0001), so $1 is about 150 answers a day.
+    chat_requests_per_minute_per_ip: int = Field(default=6, ge=1, le=600)
+    chat_requests_per_day_per_ip: int = Field(default=60, ge=1, le=100_000)
+    # Answers one IP may receive at the same time (a stream lasts up to CHAT_TOTAL_TIMEOUT_S).
+    chat_streams_per_ip: int = Field(default=2, ge=1, le=50)
+    session_max_questions: int = Field(default=30, ge=1, le=1000)
+    # The estimated spend of all answers per UTC day; then `budget_exceeded` until midnight UTC.
+    daily_budget_usd: float = Field(default=1.0, gt=0, le=1000)
+
+    # Tracing (ROADMAP 4.6, ADR-0001): Langfuse Cloud, EU region. Off unless both keys are set;
+    # every exported span is masked first (services/tracing.py, SPEC §6.6).
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: SecretStr | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
+
+    # Chat statistics (ROADMAP 4.6, SPEC §6.6): rows older than this are deleted by a job that
+    # runs at startup and then every `chat_stats_purge_interval_s`.
+    chat_stats_retention_days: int = Field(default=30, ge=1, le=365)
+    chat_stats_purge_interval_s: float = Field(default=6 * 3600, ge=60, le=7 * 24 * 3600)
 
     @field_validator("cors_allow_origins")
     @classmethod
@@ -164,6 +274,20 @@ class Settings(BaseSettings):
             owner = source.repo.split("/", 1)[0]
             if owner.lower() != self.github_owner.lower():
                 msg = f"README {source.repo!r} is not owned by {self.github_owner!r}"
+                raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _the_chat_models_have_prices(self) -> Self:
+        """Fail at startup, not in the first answer, when a chat model has no price."""
+        roles = (
+            ("answer", self.answer_model),
+            ("router", self.router_model),
+            ("eval judge", self.eval_judge_model),
+        )
+        for role, model in roles:
+            if model not in self.model_prices:
+                msg = f"MODEL_PRICES has no price for the {role} model {model!r}"
                 raise ValueError(msg)
         return self
 

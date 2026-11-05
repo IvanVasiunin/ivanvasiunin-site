@@ -144,6 +144,24 @@ async def test_vector_search_orders_by_cosine_distance(search: PostgresChunkSear
     assert len(found) == 2
 
 
+async def test_vector_search_reports_each_chunks_cosine_similarity(
+    search: PostgresChunkSearch,
+) -> None:
+    # ROADMAP 4.3: the relevance gate reads it. The query equals one chunk's unit vector, so that
+    # chunk has similarity 1 and an orthogonal one 0.
+    found = await search.by_vector(axis(1), limit=2)
+
+    assert found[0].similarity == pytest.approx(1.0)
+    assert found[1].similarity is not None
+    assert found[1].similarity < 1.0
+
+
+async def test_text_search_leaves_the_similarity_unknown(search: PostgresChunkSearch) -> None:
+    found = await search.by_text("corgi", limit=1)
+
+    assert found[0].similarity is None
+
+
 async def test_text_search_finds_exact_terms(search: PostgresChunkSearch) -> None:
     found = await search.by_text("corgi", limit=10)
 

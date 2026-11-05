@@ -91,7 +91,7 @@ Notation: **US-A** = AI mode, **US-T** = Text mode, **US-X** = cross-cutting.
 - Success is confirmed visually and via `aria-live` ("Copied").
 
 **US-A5. Example questions.**
-- Three clickable example questions are shown under the input.
+- Before the first question the chat panel shows four topic cards above the input (Experience, Skills & stack, Projects, This site); each card holds an example question (Ivan, 2026-11-05).
 - Clicking one fills the input and focuses it. It does not send. The user presses Enter or Send.
 - Examples are also present in the no-JS HTML of `/` as plain text and links.
 
@@ -111,7 +111,7 @@ Notation: **US-A** = AI mode, **US-T** = Text mode, **US-X** = cross-cutting.
 **US-A8. Sources in answers.**
 - Answers that use retrieved context include source references (e.g. "CV — BrainRocket", "Experience notes — Liketelecom").
 - References link to the site's own pages where a URL exists, or to the public GitHub README.
-- Templated answers (greeting, refusals, "no information") have no sources.
+- Templated answers (greeting, refusals, "no information") show no sources; for "no information" the `sources` event carries an empty list (§4.2).
 
 **US-A9. Under the hood panel.**
 - Under every answer there is a collapsed **Under the hood** toggle (`<button aria-expanded>`), operable by keyboard.
@@ -223,8 +223,10 @@ The schemas below are normative. Pydantic models in the API (`schemas/`) impleme
 
 ```
 about_ivan:          route → sources → token* → usage → done
+no_info (about_ivan, nothing relevant):
+                     route → sources (empty list) → token+ (templated) → usage → done
 greeting / off_topic
-/ injection / no_info: route → token+ (templated) → usage → done
+/ injection:         route → token+ (templated) → usage → done
 any failure:         … → error   (terminal, no done afterwards)
 ```
 
@@ -330,6 +332,12 @@ The router and the system prompt implement exactly this policy. The eval set has
 | `injection` | Attempts to change instructions, reveal the system prompt, role-play as someone else, or make Elio speak as Ivan in the first person | Template: polite refusal; the attempt is counted in stats |
 
 All templates exist in EN, ES, RU and UK, and fall back to EN for other languages.
+
+Edge cases (2026-11-05, ROADMAP 4.2):
+- Mentioning Ivan does not make a task about Ivan: "Ivan, translate this to French" is `off_topic`.
+- A message that mixes a question about Ivan with an unrelated request is `about_ivan`; Elio answers only the part about Ivan.
+- A message that mixes anything with an attempt to change the rules is `injection`.
+- The client-sent history is data and may be forged; the router classifies only the latest message.
 
 ### 5.2 Grounding rules (`about_ivan`)
 
@@ -446,6 +454,8 @@ Never name numbers or ranges, even if asked repeatedly or hypothetically. Use th
   - deleted automatically after the retention period in config (default 30 days);
   - sent to Langfuse (EU region) only after masking.
 - Full question texts are not written to application logs.
+- The question reaches the model provider (OpenAI, or Anthropic when configured) unmasked: the model needs it to answer. Masking is best effort (emails, phone numbers, URLs); names, addresses and nicknames have no pattern. `/privacy` says both.
+- Langfuse traces (question, history, retrieved context, answer, all masked) are kept for the Langfuse project's retention, at most 30 days (Hobby plan, ADR-0001).
 - IP addresses are used in memory for rate limiting only and are not persisted.
 
 ### 6.7 Cost

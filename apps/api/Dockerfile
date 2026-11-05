@@ -49,8 +49,8 @@ EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4).status == 200 else 1)"]
 
-# --proxy-headers with FORWARDED_ALLOW_IPS (set in Compose to Caddy's network) gives slowapi the
-# real client IP from Caddy; no server header; no uvicorn access log (it would log client IPs:
-# the app writes its own access line without them, core/request_context.py).
+# --proxy-headers with FORWARDED_ALLOW_IPS (set in Compose to Caddy's network) gives the rate
+# limits the real client IP from Caddy; no server header; no uvicorn access log (it would log
+# client IPs: the app writes its own access line without them, core/request_context.py).
 CMD ["uvicorn", "site_api.main:app", "--host", "0.0.0.0", "--port", "8000", \
      "--proxy-headers", "--no-server-header", "--no-access-log"]

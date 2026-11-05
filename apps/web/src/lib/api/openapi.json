@@ -527,6 +527,141 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/chat": {
+      "post": {
+        "description": "Stream Elio's answer: route → sources → token* → usage → done, or a terminal error.",
+        "operationId": "chat_api_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "properties": {
+                    "data": {
+                      "contentMediaType": "application/json",
+                      "contentSchema": {
+                        "discriminator": {
+                          "mapping": {
+                            "done": "#/components/schemas/DoneEvent",
+                            "error": "#/components/schemas/ErrorEvent",
+                            "route": "#/components/schemas/RouteEvent",
+                            "sources": "#/components/schemas/SourcesEvent",
+                            "token": "#/components/schemas/TokenEvent",
+                            "usage": "#/components/schemas/UsageEvent"
+                          },
+                          "propertyName": "type"
+                        },
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/RouteEvent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/SourcesEvent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/TokenEvent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/UsageEvent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DoneEvent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/ErrorEvent"
+                          }
+                        ],
+                        "title": "Streamitem Chat Api Chat Post"
+                      },
+                      "type": "string"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "retry": {
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Question too long (SPEC §4.3)"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request (SPEC §4.3)"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate or session limit (SPEC §4.3)"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Chat unavailable or daily budget spent (SPEC §4.3)"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error (SPEC §4.3)"
+          }
+        },
+        "summary": "Chat",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "description": "Report whether the API and its database are up, and which build is running.",

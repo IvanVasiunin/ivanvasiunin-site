@@ -1,16 +1,23 @@
 """Shared fixtures for API contract tests: an app with test settings and a fake database probe."""
 
+import json
+import uuid
 from collections.abc import AsyncIterator
 
 import pytest
 from fastapi import FastAPI
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport, AsyncClient, Response
 from pydantic import SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from site_api.app import create_app
 from site_api.core.config import Settings
-from site_api.deps import get_database_probe
+from site_api.deps import get_chat_service, get_database_probe
+from site_api.graph.nodes import ChatModels
+from site_api.services.chat import ChatService
+from site_api.services.limits import DailySpend
+
+from .chat_fakes import FakeRetriever, FakeRouterModel, StreamingFakeModel, answering, routing
 
 # Nothing listens on port 1: Linux refuses at once, Windows times out. Either way the database is
 # reliably "down", and the 1 s connect timeout in `settings` keeps the tests fast.
@@ -73,3 +80,53 @@ def add_crash_route(app: FastAPI) -> None:
     @app.get("/api/test/crash")
     async def crash() -> None:
         raise RuntimeError(INTERNAL_DETAIL)
+
+
+# ── Chat ──────────────────────────────────────────────────────────────────────────────────────
+
+QUESTION = "What does Ivan do?"
+
+
+class Chat:
+    """The service the app uses in a test: swap its retriever or model before a request."""
+
+    def __init__(self, settings: Settings, spend: DailySpend) -> None:
+        self.settings: Settings = settings
+        # The app's own day spend, which its limits check.
+        self.spend: DailySpend = spend
+        self.retriever: FakeRetriever = FakeRetriever()
+        self.model: StreamingFakeModel = answering("Ivan ", "builds UI.")
+        # Every question is about Ivan unless a test routes it elsewhere.
+        self.router: FakeRouterModel = routing()
+
+    def service(self) -> ChatService:
+        return ChatService(
+            self.retriever, ChatModels(self.router, self.model), self.settings, self.spend
+        )
+
+
+@pytest.fixture
+def chat(app: FastAPI, settings: Settings) -> Chat:
+    """The app's chat service, on fakes: no model, embedding or database call."""
+    spend: DailySpend = app.state.daily_spend
+    chat = Chat(settings, spend)
+    # A function, so a test can replace the model or retriever after the fixture ran.
+    app.dependency_overrides[get_chat_service] = chat.service
+    return chat
+
+
+def body(message: str = QUESTION, **extra: object) -> dict[str, object]:
+    """A chat request body with a new session."""
+    return {"message": message, "session_id": str(uuid.uuid4()), **extra}
+
+
+def events_of(response: Response) -> list[dict[str, object]]:
+    """The JSON `data` of every event, in order; comments (`: ping`) are skipped."""
+    events: list[dict[str, object]] = []
+    for block in response.text.split("\n\n"):
+        data = [
+            line.removeprefix("data: ") for line in block.splitlines() if line.startswith("data: ")
+        ]
+        if data:
+            events.append(json.loads("\n".join(data)))
+    return events

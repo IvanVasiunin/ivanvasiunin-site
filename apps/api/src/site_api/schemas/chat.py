@@ -4,7 +4,8 @@ Every event's `data` is one JSON object with a `type` discriminator; clients dis
 `event:` field is not used). The order of events:
 
     about_ivan:                    route → sources → token* → usage → done
-    greeting / off_topic / injection / no_info:
+    no_info (nothing relevant):    route → sources (empty) → token+ (templated) → usage → done
+    greeting / off_topic / injection:
                                    route → token+ (templated) → usage → done
     any failure:                   … → error   (terminal, no done afterwards)
 
@@ -12,8 +13,8 @@ On the wire every key is present, `null` where a value is absent (the default se
 OpenAPI components use the serialisation schema, so the generated TS types mark them required).
 SPEC §4.2 omits such keys in its examples for brevity; clients must accept both.
 
-The endpoint arrives in ROADMAP 3.8; the models are part of the contract already, so the chat UI
-(ROADMAP 3.9) is built against the generated types (`core/openapi.py` registers them).
+The endpoint is `routers/chat.py` (ROADMAP 3.8); the chat UI is built against the generated types
+(`core/openapi.py` also registers the models, under fixed names).
 """
 
 from typing import Annotated, Literal
@@ -24,9 +25,9 @@ from site_api.schemas.errors import ErrorCode
 
 # ── Request ───────────────────────────────────────────────────────────────────────────────────
 
-# Hard upper bounds of the request shape. The effective limits are lower and come from config in
-# ROADMAP 3.8 (question length → `input_too_long`, history turns); these only stop absurd payloads
-# before any of that runs.
+# Hard upper bounds of the request shape. The effective limits are lower and come from config
+# (MAX_QUESTION_CHARS → `input_too_long` in routers/chat.py; HISTORY_MAX_TURNS in services/chat.py);
+# these only stop absurd payloads before any of that runs.
 _MESSAGE_HARD_MAX = 4000
 _HISTORY_HARD_MAX = 40
 
@@ -42,7 +43,7 @@ class ChatRequest(BaseModel):
     """A visitor's question with the client's session and recent history."""
 
     # Trimmed here, so a blank question is rejected; the effective maximum, MAX_QUESTION_CHARS
-    # (config, default 500), is checked on the trimmed text in ROADMAP 3.8.
+    # (config, default 500), is checked on the trimmed text by the router.
     message: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1, max_length=_MESSAGE_HARD_MAX)
     ]
@@ -57,6 +58,8 @@ class ChatRequest(BaseModel):
 Route = Literal["about_ivan", "greeting", "off_topic", "injection"]
 SourceType = Literal["cv", "experience", "personal", "site_docs", "github_readme"]
 FinishReason = Literal["stop", "length", "templated", "no_info"]
+# The longest `snippet` of a source (SPEC §4.2).
+SNIPPET_MAX_CHARS = 200
 
 
 class RouteEvent(BaseModel):
@@ -80,7 +83,7 @@ class SourceItem(BaseModel):
     section: str | None = None
     # A page of this site or a public GitHub README; null when the source has no URL.
     url: str | None = None
-    snippet: str = Field(max_length=200)
+    snippet: str = Field(max_length=SNIPPET_MAX_CHARS)
 
 
 class SourcesEvent(BaseModel):

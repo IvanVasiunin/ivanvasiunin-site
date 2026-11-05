@@ -63,7 +63,9 @@ class HybridRetriever:
         embedding = await self._embeddings.aembed_query(question)
         by_vector = await self._search.by_vector(embedding, self._params.candidates)
         by_text = await self._search.by_text(question, self._params.candidates)
-        candidates = {chunk.chunk_id: chunk for chunk in [*by_vector, *by_text]}
+        # One candidate per chunk; the vector search's copy wins, because it carries the
+        # similarity the relevance gate needs (the full-text copy has none).
+        candidates = {chunk.chunk_id: chunk for chunk in [*by_text, *by_vector]}
         scores = reciprocal_rank_fusion(
             [[c.chunk_id for c in by_vector], [c.chunk_id for c in by_text]], self._params.rrf_k
         )
