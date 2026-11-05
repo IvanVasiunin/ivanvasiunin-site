@@ -6,6 +6,7 @@ import { BRAINROCKET_ANSWER, mockScenario, toSse } from '../../lib/chat/mock/sce
 import { CHAT_ENDPOINT } from '../../lib/sse/client';
 import { Chat, EXAMPLE_QUESTIONS, exampleHref } from './Chat';
 import { ChatErrorBoundary } from './ChatErrorBoundary';
+import { afterViewTransition } from './useChat';
 import { keyboardInset } from './useKeyboardInset';
 
 /** The JSON body a test fetch was called with. */
@@ -66,6 +67,8 @@ beforeEach(() => {
     vi.fn((query: string) => ({ matches: false, media: query }) as MediaQueryList),
   );
   window.history.replaceState(null, '', '/');
+  // The conversation is kept in sessionStorage (lib/chat/history.ts): every test starts with none.
+  sessionStorage.clear();
 });
 
 afterEach(() => {
@@ -79,7 +82,7 @@ describe('Chat', () => {
       render(<Chat fetchImpl={scenarioFetch()} />);
 
       expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
-        'Ask Elio about Ivan’s work',
+        'Hi! I’m Elio, Ivan’s AI assistant.',
       );
       expect(screen.getByText(/Elio is an AI assistant and can be wrong/)).toBeDefined();
       expect(screen.getByRole('link', { name: 'How chats are handled' }).getAttribute('href')).toBe(
@@ -88,12 +91,6 @@ describe('Chat', () => {
       const examples = screen.getAllByRole('link', { name: /\?$/ });
       expect(examples.map((link) => link.textContent)).toEqual(EXAMPLE_QUESTIONS);
       expect(examples[0]?.getAttribute('href')).toBe(exampleHref(EXAMPLE_QUESTIONS[0] ?? ''));
-    });
-
-    it('shows the CV button passed by the page', () => {
-      render(<Chat fetchImpl={scenarioFetch()} cv={<a href="/cv">Read the CV</a>} />);
-
-      expect(screen.getByRole('link', { name: 'Read the CV' })).toBeDefined();
     });
 
     it('an example question fills and focuses the input, and never sends', async () => {
@@ -233,6 +230,52 @@ describe('Chat', () => {
   });
 });
 
+describe('Chat history for the tab', () => {
+  it('brings the conversation back after the page is left and opened again', async () => {
+    const first = render(<Chat fetchImpl={scenarioFetch()} newTurnId={newTurnId} />);
+    await userEvent.type(input(), 'BrainRocket?{Enter}');
+    await screen.findByRole('button', { name: 'Copy' });
+    first.unmount();
+
+    // Text mode and back: a new page, the same tab.
+    const fetchImpl = scenarioFetch();
+    render(<Chat fetchImpl={fetchImpl} newTurnId={newTurnId} />);
+
+    expect(await screen.findByText('BrainRocket?')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'New chat' })).toBeDefined();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('New chat clears the conversation, forgets it and focuses the input', async () => {
+    const first = render(<Chat fetchImpl={scenarioFetch()} newTurnId={newTurnId} />);
+    await userEvent.type(input(), 'BrainRocket?{Enter}');
+    await screen.findByRole('button', { name: 'Copy' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'New chat' }));
+
+    expect(screen.queryByText('BrainRocket?')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'New chat' })).toBeNull();
+    expect(document.activeElement).toBe(input());
+    await waitFor(() => {
+      expect(liveRegion()?.textContent).toContain('New chat');
+    });
+    first.unmount();
+
+    render(<Chat fetchImpl={scenarioFetch()} newTurnId={newTurnId} />);
+    await act(() => Promise.resolve());
+    expect(screen.queryByText('BrainRocket?')).toBeNull();
+  });
+
+  it('starts empty when the stored conversation is malformed', async () => {
+    sessionStorage.setItem('elio-chat-v1', '[{"id": 1}]');
+
+    render(<Chat fetchImpl={scenarioFetch()} newTurnId={newTurnId} />);
+    await act(() => Promise.resolve());
+
+    expect(screen.queryByRole('button', { name: 'New chat' })).toBeNull();
+  });
+});
+
 describe('ChatErrorBoundary', () => {
   it('shows the fallback instead of a crashed chat', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -276,5 +319,52 @@ describe('Chat accessibility', () => {
     const regions = document.querySelectorAll('[aria-live], [role="log"], [role="status"]');
     expect(regions).toHaveLength(1);
     await act(() => Promise.resolve());
+  });
+});
+
+describe('afterViewTransition', () => {
+  it('waits while a view transition animates, then runs once', () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    const matches = vi.spyOn(document.documentElement, 'matches').mockReturnValue(true);
+    const run = vi.fn();
+
+    afterViewTransition(run);
+    expect(run).not.toHaveBeenCalled();
+
+    matches.mockReturnValue(false);
+    frames.shift()?.(0);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs at once where view transitions are unknown', () => {
+    vi.spyOn(document.documentElement, 'matches').mockImplementation(() => {
+      throw new SyntaxError('unknown pseudo-class');
+    });
+    const run = vi.fn();
+
+    afterViewTransition(run);
+
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('afterViewTransition safety', () => {
+  it('gives up waiting after about two seconds of frames', () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.spyOn(document.documentElement, 'matches').mockReturnValue(true);
+    const run = vi.fn();
+
+    afterViewTransition(run);
+    for (let i = 0; i < 200 && run.mock.calls.length === 0; i += 1) frames.shift()?.(i);
+
+    expect(run).toHaveBeenCalledTimes(1);
   });
 });

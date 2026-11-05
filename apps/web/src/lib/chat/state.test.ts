@@ -186,3 +186,29 @@ describe('historyBefore', () => {
     expect(history[0]).toEqual({ role: 'user', content: 'Question t2' });
   });
 });
+
+describe('restore and clear', () => {
+  const stored = chatReducer(INITIAL_CHAT_STATE, { type: 'send', id: 'old', question: 'Earlier?' });
+
+  it('restores the stored conversation into an empty chat', () => {
+    expect(chatReducer(INITIAL_CHAT_STATE, { type: 'restore', turns: stored.turns })).toEqual(
+      stored,
+    );
+  });
+
+  it('keeps a question asked before the restore ran, after the stored ones', () => {
+    const asked = chatReducer(INITIAL_CHAT_STATE, { type: 'send', id: 'new', question: 'Now?' });
+
+    const restored = chatReducer(asked, { type: 'restore', turns: stored.turns });
+
+    expect(restored.turns.map((turn) => turn.id)).toEqual(['old', 'new']);
+  });
+
+  it('a turn already in the chat is not restored twice', () => {
+    expect(chatReducer(stored, { type: 'restore', turns: stored.turns })).toEqual(stored);
+  });
+
+  it('clear empties the chat', () => {
+    expect(chatReducer(stored, { type: 'clear' })).toEqual(INITIAL_CHAT_STATE);
+  });
+});

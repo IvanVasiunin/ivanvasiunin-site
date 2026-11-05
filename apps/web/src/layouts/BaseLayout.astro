@@ -25,9 +25,14 @@ interface Props {
    * would sit on the docked input.
    */
   readonly scrollTop?: boolean;
+  /**
+   * From `md` the page is exactly one window tall and the main area's content takes the free height
+   * between the header and the footer (AI mode: the chat panel scrolls inside, the page does not).
+   */
+  readonly fit?: boolean;
 }
 
-const { title, description, ogType = 'website', scrollTop = true } = Astro.props;
+const { title, description, ogType = 'website', scrollTop = true, fit = false } = Astro.props;
 
 // Canonical and Open Graph URLs (html-a11y.md → Structure) from `site` in astro.config.mjs.
 const SITE_NAME = 'Ivan Vasiunin';
@@ -108,7 +113,7 @@ const SPECULATION_RULES = {
     future CSP needs 'inline-speculation-rules' or this block's hash. ADR-0009. */}
     <script type="speculationrules" is:inline set:html={JSON.stringify(SPECULATION_RULES)} />
   </head>
-  <body class="page">
+  <body class:list={['page', { 'page--fit': fit }]}>
     <SkipLink target="main" />
     <Backdrop />
     <SiteHeader>

@@ -15,6 +15,15 @@
       padding-block-end: 0;
     }
 
+    // Exactly one window from `md`, unless the window is very short: then the page scrolls rather
+    // than squeezing the content.
+    &--fit {
+      @include mq(md) {
+        block-size: 100dvh;
+        min-block-size: var(--size-page-fit-min);
+      }
+    }
+
     // Paper: the page margins come from `@page` (styles/base.scss).
     @media print {
       min-block-size: 0;
@@ -46,6 +55,17 @@
 
     > :where(p, ul, ol) {
       max-inline-size: var(--measure);
+    }
+
+    // A fitted page (AI mode) ends with the chat, not with a long reading column: a small bottom
+    // padding at every width. From `md` main may also shrink to the free height, and its child takes
+    // it (flex: 1 there).
+    .page--fit & {
+      padding-block-end: var(--space-lg);
+
+      @include mq(md) {
+        min-block-size: 0;
+      }
     }
 
     @media print {

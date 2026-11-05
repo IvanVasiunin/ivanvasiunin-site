@@ -1,9 +1,10 @@
-// The chat island of AI mode (`/`, ROADMAP 3.9): Elio's introduction, the conversation and the docked
-// input. Hydrated with `client:load`; its server HTML is the no-JS page (the introduction, the example
-// questions as `/?q=` links, a disabled input and a pointer to the CV).
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+// The chat island of AI mode (`/`, ROADMAP 3.9): Elio's greeting, the conversation and the docked
+// input. Hydrated with `client:load`; its server HTML is the no-JS page (the greeting, the example
+// questions as `/?q=` links, a disabled input and, in <noscript>, a pointer to the CV).
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ChatComposer } from '../../components/ChatComposer';
+import { ElioAvatar } from '../../components/ElioAvatar';
 import { ChatTurn } from '../../components/ChatTurn';
 import { errorText } from '../../lib/chat/messages';
 import { questionFromSearch } from '../../lib/chat/prefill';
@@ -27,10 +28,7 @@ export const EXAMPLE_QUESTIONS: readonly string[] = [
 /** An example's link without JS: the page with the question prefilled (SPEC §2). */
 export const exampleHref = (question: string): string => `/?q=${encodeURIComponent(question)}`;
 
-export interface ChatProps extends UseChatOptions {
-  /** The "Read the CV" button: static Astro markup passed as the named slot `cv` (index.astro). */
-  readonly cv?: ReactNode;
-}
+export type ChatProps = UseChatOptions;
 
 const NBSP = String.fromCharCode(0xa0);
 
@@ -56,22 +54,25 @@ function endAnnouncement(turn: Turn): string | null {
   }
 }
 
-function Intro({ cv }: { readonly cv: ReactNode }) {
+// Elio introduces itself in the first person; Ivan stays in the third person, as in every answer.
+function Intro({ busy = false }: { readonly busy?: boolean }) {
   return (
     <header className="chat__intro">
-      <h1 className="chat__title">Ask Elio about Ivan’s work</h1>
-      <p className="chat__lede">
-        Elio is an AI assistant that answers questions about Ivan Vasiunin: his experience, skills
-        and projects. It speaks about Ivan in the third person and answers only from what Ivan has
-        written.
-      </p>
-      {cv !== undefined && <div className="chat__cv">{cv}</div>}
+      {/* The live avatar: its eyes follow the mouse; it shows the thinking light while busy. */}
+      <ElioAvatar size="lg" live active={busy} named={false} />
+      <div className="chat__intro-text">
+        <h1 className="chat__title">Hi! I’m Elio, Ivan’s AI assistant.</h1>
+        <p className="chat__lede">
+          I can tell you about his experience, skills and projects, or how this site works. Ask me
+          anything below, or pick a question to start.
+        </p>
+      </div>
     </header>
   );
 }
 
-function ChatView({ cv, ...options }: ChatProps) {
-  const { state, busy, send, stop, retry } = useChat(options);
+function ChatView(options: ChatProps) {
+  const { state, busy, send, stop, retry, clear } = useChat(options);
   const ready = usePageReady();
   const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -86,8 +87,11 @@ function ChatView({ cv, ...options }: ChatProps) {
   }, []);
 
   const last = lastTurn(state);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const { following, jumpToLatest } = useFollowScroll(
     `${String(state.turns.length)}:${String(last?.answer.length ?? 0)}:${last?.status ?? ''}`,
+    state.turns.length > 0,
+    scrollRef,
   );
 
   // Announce each answer's end once, on the change of its status.
@@ -136,6 +140,13 @@ function ChatView({ cv, ...options }: ChatProps) {
     inputRef.current?.focus();
   };
 
+  const onNewChat = (): void => {
+    clear();
+    announce('New chat');
+    // The button disappears with the conversation: focus goes to where the next question starts.
+    inputRef.current?.focus();
+  };
+
   const onExample = (question: string): void => {
     setDraft(question);
     const input = inputRef.current;
@@ -148,95 +159,131 @@ function ChatView({ cv, ...options }: ChatProps) {
   };
 
   return (
-    <div className="chat" data-state={state.turns.length === 0 ? 'empty' : 'conversation'}>
-      <Intro cv={cv} />
+    <div
+      className="chat"
+      data-state={state.turns.length === 0 ? 'empty' : 'conversation'}
+      // The reader has scrolled up from the latest answer (text now passes behind the input).
+      data-reading={following || state.turns.length === 0 ? undefined : ''}
+    >
+      <Intro busy={busy} />
 
-      {state.turns.length > 0 && (
-        <div className="chat__log">
-          {state.turns.map((turn) => (
-            <ChatTurn
-              key={turn.id}
-              turn={turn}
-              canRetry={canRetry(state, turn.id)}
-              onRetry={retry}
-              onAnnounce={announce}
-            />
-          ))}
+      <div className="chat__panel">
+        {/* From `md` the chat is a panel and this area scrolls inside it, above the input; below
+      `md` the page scrolls (Chat.scss). */}
+        <div className="chat__scroll" ref={scrollRef}>
+          {state.turns.length > 0 && (
+            <div className="chat__toolbar">
+              <button className="chat__new" type="button" onClick={onNewChat}>
+                <svg
+                  className="chat__new-icon"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                New chat
+              </button>
+            </div>
+          )}
+
+          {state.turns.length > 0 && (
+            <div className="chat__log">
+              {state.turns.map((turn) => (
+                <ChatTurn
+                  key={turn.id}
+                  turn={turn}
+                  canRetry={canRetry(state, turn.id)}
+                  onRetry={retry}
+                  onAnnounce={announce}
+                />
+              ))}
+            </div>
+          )}
+
+          {state.turns.length === 0 && (
+            <ul className="chat__examples" aria-label="Example questions">
+              {EXAMPLE_QUESTIONS.map((question) => (
+                <li key={question}>
+                  <a
+                    className="chat__example"
+                    href={exampleHref(question)}
+                    onClick={(event) => {
+                      // A modified or middle click keeps the link's own behaviour (a new tab).
+                      if (
+                        event.button !== 0 ||
+                        event.metaKey ||
+                        event.ctrlKey ||
+                        event.shiftKey ||
+                        event.altKey
+                      ) {
+                        return;
+                      }
+                      // With JS an example only fills the input; it never sends (SPEC US-A5).
+                      event.preventDefault();
+                      onExample(question);
+                    }}
+                  >
+                    {question}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      )}
 
-      <div className="chat__dock">
-        {!following && state.turns.length > 0 && (
-          <button
-            className="chat__jump"
-            type="button"
-            onClick={() => {
-              jumpToLatest();
-            }}
-          >
-            <svg
-              className="chat__jump-icon"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              focusable="false"
+        <div className="chat__dock">
+          {/* Always mounted while there is a conversation, so it can fade in and out (Ivan:
+          it vanished abruptly). Hidden, it is inert: no pointer, no Tab stop, nothing read out. */}
+          {state.turns.length > 0 && (
+            <button
+              className="chat__jump"
+              type="button"
+              inert={following}
+              aria-hidden={following ? true : undefined}
+              onClick={() => {
+                jumpToLatest();
+                // The button fades away: focus moves to the latest answer (not the input, which
+                // would open the keyboard on a phone), without breaking the smooth scroll.
+                scrollRef.current
+                  ?.querySelector<HTMLElement>('.chat-turn:last-child')
+                  ?.focus({ preventScroll: true });
+              }}
             >
-              <path d="M12 5v14M5 12l7 7 7-7" />
-            </svg>
-            Jump to latest
-          </button>
-        )}
-        <ChatComposer
-          value={draft}
-          onChange={setDraft}
-          onSend={onSend}
-          onStop={onStop}
-          busy={busy}
-          ready={ready}
-          inputRef={inputRef}
-        />
-      </div>
-
-      {state.turns.length === 0 && (
-        <ul className="chat__examples" aria-label="Example questions">
-          {EXAMPLE_QUESTIONS.map((question) => (
-            <li key={question}>
-              <a
-                className="chat__example"
-                href={exampleHref(question)}
-                onClick={(event) => {
-                  // A modified or middle click keeps the link's own behaviour (a new tab).
-                  if (
-                    event.button !== 0 ||
-                    event.metaKey ||
-                    event.ctrlKey ||
-                    event.shiftKey ||
-                    event.altKey
-                  ) {
-                    return;
-                  }
-                  // With JS an example only fills the input; it never sends (SPEC US-A5).
-                  event.preventDefault();
-                  onExample(question);
-                }}
+              <svg
+                className="chat__jump-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
               >
-                {question}
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
+                <path d="M12 5v14M5 12l7 7 7-7" />
+              </svg>
+              Jump to latest
+            </button>
+          )}
+          <ChatComposer
+            value={draft}
+            onChange={setDraft}
+            onSend={onSend}
+            onStop={onStop}
+            busy={busy}
+            ready={ready}
+            inputRef={inputRef}
+          />
+        </div>
 
-      <p className="chat__disclosure">
-        Elio is an AI assistant and can be wrong; Ivan is the source of truth.{' '}
-        <a className="chat__disclosure-link" href="/privacy">
-          How chats are handled
-        </a>
-      </p>
-      <noscript>
         <p className="chat__disclosure">
-          The chat needs JavaScript. <a href="/cv">Read the CV</a> instead.
+          Elio is an AI assistant and can be wrong; Ivan is the source of truth.{' '}
+          <a className="chat__disclosure-link" href="/privacy">
+            How chats are handled
+          </a>
         </p>
-      </noscript>
+        <noscript>
+          <p className="chat__disclosure">
+            The chat needs JavaScript. <a href="/cv">Read the CV</a> instead.
+          </p>
+        </noscript>
+      </div>
 
       <p className="chat__status" aria-live="polite">
         {announcement}
@@ -245,10 +292,10 @@ function ChatView({ cv, ...options }: ChatProps) {
   );
 }
 
-function ChatFallback({ cv }: { readonly cv: ReactNode }) {
+function ChatFallback() {
   return (
     <div className="chat">
-      <Intro cv={cv} />
+      <Intro />
       <p className="chat__fallback">
         The chat could not start. Try reloading the page, or <a href="/cv">read the CV</a>.
       </p>
@@ -258,7 +305,7 @@ function ChatFallback({ cv }: { readonly cv: ReactNode }) {
 
 export function Chat(props: ChatProps) {
   return (
-    <ChatErrorBoundary fallback={<ChatFallback cv={props.cv} />}>
+    <ChatErrorBoundary fallback={<ChatFallback />}>
       <ChatView {...props} />
     </ChatErrorBoundary>
   );

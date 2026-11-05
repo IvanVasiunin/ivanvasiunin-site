@@ -83,12 +83,9 @@ for (const path of PAGES) {
 }
 
 test('the header stays at the top while a long page scrolls', async ({ page }) => {
-  await page.goto('/');
-  // The placeholder is short; make main tall enough to scroll.
+  // The CV: a long page. (AI mode fits the window from md and scrolls inside its chat panel.)
+  await page.goto('/cv');
   await page.evaluate(() => {
-    const filler = document.createElement('div');
-    filler.style.blockSize = '3000px';
-    document.querySelector('main')?.append(filler);
     window.scrollTo(0, 1500);
   });
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
@@ -178,22 +175,23 @@ for (const colorScheme of ['light', 'dark'] as const) {
 }
 
 test('component styles win over element defaults (layer order works)', async ({ page }) => {
-  await page.goto('/');
-  const button = page.getByRole('link', { name: 'Read the CV' });
+  // The site's link-styled button since the home page's "Read the CV" went (2026-11-05).
+  await page.goto('/cv');
+  const button = page.getByRole('link', { name: 'Download PDF' });
 
-  // base.scss colours links with the accent; the primary button overrides it with on-accent text
+  // base.scss colours links with the accent; the secondary button overrides it with the text colour
   // and a gradient fill. If the components layer were weaker, the base colour would win.
   const style = await button.evaluate((element) => {
     const computed = getComputedStyle(element);
     const probe = document.createElement('span');
-    probe.style.color = 'var(--color-on-accent)';
+    probe.style.color = 'var(--color-text)';
     document.body.append(probe);
-    const onAccent = getComputedStyle(probe).color;
+    const text = getComputedStyle(probe).color;
     probe.remove();
-    return { color: computed.color, onAccent, background: computed.backgroundImage };
+    return { color: computed.color, text, background: computed.backgroundImage };
   });
 
-  expect(style.color).toBe(style.onAccent);
+  expect(style.color).toBe(style.text);
   expect(style.background).toContain('linear-gradient');
 });
 
@@ -202,8 +200,8 @@ test('button hover and active states fade layers in without moving the button', 
   isMobile,
 }) => {
   test.skip(isMobile, 'Touch devices have no hover state.');
-  await page.goto('/');
-  const button = page.getByRole('link', { name: 'Read the CV' });
+  await page.goto('/cv');
+  const button = page.getByRole('link', { name: 'Download PDF' });
   const layerOpacity = (pseudo: '::before' | '::after'): Promise<string> =>
     button.evaluate((element, which) => getComputedStyle(element, which).opacity, pseudo);
   const before = await button.boundingBox();
@@ -262,15 +260,11 @@ test('the brand mark sits at equal distances from the bar edges', async ({ page 
   expect(offsets?.start).toBe(offsets?.top);
 });
 
-test('primary and secondary buttons meet the 44 px touch target', async ({ page }) => {
-  for (const [path, name] of [
-    ['/', 'Read the CV'],
-    ['/cv', 'Download PDF'],
-  ] as const) {
-    await page.goto(path);
-    const box = await page.getByRole('link', { name }).boundingBox();
-    expect(box?.height, name).toBeGreaterThanOrEqual(44);
-  }
+test('link buttons meet the 44 px touch target', async ({ page }) => {
+  // The site has no primary link button since the home page's "Read the CV" went (2026-11-05).
+  await page.goto('/cv');
+  const box = await page.getByRole('link', { name: 'Download PDF' }).boundingBox();
+  expect(box?.height).toBeGreaterThanOrEqual(44);
 });
 
 test('the brand mark planet orbits while the brand link is hovered', async ({ page, isMobile }) => {
@@ -367,7 +361,8 @@ test('the content and the backdrop do not shift sideways between a short page an
       return page.evaluate(() => ({
         scrolls: document.documentElement.scrollHeight > window.innerHeight,
         scrollbar: window.innerWidth - document.documentElement.clientWidth,
-        h1: document.querySelector('h1')?.getBoundingClientRect().left ?? Number.NaN,
+        // The page frame both pages share (AI mode's heading sits inside the chat panel).
+        main: document.querySelector('main')?.getBoundingClientRect().left ?? Number.NaN,
         chart:
           document.querySelector('.backdrop__chart')?.getBoundingClientRect().left ?? Number.NaN,
       }));
@@ -378,7 +373,7 @@ test('the content and the backdrop do not shift sideways between a short page an
     expect(home.scrolls).toBe(false);
     expect(cv.scrolls).toBe(true);
     expect(cv.scrollbar).toBeGreaterThan(0);
-    expect(cv.h1).toBeCloseTo(home.h1, 0);
+    expect(cv.main).toBeCloseTo(home.main, 0);
     expect(cv.chart).toBeCloseTo(home.chart, 0);
   } finally {
     await browser.close();

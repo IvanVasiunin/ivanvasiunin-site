@@ -1,0 +1,274 @@
+// Elio's robot avatar. Only a `live` avatar (the greeting's) moves; next to the answers it is a still
+// picture (Ivan, 2026-11-05). Motion is transform and opacity only (css-scss.md → Motion):
+// - the eyes follow the mouse (lookAt.ts sets the two custom properties, a short transition smooths
+//   the steps);
+// - it breathes, blinks and catches a sheen on the visor; the antenna light pulses;
+// - while an answer is prepared (`data-active`), the eyes give way to one light sweeping the visor
+//   and the pulse speeds up.
+// With reduced motion nothing moves (and lookAt.ts does not follow the mouse).
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .elio-avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    inline-size: var(--size-avatar-sm);
+    block-size: var(--size-avatar-sm);
+
+    &[data-size='lg'] {
+      inline-size: var(--size-avatar-lg);
+      block-size: var(--size-avatar-lg);
+    }
+  }
+
+  .elio-avatar__svg {
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+  }
+
+  .elio-avatar__name {
+    @include visually-hidden;
+  }
+
+  // Gradient stops and flat parts, from the avatar's colour tokens.
+  .elio-avatar__metal-1 {
+    stop-color: var(--color-avatar-metal-1);
+  }
+
+  .elio-avatar__metal-2 {
+    stop-color: var(--color-avatar-metal-2);
+  }
+
+  .elio-avatar__metal-3 {
+    stop-color: var(--color-avatar-metal-3);
+  }
+
+  .elio-avatar__metal-4 {
+    stop-color: var(--color-avatar-metal-4);
+  }
+
+  .elio-avatar__visor-1 {
+    stop-color: var(--color-avatar-visor-1);
+  }
+
+  .elio-avatar__visor-2 {
+    stop-color: var(--color-avatar-visor-2);
+  }
+
+  .elio-avatar__visor-3 {
+    stop-color: var(--color-avatar-visor-3);
+  }
+
+  .elio-avatar__eye-1 {
+    stop-color: var(--color-avatar-eye-1);
+  }
+
+  .elio-avatar__eye-2 {
+    stop-color: var(--color-avatar-eye-2);
+  }
+
+  .elio-avatar__eye-3 {
+    stop-color: var(--color-avatar-eye-3);
+  }
+
+  .elio-avatar__bulb-1 {
+    stop-color: var(--color-avatar-shine);
+  }
+
+  .elio-avatar__bulb-2 {
+    stop-color: var(--color-avatar-bulb);
+  }
+
+  .elio-avatar__bulb-3 {
+    stop-color: var(--color-accent-2);
+  }
+
+  .elio-avatar__accent {
+    stop-color: var(--color-accent);
+  }
+
+  .elio-avatar__accent-2 {
+    stop-color: var(--color-accent-2);
+  }
+
+  .elio-avatar__light {
+    stop-color: var(--color-avatar-light);
+  }
+
+  .elio-avatar__shine {
+    stop-color: var(--color-avatar-shine);
+  }
+
+  .elio-avatar__socket {
+    fill: var(--color-avatar-visor-2);
+  }
+
+  .elio-avatar__led {
+    fill: var(--color-avatar-light);
+  }
+
+  .elio-avatar__highlight {
+    fill: var(--color-avatar-shine);
+    opacity: 0.55;
+  }
+
+  .elio-avatar__seam,
+  .elio-avatar__glare {
+    fill: none;
+    stroke: var(--color-avatar-shine);
+    stroke-linecap: round;
+  }
+
+  .elio-avatar__seam {
+    stroke-width: 1.2;
+    stroke-opacity: 0.55;
+  }
+
+  .elio-avatar__glare {
+    stroke-width: 1.6;
+    stroke-opacity: 0.35;
+  }
+
+  .elio-avatar__grille {
+    fill: var(--color-avatar-metal-4);
+    opacity: 0.8;
+  }
+
+  // The parts that move, each around its own box.
+  .elio-avatar__body,
+  .elio-avatar__blink,
+  .elio-avatar__sheen,
+  .elio-avatar__scan {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .elio-avatar__look {
+    transform: translate(
+      calc(var(--elio-avatar-look-x, 0) * 1px),
+      calc(var(--elio-avatar-look-y, 0) * 1px)
+    );
+
+    // Only while the eyes follow the mouse (lookAt.ts sets data-look; never with reduced motion).
+    .elio-avatar__svg[data-look] & {
+      transition: transform var(--duration-fast) var(--ease-out);
+    }
+  }
+
+  .elio-avatar__sheen {
+    opacity: 0;
+    transform: translateX(-70px) skewX(-20deg);
+  }
+
+  .elio-avatar__eyes {
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+
+  .elio-avatar__scan {
+    opacity: 0;
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+
+  .elio-avatar[data-active] .elio-avatar__eyes {
+    opacity: 0;
+  }
+
+  .elio-avatar[data-active] .elio-avatar__scan {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .elio-avatar[data-live] {
+      .elio-avatar__body {
+        animation: elio-avatar-breathe var(--duration-breath) ease-in-out infinite;
+      }
+
+      .elio-avatar__blink {
+        animation: elio-avatar-blink var(--duration-blink) ease-in-out infinite;
+      }
+
+      .elio-avatar__sheen {
+        animation: elio-avatar-sheen var(--duration-sheen) ease-in-out infinite;
+      }
+
+      .elio-avatar__pulse {
+        animation: elio-avatar-pulse var(--duration-pulse) ease-in-out infinite;
+      }
+    }
+
+    // Out of view (ElioAvatar.tsx, IntersectionObserver): the loops wait where they are.
+    .elio-avatar__svg[data-paused] {
+      .elio-avatar__body,
+      .elio-avatar__blink,
+      .elio-avatar__sheen,
+      .elio-avatar__pulse,
+      .elio-avatar__scan {
+        animation-play-state: paused;
+      }
+    }
+
+    .elio-avatar[data-active] {
+      .elio-avatar__pulse {
+        animation-duration: var(--duration-pulse-fast);
+      }
+
+      .elio-avatar__scan {
+        animation: elio-avatar-scan var(--duration-scan) ease-in-out infinite;
+      }
+    }
+  }
+
+  @keyframes elio-avatar-breathe {
+    50% {
+      transform: translateY(-2.5px);
+    }
+  }
+
+  @keyframes elio-avatar-blink {
+    0%,
+    90%,
+    100% {
+      transform: scaleY(1);
+    }
+
+    93% {
+      transform: scaleY(0.08);
+    }
+  }
+
+  @keyframes elio-avatar-sheen {
+    0%,
+    60% {
+      opacity: 0;
+      transform: translateX(-70px) skewX(-20deg);
+    }
+
+    65% {
+      opacity: 0.55;
+    }
+
+    85%,
+    100% {
+      opacity: 0;
+      transform: translateX(80px) skewX(-20deg);
+    }
+  }
+
+  @keyframes elio-avatar-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  @keyframes elio-avatar-scan {
+    0%,
+    100% {
+      transform: translateX(-11px);
+    }
+
+    50% {
+      transform: translateX(11px);
+    }
+  }
+}

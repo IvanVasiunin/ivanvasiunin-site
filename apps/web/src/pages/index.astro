@@ -1,8 +1,8 @@
 ---
 // AI mode (SPEC §2): the chat island with Elio. `client:load`: the input is the page's main control, so
-// it hydrates right away. The island's server HTML is the no-JS page: the introduction, the example
+// it hydrates right away. The island's server HTML is the no-JS page: the greeting, the example
 // questions as `/?q=` links and a pointer to the CV. The vector-space island arrives in Phase 6.
-import Button from '../components/Button/Button.astro';
+// The way to the CV is the mode switch's Text mode tab (Ivan, 2026-11-05: no CV button in the chat).
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Chat } from '../islands/Chat';
 ---
@@ -11,12 +11,7 @@ import { Chat } from '../islands/Chat';
   title="Ivan Vasiunin — ask Elio"
   description="Ask Elio, an AI assistant, about Ivan Vasiunin's experience, skills and projects."
   scrollTop={false}
+  fit
 >
-  {/* The CV button is static markup in the island's intro (a named slot becomes the `cv` prop): the
-  quick way to the text mode, with or without JS. */}
-  <Chat client:load>
-    <Button slot="cv" href="/cv">
-      Read the CV
-    </Button>
-  </Chat>
+  <Chat client:load />
 </BaseLayout>

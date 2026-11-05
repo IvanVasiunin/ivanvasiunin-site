@@ -54,7 +54,11 @@ export type ChatAction =
   | { readonly type: 'send'; readonly id: string; readonly question: string }
   | { readonly type: 'event'; readonly id: string; readonly event: ChatEvent }
   | { readonly type: 'stop'; readonly id: string }
-  | { readonly type: 'retry'; readonly id: string };
+  | { readonly type: 'retry'; readonly id: string }
+  /** The conversation stored for this tab (lib/chat/history.ts), after the page loads. */
+  | { readonly type: 'restore'; readonly turns: readonly Turn[] }
+  /** "New chat": an empty conversation. */
+  | { readonly type: 'clear' };
 
 export const INITIAL_CHAT_STATE: ChatState = { turns: [] };
 
@@ -140,6 +144,15 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       // Retry replaces the answer to the same question instead of adding a turn (SPEC US-A3).
       if (!canRetry(state, action.id)) return state;
       return updateTurn(state, action.id, (turn) => newTurn(turn.id, turn.question));
+    case 'restore': {
+      // The stored turns go before anything asked in the moment before the restore ran (a quick
+      // Enter right after the page opened), so neither is lost.
+      const current = new Set(state.turns.map((turn) => turn.id));
+      const stored = action.turns.filter((turn) => !current.has(turn.id));
+      return { turns: [...stored, ...state.turns] };
+    }
+    case 'clear':
+      return INITIAL_CHAT_STATE;
     default: {
       const unknown: never = action;
       return unknown;

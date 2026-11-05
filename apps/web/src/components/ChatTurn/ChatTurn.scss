@@ -1,5 +1,6 @@
-// A turn of the chat, layout A "Logbook": no bubbles. The question is an entry with a gradient rule on
-// its start edge; the answer is serif prose; turns are separated by a chart meridian (a hairline).
+// A turn of the chat, layout B "Orbits" (Ivan, 2026-11-05; replaces A "Logbook"): the question is a
+// bubble on the end side on the accent gradient; the answer is a card on the start side with the
+// gradient border, next to Elio's mark. Each bubble's sharp corner points to its speaker.
 @use '../../styles/mixins' as *;
 
 @layer components {
@@ -8,53 +9,54 @@
     flex-direction: column;
     gap: var(--space-md);
     inline-size: 100%;
-
-    & + & {
-      padding-block-start: var(--space-lg);
-      border-block-start: var(--border-width) solid
-        color-mix(in srgb, var(--color-chart-line) 40%, transparent);
-    }
   }
 
   .chat-turn__question {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2xs);
-    padding-inline-start: var(--space-sm);
-    border-inline-start: 2px solid transparent;
-    border-image: var(--gradient-border) 1;
+    align-self: flex-end;
+    max-inline-size: min(80%, var(--measure));
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-bubble) var(--radius-bubble) var(--radius-bubble-tail)
+      var(--radius-bubble);
+    color: var(--color-on-accent);
+    background-image: var(--gradient-accent);
+    box-shadow: var(--shadow-raised);
 
+    // Forced colours drop the gradient: a real border keeps the bubble's shape.
     @media (forced-colors: active) {
-      border-inline-start-color: CanvasText;
-      border-image: none;
+      border: var(--border-width) solid CanvasText;
     }
   }
 
-  .chat-turn__who {
-    margin: 0;
-    font-size: var(--font-size-xs);
-    line-height: var(--line-height-snug);
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: var(--letter-spacing-caps);
-  }
-
   .chat-turn__question-text {
-    max-inline-size: var(--measure);
     margin: 0;
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-snug);
     overflow-wrap: anywhere;
     white-space: pre-line; // keeps the line breaks typed with Shift+Enter
   }
 
+  // Elio's mark at the card's top corner, then the answer card.
   .chat-turn__answer {
     display: flex;
+    gap: var(--space-xs);
+    align-items: flex-start;
+    min-inline-size: 0;
+  }
+
+  .chat-turn__bubble {
+    @include gradient-border($fill-image: var(--gradient-surface));
+
+    display: flex;
+    flex: 1;
     flex-direction: column;
     gap: var(--space-sm);
     align-items: flex-start;
     min-inline-size: 0;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-bubble-tail) var(--radius-bubble) var(--radius-bubble)
+      var(--radius-bubble);
+    box-shadow: var(--shadow-raised);
   }
 
   .chat-turn__note {
@@ -122,13 +124,26 @@
     list-style: none;
   }
 
+  // A source is a small tinted pill (::before); the item keeps the 44 px touch height.
   .chat-turn__source {
+    position: relative;
+    isolation: isolate;
     display: inline-flex;
     gap: var(--space-xs);
     align-items: center;
     min-block-size: var(--size-touch);
+    padding-inline: var(--space-xs) var(--space-sm);
     font-size: var(--font-size-sm);
     color: var(--color-text-muted);
+
+    &::before {
+      position: absolute;
+      inset: var(--space-xs) 0;
+      z-index: var(--z-below);
+      border-radius: var(--radius-pill);
+      background-color: var(--color-highlight-soft);
+      content: '';
+    }
   }
 
   .chat-turn__source-dot {

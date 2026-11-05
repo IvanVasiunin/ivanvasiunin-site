@@ -62,7 +62,7 @@ test.describe('chat', () => {
       await page.goto('/');
 
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-        'Ask Elio about Ivan’s work',
+        'Hi! I’m Elio, Ivan’s AI assistant.',
       );
       await expect(
         page.getByRole('list', { name: 'Example questions' }).getByRole('link'),
@@ -202,5 +202,306 @@ test.describe('chat', () => {
     const bar = await modeSwitch.boundingBox();
     expect(field && bar).toBeTruthy();
     if (field && bar) expect(field.y + field.height).toBeLessThanOrEqual(bar.y);
+  });
+
+  test('the conversation survives Text mode and back, until New chat', async ({ page }) => {
+    await mockChat(page);
+    await page.goto('/');
+    await ask(page, 'What did Ivan do at BrainRocket?');
+    await expect(page.getByRole('button', { name: 'Copy' })).toBeVisible();
+
+    // On a phone the mode switch steps aside while the keyboard is up.
+    await input(page).blur();
+    await page.getByRole('link', { name: 'Text mode' }).click();
+    await expect(page).toHaveURL(/\/cv\/?$/);
+    await page.getByRole('link', { name: 'AI mode' }).click();
+
+    // Restored after hydration: the question is back as a turn, not as an example chip.
+    await expect(
+      page.getByRole('article').getByText('What did Ivan do at BrainRocket?'),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'New chat' }).click();
+    // The answer and its actions are gone (the same question returns as an example chip).
+    await expect(page.getByRole('button', { name: 'Copy' })).toBeHidden();
+    await expect(input(page)).toBeFocused();
+
+    await page.reload();
+    await expect(page.getByRole('list', { name: 'Example questions' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'New chat' })).toBeHidden();
+  });
+
+  test('different questions get different answers from the mock', async ({ page }) => {
+    await mockChat(page);
+    await page.goto('/');
+
+    // Inside the answers (the live region for screen readers repeats the finished answer).
+    const answers = page.getByRole('article');
+    await ask(page, 'Which technologies does Ivan use?');
+    await expect(answers.getByText(/Ivan's core is frontend/)).toBeVisible();
+    await ask(page, 'Does Ivan have a dog?');
+    await expect(answers.getByText(/far too friendly/)).toBeVisible();
+  });
+
+  test('the empty chat opens at the top of the page', async ({ page }) => {
+    // Regression: on a phone the follow-the-answer scroll ran with no answer and hid the greeting.
+    await mockChat(page);
+    await page.goto('/');
+    await expect(input(page)).toBeEnabled();
+
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(page.getByRole('heading', { level: 1 })).toBeInViewport();
+  });
+
+  test('example chips look small but keep a 44 px touch target', async ({ page }) => {
+    await mockChat(page);
+    await page.goto('/');
+    const chip = page.getByRole('link', { name: 'Which technologies does Ivan use?' });
+
+    const box = await chip.boundingBox();
+    const pill = await chip.evaluate((element) => {
+      const style = getComputedStyle(element, '::before');
+      return { top: parseFloat(style.top), bottom: parseFloat(style.bottom) };
+    });
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+    // The visible pill is inset from the touch area, so it is smaller than the input.
+    expect(pill.top).toBeGreaterThan(0);
+    expect(pill.bottom).toBeGreaterThan(0);
+  });
+
+  test('the input field has hover and fading focus layers', async ({ page, isMobile }) => {
+    await mockChat(page);
+    await page.goto('/');
+    // Disabled until hydrated: a disabled field neither hovers nor takes focus.
+    await expect(input(page)).toBeEnabled();
+    const field = page.locator('.chat-composer__field');
+    const layer = (pseudo: '::before' | '::after'): Promise<string> =>
+      field.evaluate((element, which) => getComputedStyle(element, which).opacity, pseudo);
+
+    if (!isMobile) {
+      await field.hover();
+      await expect.poll(() => layer('::before')).toBe('1');
+    }
+    await input(page).focus();
+    await expect.poll(() => layer('::after')).toBe('1');
+    // The ring fades in (a transition), it does not snap on.
+    expect(
+      await field.evaluate((element) => getComputedStyle(element, '::after').transitionProperty),
+    ).toContain('opacity');
+  });
+
+  test('the send button sits in the centre of the field', async ({ page }) => {
+    await mockChat(page);
+    await page.goto('/');
+    const field = await page.locator('.chat-composer__field').boundingBox();
+    const button = await page.getByRole('button', { name: 'Send' }).boundingBox();
+    expect(field && button).toBeTruthy();
+    if (field && button) {
+      const above = button.y - field.y;
+      const below = field.y + field.height - (button.y + button.height);
+      const right = field.x + field.width - (button.x + button.width);
+      expect(Math.abs(above - below)).toBeLessThanOrEqual(1);
+      expect(Math.abs(right - below)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('from md the chat is a panel: the conversation scrolls inside it, never under the input', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'Below md the page scrolls and a scrim covers the docked input instead.');
+    await mockChat(page);
+    await page.goto('/');
+    for (const question of [
+      'What did Ivan do at BrainRocket?',
+      'Which technologies does Ivan use?',
+    ]) {
+      await ask(page, question);
+      await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+    }
+
+    // The page itself stays put; the panel's scroll area followed the answer to its end.
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    const area = page.locator('.chat__scroll');
+    const distance = await area.evaluate(
+      (element) => element.scrollHeight - element.scrollTop - element.clientHeight,
+    );
+    expect(distance).toBeLessThanOrEqual(1);
+
+    // The scroll area ends above the input: no text can pass behind it.
+    const areaBox = await area.boundingBox();
+    const field = await page.locator('.chat-composer__field').boundingBox();
+    expect(areaBox && field).toBeTruthy();
+    if (areaBox && field) expect(areaBox.y + areaBox.height).toBeLessThanOrEqual(field.y);
+    // And the whole panel, input included, fits in the window.
+    const viewport = page.viewportSize();
+    if (field && viewport) expect(field.y + field.height).toBeLessThanOrEqual(viewport.height);
+  });
+
+  test('below md a blurred scrim covers text passing behind the input, only while reading up', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'From md the input is inside the panel, with nothing behind it.');
+    await mockChat(page);
+    await page.goto('/');
+    const scrim = (): Promise<string> =>
+      page
+        .locator('.chat__dock')
+        .evaluate((element) => getComputedStyle(element, '::before').content);
+    for (const question of [
+      'What did Ivan do at BrainRocket?',
+      'Which technologies does Ivan use?',
+    ]) {
+      await ask(page, question);
+      await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+    }
+
+    // At the end of the conversation nothing passes behind the input: no scrim over the disclosure.
+    await input(page).blur();
+    expect(await scrim()).toBe('none');
+
+    await page.evaluate(() => {
+      window.scrollBy(0, -600);
+    });
+    await expect(page.getByRole('button', { name: 'Jump to latest' })).toBeVisible();
+    expect(await scrim()).not.toBe('none');
+  });
+
+  test('Jump to latest floats over the text: it never shifts the layout', async ({
+    page,
+    isMobile,
+  }) => {
+    await mockChat(page);
+    await page.goto('/');
+    for (const question of [
+      'What did Ivan do at BrainRocket?',
+      'Which technologies does Ivan use?',
+    ]) {
+      await ask(page, question);
+      await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+    }
+    await input(page).blur();
+    const fieldTop = async (): Promise<number | undefined> =>
+      (await page.locator('.chat-composer__field').boundingBox())?.y;
+
+    const before = await fieldTop();
+    if (isMobile) {
+      await page.evaluate(() => {
+        window.scrollBy(0, -600);
+      });
+    } else {
+      // As a reader does it: the wheel over the conversation (an upward wheel pauses following).
+      await page.locator('.chat__scroll').hover();
+      await page.mouse.wheel(0, -600);
+    }
+    const jump = page.getByRole('button', { name: 'Jump to latest' });
+    await expect(jump).toBeVisible();
+    // On a phone the docked input stays where it is on screen; in the panel it never moves.
+    if (!isMobile) expect(await fieldTop()).toBe(before);
+    expect(await jump.evaluate((element) => getComputedStyle(element).position)).toBe('absolute');
+    // Rounded: while the pill slides in, the box can come back a hair under 44 (43.99997).
+    expect(Math.round((await jump.boundingBox())?.height ?? 0)).toBeGreaterThanOrEqual(44);
+
+    await jump.click();
+    await expect(jump).toBeHidden();
+    if (!isMobile) {
+      expect(await fieldTop()).toBe(before);
+      // The fitted page itself never scrolls, however long the conversation.
+      expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(
+        page.viewportSize()?.height,
+      );
+    }
+  });
+
+  test('the focus ring replaces the field border instead of circling it', async ({ page }) => {
+    await mockChat(page);
+    await page.goto('/');
+    await expect(input(page)).toBeEnabled();
+    await input(page).focus();
+
+    const ring = await page.locator('.chat-composer__field').evaluate((element) => {
+      const field = element.getBoundingClientRect();
+      const style = getComputedStyle(element, '::after');
+      return {
+        top: parseFloat(style.top),
+        left: parseFloat(style.left),
+        radius: style.borderTopLeftRadius,
+        fieldRadius: getComputedStyle(element).borderTopLeftRadius,
+        fieldWidth: field.width,
+      };
+    });
+    // Exactly over the 1 px border, with the field's own corner radius: one line, concentric.
+    expect(ring.top).toBe(-1);
+    expect(ring.left).toBe(-1);
+    expect(ring.radius).toBe(ring.fieldRadius);
+  });
+
+  test.describe('scrolling the panel (from md)', () => {
+    test.skip(({ isMobile }) => isMobile, 'The panel scrolls by itself only from md.');
+
+    const conversation = async (page: Page): Promise<void> => {
+      await mockChat(page);
+      await page.goto('/');
+      for (const question of [
+        'What did Ivan do at BrainRocket?',
+        'Which technologies does Ivan use?',
+      ]) {
+        await ask(page, question);
+        await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+      }
+      await input(page).blur();
+    };
+    const distanceToBottom = (page: Page): Promise<number> =>
+      page
+        .locator('.chat__scroll')
+        .evaluate((element) => element.scrollHeight - element.scrollTop - element.clientHeight);
+
+    test('a wheel outside the panel does not pause following', async ({ page }) => {
+      // Regression (Ivan, 2026-11-05): wheeling over the page showed "Jump to latest".
+      await conversation(page);
+      await page.mouse.move(1200, 300);
+      await page.mouse.wheel(0, -400);
+      await page.waitForTimeout(300);
+
+      await expect(page.getByRole('button', { name: 'Jump to latest' })).toBeHidden();
+    });
+
+    test('coming back near the end does not snap to it', async ({ page }) => {
+      // Regression: within the follow threshold the area jumped to the very bottom in one step.
+      await conversation(page);
+      await page.locator('.chat__scroll').hover();
+      await page.mouse.wheel(0, -500);
+      await expect(page.getByRole('button', { name: 'Jump to latest' })).toBeVisible();
+
+      await page.locator('.chat__scroll').evaluate((element) => {
+        element.scrollTop = element.scrollHeight - element.clientHeight - 40;
+      });
+      await page.waitForTimeout(300);
+
+      expect(await distanceToBottom(page)).toBeGreaterThan(30);
+      // Near the end the reader follows again, and the button fades away.
+      await expect(page.getByRole('button', { name: 'Jump to latest' })).toBeHidden();
+    });
+
+    test('Jump to latest scrolls smoothly and fades out', async ({ page }) => {
+      await conversation(page);
+      await page.locator('.chat__scroll').hover();
+      await page.mouse.wheel(0, -600);
+      const jump = page.getByRole('button', { name: 'Jump to latest' });
+      await expect(jump).toBeVisible();
+      const button = page.locator('.chat__jump');
+
+      await jump.click();
+
+      // A fade, not a disappearance: the button stays in the page, inert and transparent.
+      await expect(button).toHaveAttribute('inert', '');
+      expect(
+        await button.evaluate((element) => getComputedStyle(element).transitionProperty),
+      ).toContain('opacity');
+      await expect
+        .poll(() => button.evaluate((element) => getComputedStyle(element).opacity))
+        .toBe('0');
+      await expect.poll(() => distanceToBottom(page)).toBeLessThanOrEqual(1);
+    });
   });
 });

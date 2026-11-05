@@ -59,8 +59,16 @@ export const test = base.extend<ThrottleOptions & { applyThrottle: undefined }>(
 
 export { expect };
 
-/** Fails on any axe violation with impact "serious" or "critical" (html-a11y.md). */
+/**
+ * Fails on any axe violation with impact "serious" or "critical" (html-a11y.md).
+ *
+ * Checks the settled page: scroll-driven reveals (mixins.scss → reveal-on-scroll) leave a block that
+ * rests at the very bottom edge mid-fade, and axe would measure that passing opacity as a contrast
+ * failure (it did, at random, depending on where the fold fell). With reduced motion every reveal
+ * shows its final state, so the colours checked are the ones a reader sees.
+ */
 export async function expectNoSeriousA11yViolations(page: Page): Promise<void> {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();

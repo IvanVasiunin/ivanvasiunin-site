@@ -104,7 +104,10 @@
   --line-height-tight: 1.1;
   --line-height-snug: 1.3;
   --line-height-body: 1.5;
-  --line-height-prose: 1.6; // serif text gets more leading
+
+  // Serif reading text: answers and the CV (Ivan, 2026-11-05: was 1.6, felt too airy). Below the
+  // 1.5 of WCAG 1.4.8 (AAA, not required at AA); text-spacing overrides (1.4.12, AA) still work.
+  --line-height-prose: 1.4;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
@@ -138,17 +141,26 @@
   // Height of a floating bar (the header bar, the mode switch below `md`): a touch-size control inside
   // the bar's padding and border. The page reserves this space (BaseLayout.scss, scroll-padding).
   --size-chat: 46rem; // the chat column: a prose measure plus the question's rule and padding
+  --size-avatar-lg: 3.5rem; // Elio's avatar in the greeting
+  --size-avatar-sm: 2rem; // Elio's avatar next to an answer
   --size-composer-max: 10rem; // the chat input grows with its text up to about six lines
+  --size-page-fit-min: 36rem; // a fitted page (AI mode from md) scrolls below this height
   --size-bar: calc(var(--size-touch) + 2 * var(--space-2xs) + 2 * var(--border-width));
 
   // Distance of the bottom bar from the screen edge, clear of the home indicator.
   --offset-bar-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+
+  // The space the floating mode switch takes at the screen's bottom below md (bar + its offset).
+  --space-bottom-bar: calc(var(--size-bar) + var(--offset-bar-bottom));
 
   // Shape.
   --radius-sm: 4px; // chips, inputs
   --radius-md: 8px; // panels
   --radius-pill: 999px; // toggles
   --radius-input-pill: 24px; // the chat input: a pill on one line that stays rounded when it grows
+  --radius-bubble: 20px; // chat bubbles (layout B "Orbits")
+  --radius-panel: 24px; // the chat panel from md (layout L2)
+  --radius-bubble-tail: 6px; // the corner a bubble points from: the asker's or Elio's side
   --border-width: 1px;
   --focus-ring-width: 2px;
   --shadow-raised: 0 1px 2px rgb(24 32 54 / 12%), 0 4px 16px rgb(24 32 54 / 8%);
@@ -174,6 +186,27 @@
   // Accent washes for icon-control highlights (hover: soft, pressed: strong); follow the theme's accent.
   --color-highlight-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
   --color-highlight-strong: color-mix(in srgb, var(--color-accent) 26%, transparent);
+
+  // Elio's robot avatar (components/ElioAvatar): polished metal with a lavender tint, a dark glass
+  // visor and teal lights. An object with its own material, the same in both themes.
+  --color-avatar-metal-1: #f4f6ff;
+  --color-avatar-metal-2: #c9d1f0;
+  --color-avatar-metal-3: #7c87b8;
+  --color-avatar-metal-4: #363f6c;
+  --color-avatar-visor-1: #25336e;
+  --color-avatar-visor-2: #0f1638;
+  --color-avatar-visor-3: #05081c;
+  --color-avatar-light: #7fe0cf;
+  --color-avatar-eye-1: #e9fffb;
+  --color-avatar-eye-2: #9ff5e6;
+  --color-avatar-eye-3: #3cc7b2;
+  --color-avatar-bulb: #d6c9ff;
+  --color-avatar-shine: #fff;
+
+  // The header logo's golden planet (SiteHeader): a small glossy sphere, the same in both themes.
+  --color-mark-gold-1: #fff7d6;
+  --color-mark-gold-2: #f6cf6a;
+  --color-mark-gold-3: #c98a1c;
 
   // An error panel's fill (chat errors): the surface with a faint danger tint; follows the theme.
   --color-danger-soft: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
@@ -268,11 +301,19 @@
   --duration-base: 200ms;
   --duration-slow: 320ms;
   --duration-orbit: 2400ms; // one lap of the brand mark's planet (a looping hover animation)
+  // Elio's avatar: slow, small idle motion; faster only while an answer is prepared.
+  --duration-breath: 5s;
+  --duration-blink: 6s;
+  --duration-sheen: 7s;
+  --duration-pulse: 3.2s;
+  --duration-pulse-fast: 1s;
+  --duration-scan: 1.4s;
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   // Scroll motion (ROADMAP 2.6, styles/README.md).
   --distance-reveal: 12px; // how far a block rises while it fades in on scroll
+  --distance-reveal-range: 6rem; // a block is fully revealed once its top is this far above the bottom edge
   --distance-scrim-fade: 160px; // the header scrim fades in over this much scrolling
   --timeline-draw-line: 65%; // the CV timeline is drawn down to this line of the viewport
   // "Back to top" appears between these scroll offsets (from 40% of a screen to 60%).

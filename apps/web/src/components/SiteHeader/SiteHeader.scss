@@ -161,8 +161,9 @@
     flex-shrink: 0;
   }
 
-  // The planet orbits the reticle's centre while the brand link is hovered or focused, and stops where
-  // it is when the pointer leaves (the animation pauses rather than resets). Transform only.
+  // The planet orbits the reticle's centre at an even pace (linear, one lap per --duration-orbit)
+  // while the brand link is hovered or focused, and stops where it is when the pointer leaves (the
+  // animation pauses rather than resets). Transform only.
   .site-header__planet {
     transform-box: view-box;
     transform-origin: center;
@@ -177,10 +178,25 @@
     }
   }
 
-  // Forced colours: draw the mark in the text colour. CSS beats the groups' presentation attributes.
+  // Forced colours: draw the mark in the text colour. CSS beats the groups' presentation attributes;
+  // the glows and the centre star are decoration and go.
   .site-header__reticle {
     @media (forced-colors: active) {
       stroke: CanvasText;
+    }
+  }
+
+  .site-header__mark-core {
+    fill: var(--color-star);
+    opacity: 0.85;
+  }
+
+  .site-header__mark-glow,
+  .site-header__mark-haze,
+  .site-header__mark-core,
+  .site-header__planet-halo {
+    @media (forced-colors: active) {
+      display: none;
     }
   }
 
@@ -190,8 +206,24 @@
     }
   }
 
+  .site-header__mark-stop-teal {
+    stop-color: var(--color-accent-3);
+  }
+
   .site-header__mark-stop-start {
     stop-color: var(--color-accent);
+  }
+
+  .site-header__mark-stop-gold-1 {
+    stop-color: var(--color-mark-gold-1);
+  }
+
+  .site-header__mark-stop-gold-2 {
+    stop-color: var(--color-mark-gold-2);
+  }
+
+  .site-header__mark-stop-gold-3 {
+    stop-color: var(--color-mark-gold-3);
   }
 
   .site-header__mark-stop-end {

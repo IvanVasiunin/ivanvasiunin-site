@@ -151,7 +151,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(backdrop).toHaveCSS('position', 'fixed');
       await expect(backdrop).toHaveCSS('pointer-events', 'none');
       // Content above the backdrop stays clickable.
-      await page.getByRole('link', { name: 'Read the CV' }).click();
+      await page.getByRole('link', { name: 'Text mode' }).click();
       await expect(page).toHaveURL(/\/cv\/?$/);
     });
   });

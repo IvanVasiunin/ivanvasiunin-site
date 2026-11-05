@@ -14,7 +14,7 @@ for (const path of ['/', '/cv']) {
 
 test('the home page links to the CV', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: 'Read the CV' }).click();
+  await page.getByRole('link', { name: 'Text mode' }).click();
 
   await expect(page).toHaveURL(/\/cv\/?$/);
 });

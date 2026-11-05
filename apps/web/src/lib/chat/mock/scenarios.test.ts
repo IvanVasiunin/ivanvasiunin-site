@@ -2,7 +2,18 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseChatEvent } from '../../sse/parse';
-import { BRAINROCKET_ANSWER, mockScenario, toSse, tokenize } from './scenarios';
+import {
+  BRAINROCKET_ANSWER,
+  CONTACT_ANSWER,
+  OVERVIEW_ANSWER,
+  PERSONAL_ANSWER,
+  PROJECTS_ANSWER,
+  SITE_ANSWER,
+  SKILLS_ANSWER,
+  mockScenario,
+  toSse,
+  tokenize,
+} from './scenarios';
 
 const streamOf = (question: string) => {
   const scenario = mockScenario(question);
@@ -17,6 +28,12 @@ describe('mockScenario', () => {
     'Did Ivan work at Google?',
     'fail',
     'markdown',
+    'Which technologies does Ivan use?',
+    'Tell me about NumbersValidator',
+    'How is this site’s RAG built?',
+    'Does Ivan have a dog?',
+    'How can I contact Ivan?',
+    'Something else entirely',
   ])('streams only events that pass the contract guard (%s)', (question) => {
     for (const event of streamOf(question)) {
       const data = toSse(event)
@@ -64,5 +81,31 @@ describe('tokenize', () => {
 
     expect(pieces.length).toBeGreaterThan(20);
     expect(pieces.join('')).toBe(BRAINROCKET_ANSWER);
+  });
+});
+
+describe('mock topics', () => {
+  const answerOf = (question: string): string =>
+    streamOf(question)
+      .map((event) => (event.type === 'token' ? event.text : ''))
+      .join('');
+
+  it.each([
+    ['What did Ivan do at BrainRocket?', BRAINROCKET_ANSWER],
+    ['Which technologies does Ivan use?', SKILLS_ANSWER],
+    ['Tell me about NumbersValidator', PROJECTS_ANSWER],
+    ['How is this site’s RAG built?', SITE_ANSWER],
+    ['Does Ivan have a dog?', PERSONAL_ANSWER],
+    ['How can I contact Ivan?', CONTACT_ANSWER],
+    ['Something else entirely', OVERVIEW_ANSWER],
+  ])('answers "%s" on its topic', (question, answer) => {
+    expect(answerOf(question)).toBe(answer);
+  });
+
+  it('every topic cites at least one source', () => {
+    for (const question of ['Which technologies does Ivan use?', 'Something else entirely']) {
+      const sources = streamOf(question).find((event) => event.type === 'sources');
+      expect(sources?.type === 'sources' && sources.items.length).toBeGreaterThan(0);
+    }
   });
 });

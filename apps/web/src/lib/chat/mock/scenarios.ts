@@ -8,7 +8,10 @@
 //   "fail"                       → the stream breaks after a few tokens (error event)
 //   "limit"                      → HTTP 429 before the stream (SPEC §4.3), retry in 30 s
 //   "markdown"                   → unsafe Markdown (raw HTML, javascript: links) for the sanitizer
-//   anything else                → a grounded answer about BrainRocket with three sources
+//   a topic word                 → a grounded answer on that topic (TOPICS below): BrainRocket,
+//                                  projects, this site, skills, personal life, contacts
+//   anything else                → a short overview of Ivan with sources
+// The answers are written from data/*.md and the CV, so the mock never says anything untrue.
 import type { ChatEvent, ErrorResponse, SourceItem } from '../../api/types';
 
 export interface MockStep {
@@ -76,6 +79,34 @@ export const GREETING_ANSWER = `Hi! I'm Elio, an AI assistant that answers quest
 
 export const NO_INFO_ANSWER = `Ivan hasn't shared anything about that, so I can't say.`;
 
+export const SKILLS_ANSWER = `Ivan's core is frontend: **HTML, CSS / SCSS with BEM, JavaScript and TypeScript**, plus React, Next.js, Redux and TanStack Query, and Angular inside existing components at BrainRocket.
+
+He cares most about responsive layouts, reusable UI components and frontend performance. On the AI side he has learned Python, LangChain, LangGraph and vector databases through a full AI Engineer course; this site is his first applied AI project.
+
+See [Skills](/cv#skills) in the CV.`;
+
+export const PROJECTS_ANSWER = `Ivan's main project is **NumbersValidator**, a production web tool he built at Liketelecom on his own initiative: it cleans, validates and converts phone-number lists and detects each number's type, operator and region.
+
+Clients used it for about six months, and company revenue grew by 5% during that period. He also lists a study project (Little Lemon, the Meta Front-End capstone) and this website.
+
+More in [Projects](/cv#projects).`;
+
+export const SITE_ANSWER = `This site is Ivan's first AI project. I'm a **RAG assistant**: Ivan's CV, his notes and the site's own docs are split into chunks, embedded and stored in PostgreSQL with pgvector.
+
+For each question I run a vector search and a full-text search, merge them with Reciprocal Rank Fusion and answer only from the chunks found. The backend is FastAPI with LangChain and LangGraph; the front end is Astro with a React island for this chat.`;
+
+export const PERSONAL_ANSWER = `Ivan lives in Valencia, Spain, and he has a dog named **Monty**, a three-year-old corgi who is far too friendly to bring to the office on pet days.
+
+In his free time he runs (he finished a marathon in 2021), plays padel and follows Formula 1; in 2026 he saw his first Grand Prix live, in Madrid.`;
+
+export const CONTACT_ANSWER = `Ivan is open to offers: frontend, UI and markup roles, and AI-focused roles where a strong frontend background helps. He prefers remote work and is open to relocation.
+
+The best way to reach him is email (ivanvasyunin@gmail.com) or Telegram (@IvanVasiunin).`;
+
+export const OVERVIEW_ANSWER = `Ivan Vasiunin is a frontend developer with nearly 10 years of commercial experience, now at BrainRocket, where he builds and reviews UI for large iGaming platforms. He is moving into AI Engineering, and this site is his first AI project.
+
+Ask me about his work at BrainRocket, his skills, NumbersValidator, how this site works or how to contact him.`;
+
 /** Raw HTML and dangerous links: the rendered answer must contain none of them as live markup. */
 export const UNSAFE_ANSWER = `Here is **bold** text, a [safe link](/cv) and an [external one](https://github.com).
 
@@ -129,6 +160,175 @@ const route = (to: 'about_ivan' | 'greeting'): MockStep => ({
   delayMs: ROUTE_MS,
   event: { type: 'route', route: to, language: 'en' },
 });
+
+/** The source type is the chunk id's prefix (`cv:…`, `personal:…`), as in the real index. */
+const sourceType = (chunkId: string): SourceItem['source_type'] => {
+  const prefix = chunkId.split(':', 1)[0] ?? '';
+  switch (prefix) {
+    case 'cv':
+    case 'personal':
+    case 'site_docs':
+    case 'github_readme':
+      return prefix;
+    default:
+      return 'experience';
+  }
+};
+
+const source = (
+  chunkId: string,
+  score: number,
+  title: string,
+  url: string | null,
+  snippet: string,
+): SourceItem => ({
+  chunk_id: chunkId,
+  score,
+  source_type: sourceType(chunkId),
+  title,
+  section: null,
+  url,
+  snippet,
+});
+
+interface Topic {
+  readonly pattern: RegExp;
+  readonly answer: string;
+  readonly sources: readonly SourceItem[];
+}
+
+/** Checked in order; the first topic whose pattern matches the question answers it. */
+export const TOPICS: readonly Topic[] = [
+  {
+    pattern: /brainrocket|igaming|current (job|role)|team ?lead|mentor/,
+    answer: BRAINROCKET_ANSWER,
+    sources: SOURCES,
+  },
+  {
+    pattern: /numbersvalidator|liketelecom|project|portfolio|github|little lemon/,
+    answer: PROJECTS_ANSWER,
+    sources: [
+      source(
+        'cv:numbers-validator:0',
+        0.88,
+        'CV — NumbersValidator',
+        '/cv#project-numbers-validator',
+        'Web service that cleans, validates and converts phone numbers…',
+      ),
+      source(
+        'experience:experience-notes:21',
+        0.74,
+        'Experience notes — Liketelecom',
+        null,
+        'Clients used the tool for about six months; revenue grew by 5%…',
+      ),
+      source(
+        'github_readme:numbers-validator:0',
+        0.62,
+        'NumbersValidator — GitHub README',
+        'https://github.com/IvanVasiunin/NumbersValidator#readme',
+        'A web service for phone number checking and validation…',
+      ),
+    ],
+  },
+  {
+    pattern: /\brag\b|this site|website|elio|built|architecture|how do you|how does (it|this)/,
+    answer: SITE_ANSWER,
+    sources: [
+      source(
+        'site_docs:architecture:6',
+        0.84,
+        'Architecture — Ingestion data flow',
+        null,
+        'Split at headings, embedded, stored in the chunks table…',
+      ),
+      source(
+        'site_docs:0003-vector-database:2',
+        0.71,
+        'ADR-0003: Vector database',
+        null,
+        'Hybrid search: vector similarity + Postgres FTS, fused with RRF…',
+      ),
+    ],
+  },
+  {
+    pattern: /skill|technolog|stack|tool|framework|react|typescript|javascript|css|python|angular/,
+    answer: SKILLS_ANSWER,
+    sources: [
+      source(
+        'cv:skills:0',
+        0.86,
+        'CV — Skills',
+        '/cv#skills',
+        'HTML5, CSS3, SCSS / Sass, BEM, JavaScript, TypeScript, React…',
+      ),
+      source(
+        'experience:experience-notes:2',
+        0.69,
+        'Experience notes — Skills',
+        null,
+        'Frontend & web, AI Engineering, AI tools, engineering practices…',
+      ),
+    ],
+  },
+  {
+    pattern: /\b(pet|dog|hobb|free time|sport|run|padel|formula|f1|family|live|from)/,
+    answer: PERSONAL_ANSWER,
+    sources: [
+      source(
+        'personal:about-me-personal:25',
+        0.82,
+        'About Ivan — Does he have a pet?',
+        null,
+        'Yes, Ivan has a dog named Monty — a three-year-old corgi…',
+      ),
+      source(
+        'personal:about-me-personal:26',
+        0.67,
+        'About Ivan — What are his hobbies?',
+        null,
+        'Running, Formula 1, playing padel and learning new things…',
+      ),
+    ],
+  },
+  {
+    pattern: /contact|reach|email|telegram|hire|hiring|\bjob|offer|available|remote|relocat/,
+    answer: CONTACT_ANSWER,
+    sources: [
+      source(
+        'personal:about-me-personal:21',
+        0.8,
+        'About Ivan — How can someone contact him?',
+        null,
+        'The best way is email or Telegram…',
+      ),
+      source(
+        'personal:about-me-personal:17',
+        0.7,
+        'About Ivan — Is he open to job offers?',
+        null,
+        'Yes, Ivan is open to offers…',
+      ),
+    ],
+  },
+];
+
+const OVERVIEW_SOURCES: readonly SourceItem[] = [
+  source(
+    'cv:profile:0',
+    0.66,
+    'CV — Profile',
+    '/cv#summary',
+    'Frontend developer with nearly 10 years of commercial experience…',
+  ),
+  source(
+    'experience:experience-notes:0',
+    0.58,
+    'Experience notes — Summary',
+    null,
+    'Ivan is currently transitioning into AI Engineering…',
+  ),
+];
 
 const sources = (items: readonly SourceItem[]): MockStep => ({
   delayMs: SOURCES_MS,
@@ -185,12 +385,13 @@ export function mockScenario(question: string): MockScenario {
       steps: [route('about_ivan'), sources(SOURCES), ...tokens(UNSAFE_ANSWER), usage, done('stop')],
     };
   }
+  const topic = TOPICS.find(({ pattern }) => pattern.test(q));
   return {
     kind: 'stream',
     steps: [
       route('about_ivan'),
-      sources(SOURCES),
-      ...tokens(BRAINROCKET_ANSWER),
+      sources(topic?.sources ?? OVERVIEW_SOURCES),
+      ...tokens(topic?.answer ?? OVERVIEW_ANSWER),
       usage,
       done('stop'),
     ],

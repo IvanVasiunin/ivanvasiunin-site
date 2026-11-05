@@ -9,7 +9,7 @@ import type { SourceItem } from '../../lib/api/types';
 import { errorText } from '../../lib/chat/messages';
 import { type Turn, isActive } from '../../lib/chat/state';
 import { ChatMarkdown } from '../ChatMarkdown';
-import { ElioMark } from '../ElioMark';
+import { ElioAvatar } from '../ElioAvatar';
 import { ThinkingSteps } from '../ThinkingSteps';
 
 import './ChatTurn.scss';
@@ -135,75 +135,74 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
       tabIndex={-1}
     >
       <div className="chat-turn__question">
-        <p className="chat-turn__who" aria-hidden="true">
-          You asked
-        </p>
         <h2 className="chat-turn__question-text" id={`${id}-question`}>
           {turn.question}
         </h2>
       </div>
 
       <div className="chat-turn__answer" aria-busy={active}>
-        <ElioMark active={active} />
+        <ElioAvatar />
 
-        {turn.status === 'pending' && (
-          <ThinkingSteps
-            step={turn.step}
-            searches={turn.route === null || turn.route === 'about_ivan'}
-          />
-        )}
+        <div className="chat-turn__bubble">
+          {turn.status === 'pending' && (
+            <ThinkingSteps
+              step={turn.step}
+              searches={turn.route === null || turn.route === 'about_ivan'}
+            />
+          )}
 
-        {turn.answer !== '' && (
-          <ChatMarkdown text={turn.answer} streaming={turn.status === 'streaming'} />
-        )}
+          {turn.answer !== '' && (
+            <ChatMarkdown text={turn.answer} streaming={turn.status === 'streaming'} />
+          )}
 
-        {turn.status === 'stopped' && turn.answer === '' && (
-          <p className="chat-turn__note">Stopped before the answer started.</p>
-        )}
+          {turn.status === 'stopped' && turn.answer === '' && (
+            <p className="chat-turn__note">Stopped before the answer started.</p>
+          )}
 
-        {error !== null && (
-          <div className="chat-turn__error">
-            <svg
-              className="chat-turn__error-icon"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path d="M12 3l9.5 17h-19z" />
-              <path d="M12 10v4M12 17.5v.01" />
-            </svg>
-            <p className="chat-turn__error-text">
-              <strong className="chat-turn__error-title">{error.title}</strong> {error.hint}
-            </p>
-          </div>
-        )}
-
-        {turn.sources.length > 0 && <Sources items={turn.sources} headingId={`${id}-sources`} />}
-
-        {(showCopy || showRetry || turn.status === 'stopped') && (
-          <div className="chat-turn__actions">
-            {turn.status === 'stopped' && <span className="chat-turn__tag">Stopped</span>}
-            {showCopy && (
-              <button className="chat-turn__action" type="button" onClick={copy}>
-                {copied ? <CheckIcon /> : <CopyIcon />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-            )}
-            {showRetry && (
-              <button
-                className="chat-turn__action"
-                type="button"
-                onClick={() => {
-                  onRetry(turn.id);
-                  article.current?.focus();
-                }}
+          {error !== null && (
+            <div className="chat-turn__error">
+              <svg
+                className="chat-turn__error-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
               >
-                <RetryIcon />
-                Retry
-              </button>
-            )}
-          </div>
-        )}
+                <path d="M12 3l9.5 17h-19z" />
+                <path d="M12 10v4M12 17.5v.01" />
+              </svg>
+              <p className="chat-turn__error-text">
+                <strong className="chat-turn__error-title">{error.title}</strong> {error.hint}
+              </p>
+            </div>
+          )}
+
+          {turn.sources.length > 0 && <Sources items={turn.sources} headingId={`${id}-sources`} />}
+
+          {(showCopy || showRetry || turn.status === 'stopped') && (
+            <div className="chat-turn__actions">
+              {turn.status === 'stopped' && <span className="chat-turn__tag">Stopped</span>}
+              {showCopy && (
+                <button className="chat-turn__action" type="button" onClick={copy}>
+                  {copied ? <CheckIcon /> : <CopyIcon />}
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
+              )}
+              {showRetry && (
+                <button
+                  className="chat-turn__action"
+                  type="button"
+                  onClick={() => {
+                    onRetry(turn.id);
+                    article.current?.focus();
+                  }}
+                >
+                  <RetryIcon />
+                  Retry
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </article>
   );

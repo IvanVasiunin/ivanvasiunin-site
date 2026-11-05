@@ -186,51 +186,10 @@
   outline-offset: var(--focus-ring-width);
 }
 
-// The page scrollbar, for a mouse or trackpad only (touch devices keep their overlay scrollbars).
-// Only the root's: inner scrollers (the chat, code blocks) keep the system scrollbar until they opt in.
-// The thumb is the accent gradient: ≥ 3:1 against both backgrounds (WCAG 1.4.11), like the accent.
-// Chromium and Safari: a gradient pill thumb on a transparent track, so the sky shows through; that
-// needs the `::-webkit-scrollbar` pseudo-elements, which browsers ignore once `scrollbar-color` is set,
-// so the standard property is given only to browsers without them (Firefox: accent thumb, no
-// gradient). Forced colours keep the system scrollbar.
-@media (hover: hover) and (pointer: fine) and (forced-colors: none) {
-  @supports selector(::-webkit-scrollbar) {
-    :root::-webkit-scrollbar {
-      inline-size: var(--size-scrollbar);
-      block-size: var(--size-scrollbar);
-      background-color: transparent;
-    }
-
-    :root::-webkit-scrollbar-track {
-      background-color: transparent;
-    }
-
-    // The transparent border insets the pill from the edges (the background stops at the padding box).
-    :root::-webkit-scrollbar-thumb {
-      border: var(--space-3xs) solid transparent;
-      border-radius: var(--radius-pill);
-      background-image: var(--gradient-accent);
-      background-clip: padding-box;
-    }
-
-    :root::-webkit-scrollbar-thumb:hover {
-      background-image: var(--gradient-accent-hover);
-    }
-
-    :root::-webkit-scrollbar-thumb:active {
-      background-image: var(--gradient-accent-active);
-    }
-
-    :root::-webkit-scrollbar-corner {
-      background-color: transparent;
-    }
-  }
-
-  @supports not selector(::-webkit-scrollbar) {
-    :where(html) {
-      scrollbar-color: var(--color-accent) transparent;
-    }
-  }
+// The page scrollbar (mixins.scss → gradient-scrollbar): only the root's here; an inner scroller
+// that wants it (the chat panel) includes the same mixin.
+:root {
+  @include gradient-scrollbar;
 }
 
 // Pseudo-elements are not allowed inside `:where()`; the layer already keeps this below components.
