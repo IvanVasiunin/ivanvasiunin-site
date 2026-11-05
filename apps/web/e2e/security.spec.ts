@@ -9,7 +9,7 @@ import { expect, test } from './fixtures';
 // a new inline script or style without a hash is caught here, in every browser.
 
 // `/cv?view=brief` also runs the CV view head script (ROADMAP 2.4).
-const PATHS = ['/', '/cv', '/cv?view=brief'] as const;
+const PATHS = ['/', '/cv', '/cv?view=brief', '/privacy'] as const;
 
 /** Records CSP violations from the first byte of every document the page loads. */
 async function recordViolations(page: Page): Promise<() => Promise<string[]>> {

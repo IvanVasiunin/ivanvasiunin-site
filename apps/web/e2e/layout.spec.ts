@@ -2,7 +2,7 @@ import { expect, expectNoSeriousA11yViolations, test } from './fixtures';
 
 // Page shell (ROADMAP 1.1): layer order, landmarks, skip link, header, buttons, no horizontal scroll.
 
-const PAGES = ['/', '/cv'] as const;
+const PAGES = ['/', '/cv', '/privacy'] as const;
 
 for (const path of PAGES) {
   test.describe(`${path} shell`, () => {

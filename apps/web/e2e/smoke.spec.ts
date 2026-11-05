@@ -1,7 +1,8 @@
 import { expect, expectNoSeriousA11yViolations, test } from './fixtures';
 
 // Smoke tests: prove that the build, the preview server, every Playwright project and axe work.
-for (const path of ['/', '/cv']) {
+// `/privacy` (ROADMAP 4.7) is a plain page of the same shell.
+for (const path of ['/', '/cv', '/privacy']) {
   test(`${path} renders a valid page shell without serious a11y violations`, async ({ page }) => {
     await page.goto(path);
 

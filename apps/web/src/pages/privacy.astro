@@ -1,0 +1,91 @@
+---
+// The privacy notice (SPEC US-X3, §6.6; ROADMAP 4.7): what the chat stores, masking, retention,
+// what the browser keeps, no analytics cookies. Static HTML, no JS. Every fact here mirrors the
+// code: services/stats.py and services/masking.py (statistics), services/tracing.py (Langfuse),
+// services/limits.py (IP addresses in memory only), src/lib/chat (session storage). Wording
+// approved by Ivan on 2026-11-05 (ROADMAP 4.7: "C → I review"); a change to any of those files
+// that changes a fact here changes this page too. Tests: e2e/privacy.spec.ts.
+import PageProse from '../components/PageProse/PageProse.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const CONTACT_EMAIL = 'ivanvasyunin@gmail.com';
+const RETENTION_DAYS = 30;
+const UPDATED = '2026-11-05';
+---
+
+<BaseLayout
+  title="Privacy — Ivan Vasiunin"
+  description="What happens to your questions to Elio, what is stored, for how long, and what is not."
+>
+  <PageProse>
+    <h1>Privacy</h1>
+    <p>
+      This is Ivan Vasiunin's personal website. The CV (Text mode) works without any data from you.
+      This page explains what happens when you ask Elio, the AI assistant, a question.
+    </p>
+
+    <h2>When you ask Elio a question</h2>
+    <p>
+      Your question goes to this site's server. The server sends it, as you wrote it, to OpenAI's
+      models, which classify it, find matching parts of Ivan's own materials and write the answer.
+      Please don't put personal information in your questions.
+    </p>
+    <p>Elio is an AI assistant. Its answers can be wrong; Ivan is the source of truth.</p>
+
+    <h2>What the site keeps, and for how long</h2>
+    <p>For every answer the server keeps one statistics record:</p>
+    <ul>
+      <li>when it was;</li>
+      <li>
+        what kind of question it was (about Ivan, a greeting, off-topic, or an attempt to change
+        Elio's rules) and its language;
+      </li>
+      <li>how the answer ended, how long it took and roughly what it cost;</li>
+      <li>
+        the question itself, with email addresses, phone numbers and links replaced by placeholders.
+      </li>
+    </ul>
+    <p>These records are deleted automatically after {RETENTION_DAYS} days.</p>
+
+    <h2>Monitoring</h2>
+    <p>
+      To find and fix problems, the server sends a trace of each answer (the question, the earlier
+      messages of the chat, the parts of Ivan's materials it used and the answer) to Langfuse, a
+      monitoring service hosted in the European Union. Email addresses, phone numbers and links are
+      replaced by placeholders before anything leaves the server. Langfuse keeps traces for up to
+      {RETENTION_DAYS} days.
+    </p>
+    <p>
+      Masking finds what has a recognisable shape. Names, addresses or nicknames have none, so they
+      are not masked: another reason to keep them out of your questions.
+    </p>
+
+    <h2>What is never stored</h2>
+    <ul>
+      <li>
+        Your IP address: it is used only in the server's memory, to limit how many questions can be
+        asked in a short time, and it is never written down.
+      </li>
+      <li>Your name or any account: there are none.</li>
+      <li>Your question in the server's logs.</li>
+    </ul>
+
+    <h2>What your browser keeps</h2>
+    <ul>
+      <li>
+        The conversation with Elio stays in this browser tab (session storage), so it is still there
+        when you switch to the CV and back. It is gone when you close the tab or press "New chat".
+      </li>
+      <li>Your choice of light or dark theme (local storage).</li>
+    </ul>
+    <p>The site sets no cookies and uses no analytics or advertising trackers.</p>
+
+    <h2>Questions</h2>
+    <p>
+      Write to Ivan at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+    </p>
+    <p class="page-prose__note">
+      Last updated: <time datetime={UPDATED}>{UPDATED}</time>.
+    </p>
+  </PageProse>
+</BaseLayout>
