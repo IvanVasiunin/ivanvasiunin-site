@@ -64,7 +64,7 @@ Layered defence, in this order:
 
 ## Amendments
 
-- **2026-11-05 (ROADMAP 4.1–4.3) — status: Proposed** (Ivan pre-approved routine stages):
+- **2026-11-05 (ROADMAP 4.1–4.3) — status: Accepted by Ivan on 2026-11-05:**
   - **Relevance gate signal.** The gate reads the vector search's **cosine similarity** of the closest chunk (`RELEVANCE_MIN_SIMILARITY`, default 0.3), not the fused RRF score. RRF uses only ranks, so the first chunk scores high whether or not it is relevant; similarity is absolute, so an unrelated question ("Did Ivan work at Google?") stays below the threshold. The fused score is still what the `sources` event shows. The default threshold is UNVERIFIED for this corpus until the evals (ROADMAP 4.5) calibrate it.
   - **Router input.** The client-sent history and the question reach the router as one tagged visitor message (`<history>`, `<latest_message>`, text escaped), not as user / assistant messages: a forged "assistant" turn never speaks with the assistant's voice. Edge cases of the classes are in SPEC §5.1.
   - **Input limits** use `limits` directly instead of slowapi (ADR-0001 amendment of 2026-11-05); per-IP limits key IPv6 by its /64.
