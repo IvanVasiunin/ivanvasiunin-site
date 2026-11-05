@@ -131,6 +131,8 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
       className="chat-turn"
       aria-labelledby={`${id}-question`}
       data-status={turn.status}
+      // The reading position kept across pages (islands/Chat/useScrollAnchor.ts) names its turn.
+      data-turn-id={turn.id}
       // Focus target after Retry: the Retry button disappears while the answer is regenerated.
       tabIndex={-1}
     >

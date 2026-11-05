@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatComposer } from '../../components/ChatComposer';
 import { ElioAvatar } from '../../components/ElioAvatar';
 import { ChatTurn } from '../../components/ChatTurn';
+import { ChatWelcome } from '../../components/ChatWelcome';
 import { errorText } from '../../lib/chat/messages';
 import { questionFromSearch } from '../../lib/chat/prefill';
 import { type Turn, canRetry, lastTurn } from '../../lib/chat/state';
@@ -14,18 +15,12 @@ import { ChatErrorBoundary } from './ChatErrorBoundary';
 import { type UseChatOptions, useChat } from './useChat';
 import { useFollowScroll } from './useFollowScroll';
 import { useKeyboardInset } from './useKeyboardInset';
+import { useScrollAnchor } from './useScrollAnchor';
 import { usePageReady } from './usePageReady';
 
 import './Chat.scss';
 
-/** Three example questions under the input (SPEC US-A5). */
-export const EXAMPLE_QUESTIONS: readonly string[] = [
-  'What did Ivan do at BrainRocket?',
-  'Which technologies does Ivan use?',
-  'How is this site’s RAG built?',
-];
-
-/** An example's link without JS: the page with the question prefilled (SPEC §2). */
+/** A question's link without JS: the page with the question prefilled (SPEC §2). */
 export const exampleHref = (question: string): string => `/?q=${encodeURIComponent(question)}`;
 
 export type ChatProps = UseChatOptions;
@@ -72,7 +67,7 @@ function Intro({ busy = false }: { readonly busy?: boolean }) {
 }
 
 function ChatView(options: ChatProps) {
-  const { state, busy, send, stop, retry, clear } = useChat(options);
+  const { state, busy, send, stop, retry, clear, restored } = useChat(options);
   const ready = usePageReady();
   const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -88,11 +83,15 @@ function ChatView(options: ChatProps) {
 
   const last = lastTurn(state);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const { following, jumpToLatest } = useFollowScroll(
+  const dockRef = useRef<HTMLDivElement | null>(null);
+  const { following, jumpToLatest, pause } = useFollowScroll(
     `${String(state.turns.length)}:${String(last?.answer.length ?? 0)}:${last?.status ?? ''}`,
     state.turns.length > 0,
     scrollRef,
+    dockRef,
   );
+  // Back from a link in an answer (the CV): the reader returns to that answer, not to the end.
+  useScrollAnchor({ areaRef: scrollRef, following, pause, restored, ready });
 
   // Announce each answer's end once, on the change of its status.
   const announced = useRef<string | null>(null);
@@ -201,38 +200,10 @@ function ChatView(options: ChatProps) {
             </div>
           )}
 
-          {state.turns.length === 0 && (
-            <ul className="chat__examples" aria-label="Example questions">
-              {EXAMPLE_QUESTIONS.map((question) => (
-                <li key={question}>
-                  <a
-                    className="chat__example"
-                    href={exampleHref(question)}
-                    onClick={(event) => {
-                      // A modified or middle click keeps the link's own behaviour (a new tab).
-                      if (
-                        event.button !== 0 ||
-                        event.metaKey ||
-                        event.ctrlKey ||
-                        event.shiftKey ||
-                        event.altKey
-                      ) {
-                        return;
-                      }
-                      // With JS an example only fills the input; it never sends (SPEC US-A5).
-                      event.preventDefault();
-                      onExample(question);
-                    }}
-                  >
-                    {question}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
+          {state.turns.length === 0 && <ChatWelcome onPick={onExample} hrefFor={exampleHref} />}
         </div>
 
-        <div className="chat__dock">
+        <div className="chat__dock" ref={dockRef}>
           {/* Always mounted while there is a conversation, so it can fade in and out (Ivan:
           it vanished abruptly). Hidden, it is inert: no pointer, no Tab stop, nothing read out. */}
           {state.turns.length > 0 && (

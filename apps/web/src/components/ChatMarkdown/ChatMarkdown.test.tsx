@@ -47,6 +47,14 @@ describe('ChatMarkdown', () => {
     expect(link.getAttribute('target')).toBeNull();
   });
 
+  it('keeps an email link as mailto: in the tab (the "no information" answer offers one)', () => {
+    renderMarkdown('Ask Ivan by [email](mailto:ivan@example.com).');
+
+    const link = screen.getByRole('link', { name: 'email' });
+    expect(link.getAttribute('href')).toBe('mailto:ivan@example.com');
+    expect(link.getAttribute('target')).toBeNull();
+  });
+
   it('opens external links in a new tab without an opener', () => {
     renderMarkdown('Code on [GitHub](https://github.com).');
 

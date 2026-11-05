@@ -267,6 +267,28 @@ test('link buttons meet the 44 px touch target', async ({ page }) => {
   expect(box?.height).toBeGreaterThanOrEqual(44);
 });
 
+test('the PDF link sits beside the Brief / Full switch, with a short label on phones', async ({
+  page,
+  isMobile,
+}) => {
+  // Ivan, 2026-11-05: next to the switch it read as a third view; an icon sets the action apart.
+  await page.goto('/cv');
+  // Exact: the hidden verb and "PDF" must not run together ("DownloadPDF").
+  const link = page.getByRole('link', { name: 'Download PDF', exact: true });
+  const switchBox = await page.getByRole('group', { name: 'CV view' }).boundingBox();
+  const linkBox = await link.boundingBox();
+  expect(switchBox && linkBox).toBeTruthy();
+  // One row, even on a phone.
+  if (switchBox && linkBox) expect(Math.abs(linkBox.y - switchBox.y)).toBeLessThan(1);
+
+  // On phones only "PDF" shows: the verb is visually hidden (a 1 px box), still in the name.
+  const verbWidth = await link
+    .locator('.cv-header__pdf-verb')
+    .evaluate((element) => element.getBoundingClientRect().width);
+  if (isMobile) expect(verbWidth).toBeLessThanOrEqual(1);
+  else expect(verbWidth).toBeGreaterThan(20);
+});
+
 test('the brand mark planet orbits while the brand link is hovered', async ({ page, isMobile }) => {
   test.skip(isMobile, 'Touch devices have no hover state.');
   await page.goto('/');

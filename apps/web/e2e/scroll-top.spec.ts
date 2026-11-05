@@ -101,6 +101,27 @@ test('meets the 44 px touch target and does not cover the mobile mode switch', a
   }
 });
 
+test('on phones it stands level with the floating mode switch, beside it', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'From md the mode switch is in the header.');
+  // Below 24em the corner beside the switch is too narrow: the rocket stands above it there.
+  test.skip((page.viewportSize()?.width ?? 0) < 24 * 16, 'Too narrow for the side-by-side layout.');
+  await page.goto('/cv');
+  await page.evaluate(() => {
+    window.scrollTo({ top: 2000, behavior: 'instant' });
+  });
+  const box = await button(page).boundingBox();
+  const modeSwitch = await page.getByRole('navigation', { name: 'Mode' }).boundingBox();
+  expect(box && modeSwitch).toBeTruthy();
+  if (box && modeSwitch) {
+    const centre = (rect: { y: number; height: number }): number => rect.y + rect.height / 2;
+    expect(Math.abs(centre(box) - centre(modeSwitch))).toBeLessThan(1);
+    expect(box.x).toBeGreaterThanOrEqual(modeSwitch.x + modeSwitch.width);
+  }
+});
+
 test('stays hidden on a page too short to scroll', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 2000 });
   await page.goto('/');

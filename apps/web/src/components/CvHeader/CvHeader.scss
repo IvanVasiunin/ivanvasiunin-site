@@ -100,6 +100,34 @@
     }
   }
 
+  // The PDF link (pages/cv.astro) is an action, not a third view: next to the Brief / Full switch, in
+  // the same pill shape, it read as one more option of it (Ivan, 2026-11-05). A download icon and a
+  // wider gap set it apart. (At the far end of the row it hung in empty space on wide screens and
+  // dropped to a line of its own on phones.) On narrow screens it says just "PDF", so the row fits a 360 px
+  // screen; the verb stays in the accessible name.
+  .cv-header__pdf {
+    margin-inline-start: var(--space-xs);
+  }
+
+  // `em` in a media query is the browser's default font size: enlarged text keeps the short label
+  // on wider screens too.
+  .cv-header__pdf-verb {
+    @media (width < 30em) {
+      @include visually-hidden;
+    }
+  }
+
+  .cv-header__pdf-icon {
+    flex-shrink: 0;
+    inline-size: var(--size-icon-sm);
+    block-size: var(--size-icon-sm);
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   // One line of text: the key and the value sit on the same baseline. The font's ascent and descent
   // differ, so the line box is trimmed to cap height and baseline, which centres the letters optically
   // in the chip (progressive: without `text-box` the line box is centred instead).

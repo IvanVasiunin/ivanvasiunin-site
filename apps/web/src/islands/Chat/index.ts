@@ -1,1 +1,1 @@
-export { Chat, type ChatProps, EXAMPLE_QUESTIONS, exampleHref } from './Chat';
+export { Chat, type ChatProps, exampleHref } from './Chat';

@@ -1,6 +1,6 @@
 // AI mode's chat (Ivan, 2026-11-05: bubbles B "Orbits", layout L2): Elio's greeting with the live
-// avatar, then the chat panel: the conversation and the example questions in a scroll area, the input
-// and the AI disclosure.
+// avatar, then the chat panel: the conversation (before it, the topic cards) in a scroll area, the
+// input and the AI disclosure.
 
 // From `md` the panel is as tall as the free height of the window, and only the scroll area inside it
 // scrolls: the input stays at the panel's bottom with nothing behind it. (The knowledge-map card joins
@@ -89,13 +89,23 @@
       flex: 1;
       min-block-size: 0;
 
-      // Room for the scrollbar without pulling the text under it; the bubbles' shadows need a
-      // little space on the sides too.
+      // The bubbles' shadows need a little space on the sides: the padding, pulled back out by the
+      // negative margins, so the text column lines up with the input below.
       margin-inline: calc(-1 * var(--space-sm));
       padding: var(--space-xs) var(--space-sm);
       overflow-y: auto;
       overscroll-behavior: contain;
       scrollbar-gutter: stable;
+
+      // The scrollbar's gutter goes into the panel's side padding, not into the text column: the
+      // answers end exactly where the input ends (Ivan, 2026-11-05: a gutter-wide step made the input
+      // look as if it stuck out). Where the gutter's width is known (the site's own scrollbar,
+      // mixins.scss → gradient-scrollbar); elsewhere scrollbars overlay or keep the browser's width.
+      @media (hover: hover) and (pointer: fine) and (forced-colors: none) {
+        @supports selector(::-webkit-scrollbar) {
+          margin-inline-end: calc(-1 * (var(--space-sm) + var(--size-scrollbar)));
+        }
+      }
 
       // While the content is shorter than the panel it sits at the bottom, next to the input, as in
       // a messenger; once it is taller the area scrolls and the newest line is at the bottom.
@@ -327,91 +337,6 @@
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-  }
-
-  .chat__examples {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 var(--space-xs);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  // An example question: a small, quiet chip, clearly secondary to the input (Ivan, 2026-11-05). The
-  // link itself keeps the 44 px touch target; the visible pill is drawn on ::before, inset from the
-  // top and bottom, and the hover / press highlight on ::after inside the pill's border.
-  .chat__example {
-    position: relative;
-    isolation: isolate;
-    display: inline-flex;
-    align-items: center;
-    min-block-size: var(--size-touch);
-    padding-inline: var(--space-sm);
-    border-radius: var(--radius-pill);
-    font-size: var(--font-size-xs);
-    line-height: var(--line-height-snug);
-    color: var(--color-text-muted);
-    text-decoration-line: none;
-
-    &::before,
-    &::after {
-      position: absolute;
-      z-index: var(--z-below);
-      border-radius: inherit;
-      content: '';
-    }
-
-    &::before {
-      @include gradient-border;
-
-      inset: var(--space-xs) 0;
-    }
-
-    &::after {
-      inset: calc(var(--space-xs) + var(--border-width)) var(--border-width);
-      background-image: var(--gradient-surface-hover);
-      opacity: 0;
-      transition: opacity var(--duration-base) var(--ease-out);
-    }
-
-    // The ring follows the visible pill, not the taller touch area.
-    &:focus-visible {
-      outline: none;
-      color: var(--color-text);
-    }
-
-    &:focus-visible::before {
-      outline: var(--focus-ring-width) solid var(--color-focus);
-      outline-offset: var(--space-3xs);
-    }
-
-    @media (hover: hover) {
-      &:hover {
-        color: var(--color-text);
-      }
-
-      &:hover::after {
-        opacity: 1;
-      }
-    }
-
-    &:active::after {
-      background-image: var(--gradient-surface-active);
-      opacity: 1;
-    }
-
-    // Forced colours drop the gradient border and the ring's colour: system colours keep the
-    // pill's outline and a visible focus.
-    @media (forced-colors: active) {
-      &::before {
-        border-color: CanvasText;
-      }
-
-      &:focus-visible::before {
-        outline-color: Highlight;
-      }
-    }
   }
 
   .chat__disclosure {

@@ -155,11 +155,10 @@ test.describe('mode switch transition', () => {
   // 4x CPU slowdown of the Android profile can cause. This checks the behaviour, not the speed.
   test.use({ throttle: null });
 
-  test('on a mode switch only the main content moves, and main is named only during the transition', async ({
-    page,
-  }) => {
+  test('on a mode switch only the pill moves: the page swaps without a fade', async ({ page }) => {
+    // Ivan, 2026-11-05: the content lifting out and rising in looked jerky; it is gone.
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    // Records, on the new page, which view-transition animations ran.
+    // Records, on the new page, which view-transition pseudo-elements animate.
     await page.addInitScript(() => {
       window.addEventListener('pagereveal', (event) => {
         const transition = (event as Event & { viewTransition: ViewTransition | null })
@@ -168,7 +167,12 @@ test.describe('mode switch transition', () => {
         void transition.ready.then(() => {
           document.documentElement.dataset.vtAnimations = document
             .getAnimations()
-            .map((animation) => (animation instanceof CSSAnimation ? animation.animationName : ''))
+            .map((animation) =>
+              animation.effect instanceof KeyframeEffect
+                ? (animation.effect.pseudoElement ?? '')
+                : '',
+            )
+            .filter((pseudo) => pseudo.startsWith('::view-transition'))
             .join(' ');
         });
       });
@@ -180,15 +184,21 @@ test.describe('mode switch transition', () => {
       )),
       'Needs cross-document view transitions.',
     );
-
-    // A named element is a backdrop root (it would stop backdrop-filter inside main reaching the sky).
-    expect(await page.evaluate(style('main', '', 'viewTransitionName'))).toBe('none');
+    // A prerendered page is activated without Playwright's init scripts: drop the rules.
+    await page.evaluate(() => {
+      document.querySelector('script[type="speculationrules"]')?.remove();
+    });
 
     await page.getByRole('link', { name: 'Text mode' }).first().click();
     await page.waitForURL('**/cv');
     await expect
       .poll(() => page.evaluate(() => document.documentElement.dataset.vtAnimations ?? ''))
-      .toContain('page-main-in');
-    await expect.poll(() => page.evaluate(style('main', '', 'viewTransitionName'))).toBe('none');
+      .toContain('::view-transition-group(mode-switch-indicator)');
+    const animated = await page.evaluate(() => document.documentElement.dataset.vtAnimations ?? '');
+    expect(animated).not.toContain('::view-transition-old(root)');
+    expect(animated).not.toContain('::view-transition-new(root)');
+    expect(animated).not.toContain('page-main');
+    // Nothing on the page is named outside the switch (a named element is a backdrop root).
+    expect(await page.evaluate(style('main', '', 'viewTransitionName'))).toBe('none');
   });
 });

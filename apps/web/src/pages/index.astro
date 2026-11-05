@@ -5,6 +5,13 @@
 // The way to the CV is the mode switch's Text mode tab (Ivan, 2026-11-05: no CV button in the chat).
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Chat } from '../islands/Chat';
+import { chatRestoringHeadScript } from '../lib/chat/restoring';
+import { cspHash } from '../lib/csp';
+
+// Hides the topic cards before first paint while a kept conversation waits for its restore
+// (lib/chat/restoring.ts). Inline, so its hash goes into the page's CSP, like /cv's view script.
+const RESTORING_SCRIPT = chatRestoringHeadScript();
+Astro.csp?.insertScriptHash(cspHash(RESTORING_SCRIPT));
 ---
 
 <BaseLayout
@@ -13,5 +20,6 @@ import { Chat } from '../islands/Chat';
   scrollTop={false}
   fit
 >
+  <script slot="head" is:inline set:html={RESTORING_SCRIPT} />
   <Chat client:load />
 </BaseLayout>

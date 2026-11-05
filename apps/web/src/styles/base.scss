@@ -40,11 +40,11 @@
   }
 }
 
-// Cross-document view transitions (SPEC §2, ADR-0009): the header, the backdrop and the footer stay in
-// the root image (the same on both sides, so they look still), the mode switch pill slides from one tab
-// to the other, and the main content (`page-main`, BaseLayout.scss) leaves upwards while the new one
-// rises into place (ROADMAP 2.6). Only without a reduced-motion preference; browsers without support
-// simply navigate.
+// Cross-document view transitions (SPEC §2, ADR-0009): only the mode switch pill slides from one tab
+// to the other; the page itself swaps at once. The content used to lift out and rise into place
+// (ROADMAP 2.6), which Ivan found jerky rather than smooth (2026-11-05): the new page now replaces the
+// old one in the first frame, with no fade or movement. Only without a reduced-motion preference;
+// browsers without support simply navigate.
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;
@@ -56,6 +56,13 @@
   animation-timing-function: var(--ease-in-out);
 }
 
+// The page: no cross-fade. The new image is opaque (the page background), so it simply covers the old
+// one from the first frame while the pill moves above both.
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
 // Groups otherwise stack in the old page's paint order, where the pill can come after a tab label and
 // cover it. The tab labels (src/components/ModeSwitch/) always stay above the sliding pill.
 ::view-transition-group(mode-switch-indicator) {
@@ -65,35 +72,6 @@
 ::view-transition-group(mode-switch-ai),
 ::view-transition-group(mode-switch-text) {
   z-index: var(--z-raised);
-}
-
-// The content swap: the old page fades out quickly while lifting a little, the new one fades in from
-// slightly below. The group does not morph (the two pages differ in height): both images stay anchored
-// at the top. Opacity and translate only.
-::view-transition-group(page-main) {
-  animation: none;
-}
-
-::view-transition-old(page-main) {
-  animation: page-main-out var(--duration-base) var(--ease-in-out) both;
-}
-
-::view-transition-new(page-main) {
-  animation: page-main-in var(--duration-slow) var(--ease-out) var(--duration-fast) both;
-}
-
-@keyframes page-main-out {
-  to {
-    opacity: 0;
-    translate: 0 calc(-1 * var(--distance-reveal));
-  }
-}
-
-@keyframes page-main-in {
-  from {
-    opacity: 0;
-    translate: 0 var(--distance-reveal);
-  }
 }
 
 :where(body) {

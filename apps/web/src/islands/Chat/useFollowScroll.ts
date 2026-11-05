@@ -34,18 +34,29 @@ export function nextFollowing(
 }
 
 /** The scroll area when it scrolls itself (the panel from `md`), or null: the page scrolls. */
-function scrollingArea(area: HTMLElement | null): HTMLElement | null {
+export function scrollingArea(area: HTMLElement | null): HTMLElement | null {
   if (area === null) return null;
   const { overflowY } = getComputedStyle(area);
   return overflowY === 'auto' || overflowY === 'scroll' ? area : null;
 }
 
-const sample = (area: HTMLElement | null): ScrollSample => {
+const sample = (area: HTMLElement | null, dock: HTMLElement | null): ScrollSample => {
   const box = scrollingArea(area);
   if (box !== null) {
     return {
       scrollY: box.scrollTop,
       distanceToBottom: box.scrollHeight - (box.scrollTop + box.clientHeight),
+    };
+  }
+  // The page scrolls: "the bottom" is the end of the conversation, not of the document. Below the
+  // input come the disclosure and the footer; a reader who sees the last answer above the input is at
+  // the end even with the footer still below (Ivan, 2026-11-05: there, "Jump to latest" stayed and
+  // the scrim blurred the disclosure). How far the conversation reaches under the input's top edge:
+  // zero or less once the docked input has come to rest under the last answer.
+  if (area !== null && dock !== null) {
+    return {
+      scrollY: window.scrollY,
+      distanceToBottom: area.getBoundingClientRect().bottom - dock.getBoundingClientRect().top,
     };
   }
   return {
@@ -70,6 +81,8 @@ export interface FollowScroll {
   readonly following: boolean;
   /** Scroll to the latest content and follow it again ("Jump to latest", a new question). */
   readonly jumpToLatest: (smooth?: boolean) => void;
+  /** Stop following, as if the reader had scrolled up (a restored reading position). */
+  readonly pause: () => void;
 }
 
 /**
@@ -78,11 +91,15 @@ export interface FollowScroll {
  * @param active whether there is a conversation to follow. Without one nothing scrolls: on a page
  * taller than the screen (a phone) the empty chat would otherwise open scrolled to the bottom, with
  * the greeting under the header.
+ * @param areaRef the conversation's scroll area (it scrolls by itself from `md`).
+ * @param dockRef the docked input: below `md` the conversation counts as read to its end once its
+ * last line is above the input's top edge.
  */
 export function useFollowScroll(
   content: unknown,
   active = true,
   areaRef?: RefObject<HTMLElement | null>,
+  dockRef?: RefObject<HTMLElement | null>,
 ): FollowScroll {
   const [following, setFollowing] = useState(true);
   // The same value for the handlers and the layout effect, written together with the state so it
@@ -96,7 +113,9 @@ export function useFollowScroll(
 
   useEffect(() => {
     const scrollArea = areaRef?.current ?? null;
-    last.current = sample(scrollArea);
+    // Read at every sample, so a dock mounted later is never a stale node.
+    const dock = (): HTMLElement | null => dockRef?.current ?? null;
+    last.current = sample(scrollArea, dock());
     let touchY: number | null = null;
     const pause = (): void => {
       setFollow(false);
@@ -109,7 +128,7 @@ export function useFollowScroll(
       return box === null || (target instanceof Node && box.contains(target));
     };
     const onScroll = (): void => {
-      const current = sample(scrollArea);
+      const current = sample(scrollArea, dock());
       const previous = last.current ?? current;
       last.current = current;
       setFollow(nextFollowing(followingRef.current, previous, current));
@@ -146,7 +165,7 @@ export function useFollowScroll(
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [areaRef, setFollow]);
+  }, [areaRef, dockRef, setFollow]);
 
   // New content while following: down to it before paint, so the new line never flashes below the
   // fold. Only when content changes, not when following switches on: a reader who wheels back near
@@ -154,10 +173,11 @@ export function useFollowScroll(
   // 2026-11-05: both looked like a glitch).
   useLayoutEffect(() => {
     const scrollArea = areaRef?.current ?? null;
-    if (active && followingRef.current && sample(scrollArea).distanceToBottom > 0) {
+    const dock = dockRef?.current ?? null;
+    if (active && followingRef.current && sample(scrollArea, dock).distanceToBottom > 0) {
       scrollToBottom(scrollArea, false);
     }
-  }, [content, active, areaRef]);
+  }, [content, active, areaRef, dockRef]);
 
   const jumpToLatest = useCallback(
     (smooth = true) => {
@@ -167,5 +187,9 @@ export function useFollowScroll(
     [areaRef, setFollow],
   );
 
-  return { following, jumpToLatest };
+  const pause = useCallback(() => {
+    setFollow(false);
+  }, [setFollow]);
+
+  return { following, jumpToLatest, pause };
 }

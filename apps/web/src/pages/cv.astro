@@ -84,8 +84,29 @@ Astro.csp?.insertScriptHash(cspHash(VIEW_SCRIPT));
   <CvHeader profile={profile.data}>
     <CvViewSwitch />
     {/* The build-time PDF (scripts/build-pdf.mjs): always the Full view, printed from this page. */}
-    <Button href={CV_PDF_PATH} variant="secondary" download type="application/pdf">
-      Download PDF
+    {/* An action, not a third view: a download icon, and on narrow screens the short "PDF" (the
+    accessible name stays "Download PDF"). */}
+    <Button
+      class="cv-header__pdf"
+      href={CV_PDF_PATH}
+      variant="secondary"
+      download
+      type="application/pdf"
+    >
+      <svg
+        class="cv-header__pdf-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" />
+      </svg>
+      {/* The space stays outside the hidden verb: inside it, WebKit dropped it from the name. */}
+      <span>
+        <span class="cv-header__pdf-verb">Download</span> PDF
+      </span>
     </Button>
   </CvHeader>
 

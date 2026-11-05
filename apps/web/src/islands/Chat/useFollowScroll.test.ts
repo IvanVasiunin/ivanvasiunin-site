@@ -23,6 +23,11 @@ describe('nextFollowing', () => {
     expect(nextFollowing(false, at(100, 900), at(300, 700))).toBe(false);
   });
 
+  it('follows when the conversation ends above the docked input (the footer still below)', () => {
+    // Below md the distance is measured to the input's top edge: negative once it has come to rest.
+    expect(nextFollowing(false, at(300, 120), at(380, -40))).toBe(true);
+  });
+
   it('a smooth jump down never pauses on the way', () => {
     expect(nextFollowing(true, at(100, 900), at(400, 600))).toBe(true);
   });

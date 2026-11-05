@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BRAINROCKET_ANSWER, mockScenario, toSse } from '../../lib/chat/mock/scenarios';
 import { CHAT_ENDPOINT } from '../../lib/sse/client';
-import { Chat, EXAMPLE_QUESTIONS, exampleHref } from './Chat';
+import { WELCOME_TOPICS } from '../../components/ChatWelcome';
+import { Chat, exampleHref } from './Chat';
 import { ChatErrorBoundary } from './ChatErrorBoundary';
 import { afterViewTransition } from './useChat';
 import { keyboardInset } from './useKeyboardInset';
@@ -78,7 +79,7 @@ afterEach(() => {
 
 describe('Chat', () => {
   describe('empty', () => {
-    it('introduces Elio, with the disclosure and three example questions', () => {
+    it('introduces Elio, with the disclosure and the four topic cards', () => {
       render(<Chat fetchImpl={scenarioFetch()} />);
 
       expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
@@ -88,18 +89,21 @@ describe('Chat', () => {
       expect(screen.getByRole('link', { name: 'How chats are handled' }).getAttribute('href')).toBe(
         '/privacy',
       );
-      const examples = screen.getAllByRole('link', { name: /\?$/ });
-      expect(examples.map((link) => link.textContent)).toEqual(EXAMPLE_QUESTIONS);
-      expect(examples[0]?.getAttribute('href')).toBe(exampleHref(EXAMPLE_QUESTIONS[0] ?? ''));
+      const cards = within(screen.getByRole('list', { name: 'Example questions' })).getAllByRole(
+        'link',
+      );
+      expect(cards).toHaveLength(WELCOME_TOPICS.length);
+      // Without JS a card is a link to the page with its question prefilled.
+      expect(cards.map((card) => card.getAttribute('href'))).toEqual(
+        WELCOME_TOPICS.map((topic) => exampleHref(topic.question)),
+      );
     });
 
-    it('an example question fills and focuses the input, and never sends', async () => {
+    it('a topic card fills and focuses the input with its question, and never sends', async () => {
       const fetchImpl = scenarioFetch();
       render(<Chat fetchImpl={fetchImpl} />);
 
-      await userEvent.click(
-        screen.getByRole('link', { name: 'Which technologies does Ivan use?' }),
-      );
+      await userEvent.click(screen.getByRole('link', { name: /Skills & stack/ }));
 
       expect(input()).toHaveProperty('value', 'Which technologies does Ivan use?');
       expect(document.activeElement).toBe(input());
@@ -137,7 +141,7 @@ describe('Chat', () => {
       expect(await screen.findByRole('button', { name: 'Copy' })).toBeDefined();
       expect(screen.getByRole('region', { name: 'Sources' })).toBeDefined();
       expect(screen.getByText('Homepage performance.')).toBeDefined();
-      // The input is cleared for the next question; the examples are gone.
+      // The input is cleared for the next question; the topic cards are gone.
       expect(input()).toHaveProperty('value', '');
       expect(screen.queryByRole('list', { name: 'Example questions' })).toBeNull();
     });

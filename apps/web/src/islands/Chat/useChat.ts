@@ -6,9 +6,10 @@
 //
 // The conversation lives as long as the tab (lib/chat/history.ts): restored after the page loads,
 // saved whenever an answer ends and when the page is left, cleared by "New chat".
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 
 import { clearTurns, loadTurns, saveTurns } from '../../lib/chat/history';
+import { clearRestoring } from '../../lib/chat/restoring';
 
 import {
   type ChatState,
@@ -40,6 +41,8 @@ export interface UseChat {
   readonly retry: (turnId: string) => void;
   /** "New chat": stops any answer and forgets the conversation, here and in storage. */
   readonly clear: () => void;
+  /** How many times a stored conversation was restored (0 before the first): a signal to effects. */
+  readonly restored: number;
 }
 
 const randomTurnId = (): string => crypto.randomUUID();
@@ -94,6 +97,7 @@ export function useChat({
     stateRef.current = state;
   }, [state]);
   const controllerRef = useRef<AbortController | null>(null);
+  const [restored, setRestored] = useState(0);
 
   useEffect(
     () => () => {
@@ -107,11 +111,22 @@ export function useChat({
   // WebKit (found by e2e on the iPhone profile, 2026-11-05); the page looks the same either way.
   useEffect(() => {
     const turns = loadTurns(historyStorage);
-    if (turns.length === 0) return;
+    if (turns.length === 0) {
+      // Nothing (valid) to restore: the head script's mark must not keep the topic cards hidden.
+      clearRestoring(document.documentElement);
+      return;
+    }
     return afterViewTransition(() => {
       dispatch({ type: 'restore', turns });
+      setRestored((count) => count + 1);
     });
   }, [historyStorage]);
+
+  // After the restored conversation has rendered (it replaces the cards), drop the mark, so the
+  // cards come back after "New chat".
+  useEffect(() => {
+    if (restored > 0) clearRestoring(document.documentElement);
+  }, [restored]);
 
   // Save when nothing is streaming (an answer ended, was stopped or failed; a restore), so storage
   // is not rewritten on every token. An empty chat saves nothing: on mount it would erase the stored
@@ -199,5 +214,5 @@ export function useChat({
     clearTurns(historyStorage);
   }, [historyStorage]);
 
-  return { state, busy, send, stop, retry, clear };
+  return { state, busy, send, stop, retry, clear, restored };
 }

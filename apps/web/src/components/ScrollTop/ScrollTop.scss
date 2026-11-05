@@ -1,8 +1,8 @@
 @use '../../styles/mixins' as *;
 
 // "Back to top": the rocket is the control (no frame around it), standing in the bottom corner (an
-// overlay control, so `position: fixed` is allowed). Below `md` it stands above the floating mode
-// switch, clear of it; from `md` it is larger. Hovered or focused, the engine idles (a small flickering
+// overlay control, so `position: fixed` is allowed). Below `md` it stands beside the floating
+// mode switch (or above it on the narrowest screens); from `md` it is larger. Hovered or focused, the engine idles (a small flickering
 // flame). A click launches it (src/lib/scroll-top/launch.ts): `data-state="ignition"` lights the engine,
 // raises smoke and shakes the rocket on the pad; `data-state="ascent"` keeps the engine at full thrust
 // while the script moves the rocket and the page. Everything moves with `transform` / `opacity` only.
@@ -19,9 +19,20 @@
     min-inline-size: var(--size-touch);
     border-radius: var(--radius-md);
 
+    // Level with the floating mode switch, in the corner beside it (Ivan, 2026-11-05), wherever the
+    // corner is wide enough: the bar (about 16em wide) plus a 44 px target and the gutter on each
+    // side. In `em`, so enlarged text, which widens the bar, also raises the threshold. On narrower
+    // screens the rocket stands above the bar, clear of it. The box is the bar's height, with the
+    // rocket centred in it.
+    @media (width >= 24em) {
+      inset-block-end: var(--offset-bar-bottom);
+      block-size: var(--size-bar);
+    }
+
     // Room below for the plume and the smoke, which reach under the rocket.
     @include mq(md) {
       inset-block-end: max(var(--space-xl), env(safe-area-inset-bottom));
+      block-size: auto;
     }
 
     &:focus-visible {
