@@ -34,7 +34,7 @@ tests/api/ …              contract and service tests
 | Migration tests (live DB) | `uv run --directory apps/api pytest -m db` with `TEST_DATABASE_URL` → a `*_test` DB (docs/TESTING.md §2) |
 | Mentor-pending list | `uv run --directory apps/api pytest -m mentor_pending --co -q` |
 | Migrations | `uv run --directory apps/api alembic upgrade head` (dev DB: `infra/docker-compose.dev.yml`); in images: `python -m site_api.db.migrate` |
-| Ingestion | `uv run --directory apps/api python -m site_api.ingestion` (`--refit` only deliberately) |
+| Ingestion | `uv run --directory apps/api python -m site_api.ingestion --estimate` (free: plan + cost) → `--apply` (paid embeddings — Ivan's consent); `--refit` only deliberately (6.1) |
 | Evals (paid — Ivan's consent) | `uv run --directory apps/api python -m site_api.evals --estimate` → `--run` |
 
 ## App-specific notes

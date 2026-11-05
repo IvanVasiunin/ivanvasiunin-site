@@ -240,3 +240,21 @@ def test_unknown_frontmatter_key_is_rejected(cv_dir: Path) -> None:
 
     with pytest.raises(ValidationError):
         load_cv(cv_dir)
+
+
+def test_job_without_body_falls_back_to_its_brief(cv_dir: Path) -> None:
+    # The schema allows an empty body; the Brief bullets must not be lost then.
+    head = JOB.split("\n---\n", maxsplit=1)[0]
+    (cv_dir / "jobs" / "acme.md").write_text(f"{head}\n---\n", encoding="utf-8")
+
+    assert "- I build UI." in texts_by_id(cv_dir)["cv:acme"]
+
+
+def test_validation_error_names_the_file(cv_dir: Path) -> None:
+    text = SKILLS.replace("section: skills", "section: skills\nphone: '1'")
+    (cv_dir / "skills.md").write_text(text, encoding="utf-8")
+
+    with pytest.raises(ValidationError) as error:
+        load_cv(cv_dir)
+
+    assert any("skills.md" in note for note in error.value.__notes__)

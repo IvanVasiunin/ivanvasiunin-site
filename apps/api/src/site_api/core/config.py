@@ -6,11 +6,28 @@ values they need.
 """
 
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# A GitHub `owner/name`, the form the README API takes.
+GITHUB_REPO_PATTERN = r"^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$"
+
+
+class GithubReadmeSource(BaseModel):
+    """One allow-listed public repository whose README joins the knowledge base (ROADMAP 3.5)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    repo: str = Field(pattern=GITHUB_REPO_PATTERN)
+    # The CV project slug (`projects/<slug>.md`), so retrieval deduplicates README chunks and CV
+    # chunks of one project together (ROADMAP 3.6).
+    project: str = Field(pattern=r"^[a-z0-9-]+$")
+    # Repeated in every chunk of the README: what the repository is, so the answer model can
+    # label it (SPEC §5.2: study projects are described as study projects). Short on purpose.
+    note: str = Field(min_length=1, max_length=300)
 
 
 def find_env_file(start: Path) -> Path | None:
@@ -66,6 +83,51 @@ class Settings(BaseSettings):
 
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
+    # OpenAI key for embeddings (ingestion now, the query embedding later). Optional, so the API
+    # and the ingestion estimate run without it; `ingestion --apply` fails clearly when it is unset.
+    openai_api_key: SecretStr | None = None
+    # ADR-0001: text-embedding-3-large shortened to 1536 dimensions, the `vector(1536)` column of
+    # migration 0001. Changing either needs a migration and a full reindex.
+    embedding_model: str = "text-embedding-3-large"
+    embedding_dimensions: int = Field(default=1536, ge=1, le=3072)
+    # USD per 1M input tokens, for the cost estimate printed before any paid embedding run.
+    embedding_price_per_1m_tokens: float = Field(default=0.13, ge=0)
+
+    # Chunking (ROADMAP 3.3, docs/ARCHITECTURE.md §5): the maximum body size of one chunk in
+    # characters, and how many characters neighbouring pieces of one long section share.
+    chunk_size: int = Field(default=1200, ge=200, le=8000)
+    chunk_overlap: int = Field(default=150, ge=0, le=1000)
+
+    # GitHub READMEs (ROADMAP 3.5). Only these repositories are fetched, only from this owner,
+    # without a token: the API then serves public repositories only. Proposed default: the one
+    # CV project whose README describes the project (the Little Lemon repository still has the
+    # Create React App boilerplate README). Override with GITHUB_READMES='[{...}]' (JSON).
+    github_owner: str = "IvanVasiunin"
+    github_readmes: list[GithubReadmeSource] = Field(
+        default_factory=lambda: [
+            GithubReadmeSource(
+                repo="IvanVasiunin/NumbersValidator",
+                project="numbers-validator",
+                note=(
+                    "README of NumbersValidator, a production web tool Ivan built at "
+                    "Liketelecom, from his public GitHub repository."
+                ),
+            ),
+        ]
+    )
+    github_api_url: str = "https://api.github.com"
+    github_timeout_s: float = Field(default=10.0, gt=0, le=60)
+
+    # Hybrid retrieval (ROADMAP 3.6, ADR-0003). Each search (vector, full-text) returns this many
+    # candidates; RRF fuses them; at most `retrieval_max_per_project` chunks of one project are
+    # kept, and the best `retrieval_top_k` go to the answer model. Starting values, tuned by evals.
+    retrieval_candidates: int = Field(default=20, ge=1, le=200)
+    retrieval_top_k: int = Field(default=6, ge=1, le=50)
+    retrieval_max_per_project: int = Field(default=2, ge=1, le=50)
+    # The RRF constant: 60 is the value of the original paper (Cormack et al., 2009); a larger k
+    # flattens the difference between ranks.
+    retrieval_rrf_k: int = Field(default=60, ge=1, le=1000)
+
     @field_validator("cors_allow_origins")
     @classmethod
     def _explicit_origins_only(cls, origins: list[str]) -> list[str]:
@@ -90,6 +152,20 @@ class Settings(BaseSettings):
                 msg = f"CORS origin must look like https://example.com[:port], got {origin!r}"
                 raise ValueError(msg)
         return origins
+
+    @model_validator(mode="after")
+    def _readmes_from_the_owner_only(self) -> Self:
+        """Every allow-listed README must belong to `github_owner` (rules/langchain-rag.md).
+
+        A typo or a pasted third-party repository would otherwise put someone else's text into
+        what Elio says about Ivan.
+        """
+        for source in self.github_readmes:
+            owner = source.repo.split("/", 1)[0]
+            if owner.lower() != self.github_owner.lower():
+                msg = f"README {source.repo!r} is not owned by {self.github_owner!r}"
+                raise ValueError(msg)
+        return self
 
     @property
     def is_production(self) -> bool:

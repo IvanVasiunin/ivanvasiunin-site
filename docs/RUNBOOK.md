@@ -24,7 +24,7 @@
 - **Migrations:** `infra/deploy.sh` runs `docker compose run --rm api python -m site_api.db.migrate` after the pull and before starting the new release (a failure stops the deploy with nothing changed). By hand: the same command. Migrations must stay backward-compatible with the previous release (add first, remove in a later release): an automatic rollback switches images, not the schema.
 - **Local database (development):** `docker compose -f infra/docker-compose.dev.yml up -d --wait` starts Postgres + pgvector on `127.0.0.1:5432` with the databases `site` (the dev API: `DATABASE_URL` in `.env`) and `site_test` (migration tests), and a read-only role `mcp_reader` for Postgres MCP. Then `uv run --directory apps/api alembic upgrade head`. Never used on the VPS. Use development-only passwords in the local `infra/.env` (`POSTGRES_PASSWORD`, `POSTGRES_MCP_PASSWORD`), never the production one.
 - **Postgres MCP (development):** set `POSTGRES_MCP_DATABASE_URI=postgresql://mcp_reader:<POSTGRES_MCP_PASSWORD>@127.0.0.1:5432/site` in your user environment (not in a file in the repository) and restart Claude Code. Never point it at production.
-- **Ingestion:** `docker compose run --rm api python -m site_api.ingestion`. Add `--refit` only for a deliberate full UMAP refit ([ADR-0006](adr/0006-2d-projection.md)).
+- **Ingestion:** `docker compose run --rm api python -m site_api.ingestion --estimate` prints the plan and the embedding cost; `--apply` embeds and writes. Add `--refit` only for a deliberate full UMAP refit ([ADR-0006](adr/0006-2d-projection.md)).
 - **`APP_ENV`:** Compose sets `APP_ENV=production` itself. Never copy the development `.env` to the server.
 
 ### 1.1 Automatic deploys (ROADMAP 1.7)
