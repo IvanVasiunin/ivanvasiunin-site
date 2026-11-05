@@ -13,8 +13,6 @@ from site_api.ingestion.sources import load_all
 
 from .conftest import FakeEmbeddings, FakeStore
 
-pytestmark = pytest.mark.mentor_pending
-
 REPO_ROOT = Path(__file__).resolve().parents[4]
 
 

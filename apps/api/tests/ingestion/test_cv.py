@@ -9,8 +9,6 @@ from pydantic import ValidationError
 
 from site_api.ingestion.cv import load_cv
 
-pytestmark = pytest.mark.mentor_pending
-
 PROFILE = """---
 section: profile
 name: Ivan Vasiunin

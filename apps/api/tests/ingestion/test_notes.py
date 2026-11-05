@@ -8,8 +8,6 @@ from pydantic import ValidationError
 
 from site_api.ingestion.notes import load_notes
 
-pytestmark = pytest.mark.mentor_pending
-
 EXPERIENCE = """---
 title: Experience notes — Ivan Vasiunin
 category: experience

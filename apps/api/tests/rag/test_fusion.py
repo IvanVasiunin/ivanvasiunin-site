@@ -4,8 +4,6 @@ import pytest
 
 from site_api.rag.fusion import reciprocal_rank_fusion
 
-pytestmark = pytest.mark.mentor_pending
-
 K = 60
 
 

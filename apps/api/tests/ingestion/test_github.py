@@ -16,8 +16,6 @@ from site_api.ingestion.pii import PHONE_PLACEHOLDER, redact_phone_numbers
 
 from .conftest import IsolatedSettings
 
-pytestmark = pytest.mark.mentor_pending
-
 # Built at runtime: no phone number may be written in the repo, not even a fake one (gitleaks).
 FAKE_PHONE = "+NN NNN NNN NNN".replace("N", "0")
 

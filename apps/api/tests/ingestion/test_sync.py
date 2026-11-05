@@ -13,8 +13,6 @@ from site_api.ingestion.sync import apply_sync, content_hash, plan_sync
 
 from .conftest import FAKE_DIMENSIONS, FakeEmbeddings, FakeStore
 
-pytestmark = pytest.mark.mentor_pending
-
 
 def chunk(chunk_id: str, text: str, url: str | None = "/cv#job-acme") -> Document:
     return Document(

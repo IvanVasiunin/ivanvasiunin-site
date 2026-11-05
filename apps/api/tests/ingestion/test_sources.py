@@ -13,8 +13,6 @@ from langchain_core.documents import Document
 
 from site_api.ingestion.sources import load_all
 
-pytestmark = pytest.mark.mentor_pending
-
 REPO_ROOT = Path(__file__).resolve().parents[4]
 
 # 9+ digits with at most two separators between them: a phone number, not a date or a version.

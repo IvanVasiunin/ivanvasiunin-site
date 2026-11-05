@@ -6,8 +6,6 @@ import pytest
 
 from site_api.ingestion.frontmatter import split_frontmatter
 
-pytestmark = pytest.mark.mentor_pending
-
 
 def test_returns_the_mapping_and_the_body() -> None:
     text = "---\ntitle: Notes\ncategory: experience\n---\n\n# Notes\n\nBody text.\n"

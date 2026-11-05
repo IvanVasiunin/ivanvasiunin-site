@@ -1,6 +1,5 @@
 """Hybrid retrieval with fake searches (ROADMAP 3.6). No database, no API call."""
 
-import pytest
 from langchain_core.embeddings import Embeddings
 
 from site_api.rag.retrieval import (
@@ -10,8 +9,6 @@ from site_api.rag.retrieval import (
     limit_per_project,
 )
 from site_api.rag.search import Candidate
-
-pytestmark = pytest.mark.mentor_pending
 
 PARAMS = RetrievalParams(candidates=10, top_k=3, max_per_project=2, rrf_k=60)
 

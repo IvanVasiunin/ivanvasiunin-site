@@ -6,8 +6,6 @@ import pytest
 
 from site_api.ingestion.site_docs import load_site_docs
 
-pytestmark = pytest.mark.mentor_pending
-
 
 @pytest.fixture
 def repo_root(tmp_path: Path) -> Path:
