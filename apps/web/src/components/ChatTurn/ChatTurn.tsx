@@ -11,6 +11,7 @@ import { type Turn, isActive } from '../../lib/chat/state';
 import { ChatMarkdown } from '../ChatMarkdown';
 import { ElioAvatar } from '../ElioAvatar';
 import { ThinkingSteps } from '../ThinkingSteps';
+import { UnderTheHood, usageSummary } from '../UnderTheHood';
 
 import './ChatTurn.scss';
 
@@ -47,6 +48,17 @@ function CheckIcon() {
   return (
     <svg className="chat-turn__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M5 12.5l4.5 4.5L19 7" />
+    </svg>
+  );
+}
+
+function HoodIcon() {
+  return (
+    <svg className="chat-turn__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="6" cy="6" r="2" />
+      <circle cx="6" cy="18" r="2" />
+      <circle cx="18" cy="12" r="2" />
+      <path d="M6 8v8M8 6h4a4 4 0 0 1 4 4v0M8 18h4a4 4 0 0 0 4-4v0" />
     </svg>
   );
 }
@@ -94,6 +106,8 @@ function Sources({
 export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps) {
   const id = useId();
   const [copied, setCopied] = useState(false);
+  // Under the hood starts collapsed under every answer (SPEC US-A9).
+  const [hoodOpen, setHoodOpen] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   const article = useRef<HTMLElement | null>(null);
   useEffect(
@@ -107,6 +121,9 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
   const error = turn.error === null ? null : errorText(turn.error.code, turn.error.retryAfterS);
   const showRetry = canRetry && !active && (error === null || error.retryable);
   const showCopy = turn.answer !== '' && (turn.status === 'done' || turn.status === 'stopped');
+  // Only a finished answer has its `usage` (sent right before `done`).
+  const usage = turn.status === 'done' ? turn.usage : null;
+  const hoodId = `${id}-hood`;
 
   const copy = (): void => {
     // Inside the click handler: browsers allow clipboard writes only from a user gesture.
@@ -180,13 +197,29 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
 
           {turn.sources.length > 0 && <Sources items={turn.sources} headingId={`${id}-sources`} />}
 
-          {(showCopy || showRetry || turn.status === 'stopped') && (
+          {(showCopy || showRetry || usage !== null || turn.status === 'stopped') && (
             <div className="chat-turn__actions">
               {turn.status === 'stopped' && <span className="chat-turn__tag">Stopped</span>}
               {showCopy && (
                 <button className="chat-turn__action" type="button" onClick={copy}>
                   {copied ? <CheckIcon /> : <CopyIcon />}
                   {copied ? 'Copied' : 'Copy'}
+                </button>
+              )}
+              {usage !== null && (
+                <button
+                  className="chat-turn__action"
+                  type="button"
+                  aria-expanded={hoodOpen}
+                  aria-controls={hoodId}
+                  onClick={() => {
+                    setHoodOpen((open) => !open);
+                  }}
+                >
+                  <HoodIcon />
+                  Under the hood{' '}
+                  {/* Part of the name: a visible label must be in the accessible name (WCAG 2.5.3). */}
+                  <span className="chat-turn__action-note">{usageSummary(usage)}</span>
                 </button>
               )}
               {showRetry && (
@@ -203,6 +236,19 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
                 </button>
               )}
             </div>
+          )}
+
+          {usage !== null && (
+            // Rendered while collapsed too, so `aria-controls` always points at an element.
+            <UnderTheHood
+              id={hoodId}
+              hidden={!hoodOpen}
+              route={turn.route}
+              language={turn.language}
+              sources={turn.sources}
+              usage={usage}
+              finishReason={turn.finishReason}
+            />
           )}
         </div>
       </div>

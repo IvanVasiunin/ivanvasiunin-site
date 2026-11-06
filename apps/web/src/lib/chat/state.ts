@@ -13,6 +13,8 @@ export const HISTORY_TURNS = 6;
 
 type Route = Extract<ChatEvent, { type: 'route' }>['route'];
 type FinishReason = Extract<ChatEvent, { type: 'done' }>['finish_reason'];
+/** What the answer took, step by step (the `usage` event without its `type`; SPEC US-A9). */
+export type TurnUsage = Omit<Extract<ChatEvent, { type: 'usage' }>, 'type'>;
 
 /**
  * Where an answer is before its first token, shown by the "thinking" steps. Each step follows a real
@@ -41,7 +43,11 @@ export interface Turn {
   readonly status: TurnStatus;
   readonly step: Step;
   readonly route: Route | null;
+  /** The question's language as the router detected it (ISO 639-1). */
+  readonly language: string | null;
   readonly sources: readonly SourceItem[];
+  /** Shown by Under the hood; arrives right before `done`. */
+  readonly usage: TurnUsage | null;
   readonly error: TurnError | null;
   readonly finishReason: FinishReason | null;
 }
@@ -69,7 +75,9 @@ const newTurn = (id: string, question: string): Turn => ({
   status: 'pending',
   step: 'understanding',
   route: null,
+  language: null,
   sources: [],
+  usage: null,
   error: null,
   finishReason: null,
 });
@@ -97,6 +105,7 @@ function applyEvent(turn: Turn, event: ChatEvent): Turn {
       return {
         ...turn,
         route: event.route,
+        language: event.language,
         step: event.route === 'about_ivan' ? 'searching' : 'writing',
       };
     case 'sources':
@@ -104,8 +113,14 @@ function applyEvent(turn: Turn, event: ChatEvent): Turn {
     case 'token':
       return { ...turn, answer: turn.answer + event.text, status: 'streaming' };
     case 'usage':
-      // Shown by Under the hood (ROADMAP 5.x); nothing in the chat itself depends on it.
-      return turn;
+      return {
+        ...turn,
+        usage: {
+          nodes: event.nodes,
+          total_ms: event.total_ms,
+          estimated_cost_usd: event.estimated_cost_usd,
+        },
+      };
     case 'done':
       return { ...turn, status: 'done', finishReason: event.finish_reason };
     case 'error':

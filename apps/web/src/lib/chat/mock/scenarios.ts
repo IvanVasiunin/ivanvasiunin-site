@@ -126,11 +126,33 @@ const tokens = (text: string): MockStep[] =>
     event: { type: 'token', text: piece },
   }));
 
+const NO_TOKENS = {
+  model: null,
+  input_tokens: null,
+  cached_input_tokens: null,
+  output_tokens: null,
+  embedding_tokens: null,
+} as const;
+
+const ROUTER_NODE = {
+  name: 'router',
+  ms: 310,
+  model: 'mock-router',
+  input_tokens: 412,
+  cached_input_tokens: 0,
+  output_tokens: 18,
+  embedding_tokens: null,
+};
+
+// The steps of the real graph (apps/api graph/nodes.py), so Under the hood looks as it will live.
 const usage: MockStep = {
   delayMs: 0,
   event: {
     type: 'usage',
     nodes: [
+      ROUTER_NODE,
+      { ...NO_TOKENS, name: 'retrieval', ms: 120, embedding_tokens: 9 },
+      { ...NO_TOKENS, name: 'relevance_gate', ms: 1 },
       {
         name: 'generate',
         ms: 1840,
@@ -143,6 +165,27 @@ const usage: MockStep = {
     ],
     total_ms: 2273,
     estimated_cost_usd: 0.0061,
+  },
+};
+
+/** A ready-made reply: only the router called a model. */
+const templatedUsage: MockStep = {
+  delayMs: 0,
+  event: { type: 'usage', nodes: [ROUTER_NODE], total_ms: 312, estimated_cost_usd: 0.0001 },
+};
+
+/** "No information": the search ran, nothing passed the gate, no model wrote the reply. */
+const noInfoUsage: MockStep = {
+  delayMs: 0,
+  event: {
+    type: 'usage',
+    nodes: [
+      ROUTER_NODE,
+      { ...NO_TOKENS, name: 'retrieval', ms: 118, embedding_tokens: 7 },
+      { ...NO_TOKENS, name: 'relevance_gate', ms: 1 },
+    ],
+    total_ms: 431,
+    estimated_cost_usd: 0.0001,
   },
 };
 
@@ -350,13 +393,19 @@ export function mockScenario(question: string): MockScenario {
   if (/\b(hi|hello|hey)\b/.test(q)) {
     return {
       kind: 'stream',
-      steps: [route('greeting'), ...tokens(GREETING_ANSWER), usage, done('templated')],
+      steps: [route('greeting'), ...tokens(GREETING_ANSWER), templatedUsage, done('templated')],
     };
   }
   if (q.includes('google')) {
     return {
       kind: 'stream',
-      steps: [route('about_ivan'), sources([]), ...tokens(NO_INFO_ANSWER), usage, done('no_info')],
+      steps: [
+        route('about_ivan'),
+        sources([]),
+        ...tokens(NO_INFO_ANSWER),
+        noInfoUsage,
+        done('no_info'),
+      ],
     };
   }
   if (q.includes('fail')) {

@@ -34,7 +34,9 @@ const turnWith = (changes: Partial<Turn>): Turn => ({
   status: 'pending',
   step: 'understanding',
   route: null,
+  language: null,
   sources: [],
+  usage: null,
   error: null,
   finishReason: null,
   ...changes,
@@ -209,6 +211,72 @@ describe('ChatTurn', () => {
       setup(turnWith({ status: 'error', error: { code: 'budget_exceeded', retryAfterS: null } }));
 
       expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+    });
+  });
+  describe('Under the hood', () => {
+    const USAGE = {
+      nodes: [
+        {
+          name: 'router',
+          ms: 310,
+          model: 'gpt-6-luna',
+          input_tokens: 412,
+          cached_input_tokens: 0,
+          output_tokens: 18,
+          embedding_tokens: null,
+        },
+      ],
+      total_ms: 2273,
+      estimated_cost_usd: 0.0061,
+    };
+    const WITH_USAGE = { ...DONE, usage: USAGE, language: 'en' };
+    const toggle = () => screen.getByRole('button', { name: /Under the hood/ });
+
+    it('is a collapsed toggle with the time and cost in its name', () => {
+      setup(WITH_USAGE);
+
+      // The visible summary is part of the name (WCAG 2.5.3, axe label-content-name-mismatch).
+      expect(screen.getByRole('button', { name: 'Under the hood 2.3 s · $0.0061' })).toBe(toggle());
+      expect(toggle().getAttribute('aria-expanded')).toBe('false');
+      expect(toggle().textContent).toBe('Under the hood 2.3 s · $0.0061');
+      const panel = document.getElementById(toggle().getAttribute('aria-controls') ?? '');
+      expect(panel?.hidden).toBe(true);
+    });
+
+    it('opens and closes with a click, and focus stays on the toggle', async () => {
+      const user = userEvent.setup();
+      setup(WITH_USAGE);
+
+      await user.click(toggle());
+      expect(toggle().getAttribute('aria-expanded')).toBe('true');
+      const panel = document.getElementById(toggle().getAttribute('aria-controls') ?? '');
+      expect(panel?.hidden).toBe(false);
+      expect(within(panel ?? document.body).getByText('About Ivan · en')).toBeDefined();
+      expect(document.activeElement).toBe(toggle());
+
+      await user.click(toggle());
+      expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('works from the keyboard with Enter and Space', async () => {
+      const user = userEvent.setup();
+      setup(WITH_USAGE);
+
+      toggle().focus();
+      await user.keyboard('{Enter}');
+      expect(toggle().getAttribute('aria-expanded')).toBe('true');
+      await user.keyboard(' ');
+      expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('is not offered before the answer has finished, nor without usage', () => {
+      setup(turnWith({ status: 'streaming', answer: 'Ivan', usage: USAGE }));
+      expect(screen.queryByRole('button', { name: /Under the hood/ })).toBeNull();
+    });
+
+    it('is not offered for an answer that has no usage', () => {
+      setup(DONE);
+      expect(screen.queryByRole('button', { name: /Under the hood/ })).toBeNull();
     });
   });
 });

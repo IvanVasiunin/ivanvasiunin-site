@@ -1,0 +1,215 @@
+// Under the hood, layout "Pipeline": the steps as stations on a vertical line (the CV timeline's
+// meridian, in miniature), each with its time on the end side; the retrieved chunks hang under
+// Retrieval with a relevance bar. Small, muted type: it is a look behind the answer, not the answer.
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .under-the-hood {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: var(--border-width) solid var(--color-grid);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-snug);
+    color: var(--color-text-muted);
+    background-color: var(--color-highlight-soft);
+
+    // Opening fades the panel in and lifts it a little (transform / opacity only).
+    @media (prefers-reduced-motion: no-preference) {
+      animation: under-the-hood-in var(--duration-base) var(--ease-out);
+    }
+
+    &[hidden] {
+      display: none;
+    }
+
+    @media (forced-colors: active) {
+      border-color: CanvasText;
+    }
+  }
+
+  .under-the-hood__steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // A station: a dot on the line; the line runs on to the next station. The dot is the CV
+  // timeline's star size on purpose: the same "station on a meridian" mark across the site.
+  .under-the-hood__step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+    padding-inline-start: var(--space-lg);
+
+    &::before {
+      position: absolute;
+      inset-block-start: calc((1lh - var(--size-cv-star)) / 2);
+      inset-inline-start: 0;
+      inline-size: var(--size-cv-star);
+      block-size: var(--size-cv-star);
+      border-radius: var(--radius-pill);
+      background-color: var(--color-accent);
+      content: '';
+    }
+
+    &:not(:last-child)::after {
+      position: absolute;
+      inset-block: calc(1lh / 2 + var(--size-cv-star)) calc(-1 * var(--space-sm));
+      inset-inline-start: calc((var(--size-cv-star) - var(--border-width)) / 2);
+      border-inline-start: var(--border-width) solid var(--color-chart-line);
+      content: '';
+    }
+
+    @media (forced-colors: active) {
+      &::before {
+        background-color: CanvasText;
+      }
+
+      &:not(:last-child)::after {
+        border-color: CanvasText;
+      }
+    }
+  }
+
+  .under-the-hood__step-head {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 0;
+  }
+
+  .under-the-hood__step-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+  }
+
+  .under-the-hood__step-time {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .under-the-hood__detail {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .under-the-hood__sources {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin: var(--space-2xs) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .under-the-hood__source {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+  }
+
+  .under-the-hood__source-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-xs);
+    align-items: center;
+    margin: 0;
+  }
+
+  // The relevance bar: a track, and a fill scaled to the score (transform, never a width).
+  .under-the-hood__meter {
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden;
+    inline-size: var(--size-meter);
+    block-size: var(--size-meter-thickness);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-grid);
+
+    &::before {
+      position: absolute;
+      inset: 0;
+      background-color: var(--color-source-cv);
+      content: '';
+      transform: scaleX(var(--relevance, 0));
+      transform-origin: left;
+
+      .under-the-hood__source[data-source='experience'] & {
+        background-color: var(--color-source-experience);
+      }
+
+      .under-the-hood__source[data-source='personal'] & {
+        background-color: var(--color-source-personal);
+      }
+
+      .under-the-hood__source[data-source='site_docs'] & {
+        background-color: var(--color-source-site-docs);
+      }
+
+      .under-the-hood__source[data-source='github_readme'] & {
+        background-color: var(--color-source-github);
+      }
+    }
+
+    // A right-to-left page grows the bar from the right.
+    &:dir(rtl)::before {
+      transform-origin: right;
+    }
+
+    @media (forced-colors: active) {
+      border: var(--border-width) solid CanvasText;
+
+      &::before {
+        background-color: CanvasText;
+      }
+    }
+  }
+
+  .under-the-hood__score {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text);
+  }
+
+  // Read by screen readers only: "Relevance 0.83", the word the bar stands for.
+  .under-the-hood__hidden {
+    @include visually-hidden;
+  }
+
+  .under-the-hood__source-title {
+    color: var(--color-text);
+    overflow-wrap: anywhere;
+  }
+
+  .under-the-hood__source-kind {
+    font-size: var(--font-size-xs);
+  }
+
+  .under-the-hood__snippet {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+  }
+
+  .under-the-hood__total {
+    margin: 0;
+    padding-block-start: var(--space-xs);
+    border-block-start: var(--border-width) solid var(--color-grid);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text);
+  }
+
+  @keyframes under-the-hood-in {
+    from {
+      opacity: 0;
+      transform: translateY(calc(-1 * var(--space-2xs)));
+    }
+  }
+}

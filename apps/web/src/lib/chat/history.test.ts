@@ -26,6 +26,7 @@ const turn = (overrides: Partial<Turn> = {}): Turn => ({
   status: 'done',
   step: 'writing',
   route: 'about_ivan',
+  language: 'en',
   sources: [
     {
       chunk_id: 'cv:brainrocket:0',
@@ -37,6 +38,7 @@ const turn = (overrides: Partial<Turn> = {}): Turn => ({
       snippet: 'Builds UI.',
     },
   ],
+  usage: null,
   error: null,
   finishReason: 'stop',
   ...overrides,
@@ -98,11 +100,59 @@ describe('conversation history', () => {
     ['a question over the limit', JSON.stringify([{ ...turn(), question: 'x'.repeat(501) }])],
     ['a repeated turn id', JSON.stringify([turn(), turn()])],
     ['an answer over the limit', JSON.stringify([{ ...turn(), answer: 'x'.repeat(20_001) }])],
+    ['usage that is not an object', JSON.stringify([{ ...turn(), usage: 'lots' }])],
+    [
+      'usage without a total',
+      JSON.stringify([{ ...turn(), usage: { nodes: [], estimated_cost_usd: 0 } }]),
+    ],
+    ['a language that is not a code', JSON.stringify([{ ...turn(), language: 'x'.repeat(17) }])],
   ])('restores nothing from %s', (_case, stored) => {
     const { items, storage } = memoryStorage();
     items.set(HISTORY_STORAGE_KEY, stored);
 
     expect(loadTurns(storage)).toEqual([]);
+  });
+
+  it('keeps Under the hood across pages: usage and language round-trip', () => {
+    const { storage } = memoryStorage();
+    const usage = {
+      nodes: [
+        {
+          name: 'router',
+          ms: 310,
+          model: 'gpt-6-luna',
+          input_tokens: 412,
+          cached_input_tokens: 0,
+          output_tokens: 18,
+          embedding_tokens: null,
+        },
+      ],
+      total_ms: 312,
+      estimated_cost_usd: 0.0001,
+    };
+
+    saveTurns([turn({ usage, language: 'es' })], storage);
+
+    expect(loadTurns(storage)[0]).toMatchObject({ usage, language: 'es' });
+  });
+
+  it('a turn stored before Under the hood comes back without it', () => {
+    const { items, storage } = memoryStorage();
+    // JSON drops `undefined` fields: the stored turn has neither key, as one saved before 5.2.
+    const older = { ...turn(), usage: undefined, language: undefined };
+    items.set(HISTORY_STORAGE_KEY, JSON.stringify([older]));
+    expect(items.get(HISTORY_STORAGE_KEY)).not.toContain('usage');
+
+    expect(loadTurns(storage)[0]).toMatchObject({ usage: null, language: null });
+  });
+
+  it('a stored step keeps only the contract fields', () => {
+    const { items, storage } = memoryStorage();
+    const node = { name: 'router', ms: 1, prompt: 'SECRET' };
+    const usage = { nodes: [node], total_ms: 1, estimated_cost_usd: 0 };
+    items.set(HISTORY_STORAGE_KEY, JSON.stringify([{ ...turn(), usage }]));
+
+    expect(JSON.stringify(loadTurns(storage))).not.toContain('SECRET');
   });
 
   it('a stored source link is cleaned like a live one', () => {

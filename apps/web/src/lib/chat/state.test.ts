@@ -119,14 +119,47 @@ describe('chatReducer', () => {
     expect(state.turns).toHaveLength(1);
   });
 
-  it('ignores usage: it changes nothing the chat shows', () => {
+  it('keeps usage for Under the hood and changes nothing else (ROADMAP 5.2)', () => {
     const before = run([send('a'), token('a', 'Ivan')]);
+    const nodes = [
+      {
+        name: 'router',
+        ms: 310,
+        model: 'gpt-6-luna',
+        input_tokens: 412,
+        cached_input_tokens: 0,
+        output_tokens: 18,
+        embedding_tokens: null,
+      },
+    ];
     const after = run(
-      [event('a', { type: 'usage', nodes: [], total_ms: 10, estimated_cost_usd: 0 })],
+      [event('a', { type: 'usage', nodes, total_ms: 10, estimated_cost_usd: 0.0001 })],
       before,
     );
 
-    expect(after).toEqual(before);
+    expect(turn(after).usage).toEqual({ nodes, total_ms: 10, estimated_cost_usd: 0.0001 });
+    expect({ ...turn(after), usage: null }).toEqual(turn(before));
+  });
+
+  it('keeps the language the router detected', () => {
+    const state = run([
+      send('a'),
+      event('a', { type: 'route', route: 'about_ivan', language: 'es' }),
+    ]);
+
+    expect(turn(state).language).toBe('es');
+  });
+
+  it("a retry clears the earlier answer's usage and language", () => {
+    const state = run([
+      send('a'),
+      route('a'),
+      event('a', { type: 'usage', nodes: [], total_ms: 10, estimated_cost_usd: 0 }),
+      done('a'),
+      { type: 'retry', id: 'a' },
+    ]);
+
+    expect(turn(state)).toMatchObject({ usage: null, language: null });
   });
 
   it('replaces the answer on retry instead of adding a turn', () => {

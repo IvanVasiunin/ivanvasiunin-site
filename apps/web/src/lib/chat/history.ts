@@ -13,6 +13,8 @@ export const HISTORY_STORAGE_KEY = 'elio-chat-v1';
 export const MAX_STORED_TURNS = 30;
 /** A stored answer longer than this is not one the API produced (it caps output tokens). */
 export const MAX_STORED_ANSWER_CHARS = 20_000;
+/** A language code longer than this is not one the router returns (ISO 639-1, maybe a region). */
+const MAX_LANGUAGE_CHARS = 16;
 
 type HistoryStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 const browserStorage = (): HistoryStorage => window.sessionStorage;
@@ -93,11 +95,17 @@ function toTurn(value: unknown): Turn | null {
   const sources = toSources(value.sources);
   const error = value.error === null ? null : toError(value.error);
   const finishReason = value.finishReason === null ? null : toFinishReason(value.finishReason);
+  // Turns stored before Under the hood (ROADMAP 5.2) have neither field: they come back without it.
+  const language =
+    value.language === undefined || value.language === null ? null : toLanguage(value.language);
+  const usage = value.usage === undefined || value.usage === null ? null : toUsage(value.usage);
   if (
     route === undefined ||
     sources === null ||
     error === undefined ||
-    finishReason === undefined
+    finishReason === undefined ||
+    language === undefined ||
+    usage === undefined
   ) {
     return null;
   }
@@ -108,7 +116,9 @@ function toTurn(value: unknown): Turn | null {
     status: value.status,
     step: value.step,
     route,
+    language,
     sources,
+    usage,
     error,
     finishReason,
   });
@@ -135,6 +145,21 @@ function toError(value: unknown): Turn['error'] | undefined {
     return undefined;
   }
   return { code: value.code, retryAfterS };
+}
+
+function toLanguage(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 && value.length <= MAX_LANGUAGE_CHARS
+    ? value
+    : undefined;
+}
+
+function toUsage(value: unknown): Turn['usage'] | undefined {
+  if (!isObject(value)) return undefined;
+  // The usage event's own validator keeps only the contract's fields of every step.
+  const event = parseChatEvent(JSON.stringify({ ...value, type: 'usage' }));
+  return event?.type === 'usage'
+    ? { nodes: event.nodes, total_ms: event.total_ms, estimated_cost_usd: event.estimated_cost_usd }
+    : undefined;
 }
 
 function toFinishReason(value: unknown): Turn['finishReason'] | undefined {

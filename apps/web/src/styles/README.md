@@ -105,7 +105,7 @@ each with the native keyword as fallback.
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Spacing    | `--space-3xs` 2px · `2xs` 4 · `xs` 8 · `sm` 12 · `md` 16 · `lg` 24 · `xl` 32 · `2xl` 48 · `3xl` 64 · `4xl` 96                                                           |
 | Gutter     | `--gutter`: 16px, 32px from `md`                                                                                                                                        |
-| Sizes      | `--size-touch` 44px · `--size-container` 75rem · `--size-cv` 56rem (CV width) · `--size-cv-rail` 7.5rem (CV date rail from `md`) · `--size-cv-star` 8px (timeline star) |
+| Sizes      | `--size-touch` 44px · `--size-container` 75rem · `--size-cv` 56rem (CV width) · `--size-cv-rail` 7.5rem (CV date rail from `md`) · `--size-cv-star` 8px (timeline star) · `--size-meter` 3rem × `--size-meter-thickness` 4px (relevance bar in Under the hood) |
 | Radius     | `--radius-sm` 4px (chips, inputs) · `md` 8px (panels) · `pill` (toggles)                                                                                                |
 | Lines      | `--border-width` 1px · `--focus-ring-width` 2px                                                                                                                         |
 | Shadow     | `--shadow-raised` (ink-tinted in light, deeper in dark)                                                                                                                 |

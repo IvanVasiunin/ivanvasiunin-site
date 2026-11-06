@@ -72,6 +72,50 @@ test.describe('chat', () => {
     });
   }
 
+  // Under the hood (SPEC US-A9, ROADMAP 5.2): collapsed under a finished answer, opened from the
+  // keyboard, the pipeline steps inside, no a11y violations in either theme.
+  for (const colorScheme of ['light', 'dark'] as const) {
+    test(`Under the hood opens under an answer and shows its steps (${colorScheme})`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme });
+      await mockChat(page);
+      await page.goto('/');
+      await ask(page, 'What did Ivan do at BrainRocket?');
+
+      const toggle = page.getByRole('button', { name: /^Under the hood/ });
+      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      const panel = page.locator(`[id="${(await toggle.getAttribute('aria-controls')) ?? ''}"]`);
+      await expect(panel).toBeHidden();
+
+      await toggle.focus();
+      await page.keyboard.press('Enter');
+
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      await expect(toggle).toBeFocused();
+      await expect(panel).toBeVisible();
+      for (const step of ['Router', 'Retrieval', 'Relevance gate', 'Answer']) {
+        await expect(panel.getByText(step, { exact: true })).toBeVisible();
+      }
+      await expect(panel.getByText('About Ivan · en')).toBeVisible();
+      await expect(panel.getByText('CV — BrainRocket')).toBeVisible();
+      await expect(panel.getByText(/^Total 2\.3 s · about \$0\.0061$/)).toBeVisible();
+      await expectNoSeriousA11yViolations(page);
+    });
+  }
+
+  test('a source under an answer links to its place on the CV (ROADMAP 5.3)', async ({ page }) => {
+    await mockChat(page);
+    await page.goto('/');
+    await ask(page, 'What did Ivan do at BrainRocket?');
+
+    const sources = page.getByRole('region', { name: 'Sources' });
+    await sources.getByRole('link', { name: 'CV — BrainRocket' }).click();
+
+    await expect(page).toHaveURL(/\/cv#job-brainrocket$/);
+    await expect(page.locator('#job-brainrocket')).toBeInViewport();
+  });
+
   test('a topic card fills the input with its question and sends nothing', async ({ page }) => {
     const questions = await mockChat(page);
     await page.goto('/');
