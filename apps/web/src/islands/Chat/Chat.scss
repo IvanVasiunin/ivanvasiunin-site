@@ -115,25 +115,34 @@
     }
   }
 
-  // "New chat": a quiet pill above the conversation; it clears the chat kept for this tab.
-  .chat__toolbar {
+  // The input's row: "New chat" (once there is a conversation), then the input, which takes the rest.
+  .chat__dock-row {
     display: flex;
-    justify-content: flex-end;
+    gap: var(--space-xs);
+    align-items: flex-end;
   }
 
+  .chat__composer {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  // "New chat": a round frosted button by the input, level with the input's bottom row (the send
+  // button's row); it clears the chat kept for this tab.
   .chat__new {
     @include gradient-border($fill: var(--color-scrim-solid));
 
     position: relative;
     isolation: isolate;
     display: inline-flex;
-    gap: var(--space-2xs);
+    flex-shrink: 0;
     align-items: center;
-    min-block-size: var(--size-touch);
-    padding-inline: var(--space-sm);
+    justify-content: center;
+    inline-size: var(--size-touch);
+    block-size: var(--size-touch);
+    margin-block-end: var(--space-2xs);
+    padding: 0;
     border-radius: var(--radius-pill);
-    font: inherit;
-    font-size: var(--font-size-xs);
     color: var(--color-text-muted);
     cursor: pointer;
 

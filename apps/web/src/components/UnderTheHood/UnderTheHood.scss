@@ -93,7 +93,6 @@
 
   .under-the-hood__step-time {
     flex-shrink: 0;
-    font-variant-numeric: tabular-nums;
   }
 
   .under-the-hood__detail {
@@ -174,7 +173,6 @@
   }
 
   .under-the-hood__score {
-    font-variant-numeric: tabular-nums;
     color: var(--color-text);
   }
 
@@ -202,7 +200,6 @@
     margin: 0;
     padding-block-start: var(--space-xs);
     border-block-start: var(--border-width) solid var(--color-grid);
-    font-variant-numeric: tabular-nums;
     color: var(--color-text);
   }
 

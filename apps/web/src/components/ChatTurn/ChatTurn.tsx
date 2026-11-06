@@ -206,6 +206,20 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
                   {copied ? 'Copied' : 'Copy'}
                 </button>
               )}
+              {showRetry && (
+                <button
+                  className="chat-turn__action"
+                  type="button"
+                  onClick={() => {
+                    onRetry(turn.id);
+                    article.current?.focus();
+                  }}
+                >
+                  <RetryIcon />
+                  Retry
+                </button>
+              )}
+              {/* Last: wider than Copy and Retry, it wraps to its own row on a phone. */}
               {usage !== null && (
                 <button
                   className="chat-turn__action"
@@ -220,19 +234,6 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
                   Under the hood{' '}
                   {/* Part of the name: a visible label must be in the accessible name (WCAG 2.5.3). */}
                   <span className="chat-turn__action-note">{usageSummary(usage)}</span>
-                </button>
-              )}
-              {showRetry && (
-                <button
-                  className="chat-turn__action"
-                  type="button"
-                  onClick={() => {
-                    onRetry(turn.id);
-                    article.current?.focus();
-                  }}
-                >
-                  <RetryIcon />
-                  Retry
                 </button>
               )}
             </div>

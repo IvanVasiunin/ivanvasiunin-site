@@ -274,6 +274,52 @@ test.describe('chat', () => {
     await expect(page.getByRole('button', { name: 'New chat' })).toBeHidden();
   });
 
+  test('a reload starts a new chat', async ({ page }) => {
+    // Ivan, 2026-11-06: the mode switch and Back keep the conversation; F5 clears the page.
+    await mockChat(page);
+    await page.goto('/');
+    await ask(page, 'What did Ivan do at BrainRocket?');
+    await expect(page.getByRole('button', { name: 'Copy' })).toBeVisible();
+
+    await page.reload();
+
+    await expect(page.getByRole('list', { name: 'Example questions' })).toBeVisible();
+    await expect(page.getByRole('article')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'New chat' })).toHaveCount(0);
+  });
+
+  test('New chat sits by the input, in reach after scrolling back to the first question', async ({
+    page,
+  }) => {
+    // Ivan, 2026-11-06: at the top of the conversation it meant scrolling all the way up.
+    await mockChat(page);
+    await page.goto('/');
+    for (const question of ['What did Ivan do at BrainRocket?', 'What projects has Ivan built?']) {
+      await ask(page, question);
+      await expect(page.getByRole('button', { name: 'Copy' })).toHaveCount(
+        question.includes('projects') ? 2 : 1,
+      );
+    }
+    await input(page).blur();
+
+    await page.getByRole('article').first().scrollIntoViewIfNeeded();
+    await page.evaluate(() => {
+      document.querySelector('.chat__scroll')?.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0 });
+    });
+
+    const button = page.getByRole('button', { name: 'New chat' });
+    await expect(button).toBeInViewport();
+    const [newChat, field] = await Promise.all([button.boundingBox(), input(page).boundingBox()]);
+    // On the input's row: beside it, its bottom level with the input's bottom row.
+    expect(newChat).not.toBeNull();
+    expect(field).not.toBeNull();
+    expect((newChat?.x ?? 0) + (newChat?.width ?? 0)).toBeLessThanOrEqual(field?.x ?? 0);
+    expect(newChat?.height).toBeGreaterThanOrEqual(44);
+    await button.click();
+    await expect(page.getByRole('article')).toHaveCount(0);
+  });
+
   test('back from the CV, the chat returns to the answer the reader left, not to its end', async ({
     page,
   }) => {

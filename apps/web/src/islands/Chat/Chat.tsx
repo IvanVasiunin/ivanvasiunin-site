@@ -171,22 +171,6 @@ function ChatView(options: ChatProps) {
       `md` the page scrolls (Chat.scss). */}
         <div className="chat__scroll" ref={scrollRef}>
           {state.turns.length > 0 && (
-            <div className="chat__toolbar">
-              <button className="chat__new" type="button" onClick={onNewChat}>
-                <svg
-                  className="chat__new-icon"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                New chat
-              </button>
-            </div>
-          )}
-
-          {state.turns.length > 0 && (
             <div className="chat__log">
               {state.turns.map((turn) => (
                 <ChatTurn
@@ -232,15 +216,40 @@ function ChatView(options: ChatProps) {
               Jump to latest
             </button>
           )}
-          <ChatComposer
-            value={draft}
-            onChange={setDraft}
-            onSend={onSend}
-            onStop={onStop}
-            busy={busy}
-            ready={ready}
-            inputRef={inputRef}
-          />
+          <div className="chat__dock-row">
+            {/* "New chat" sits by the input, which is always on screen (Ivan, 2026-11-06: at the
+            top of the conversation it meant scrolling all the way up). Icon only, so it is named
+            for screen readers and titled for a mouse. */}
+            {state.turns.length > 0 && (
+              <button
+                className="chat__new"
+                type="button"
+                aria-label="New chat"
+                title="New chat"
+                onClick={onNewChat}
+              >
+                <svg
+                  className="chat__new-icon"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+            )}
+            <div className="chat__composer">
+              <ChatComposer
+                value={draft}
+                onChange={setDraft}
+                onSend={onSend}
+                onStop={onStop}
+                busy={busy}
+                ready={ready}
+                inputRef={inputRef}
+              />
+            </div>
+          </div>
         </div>
 
         <p className="chat__disclosure">
