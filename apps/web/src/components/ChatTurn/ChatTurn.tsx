@@ -29,6 +29,11 @@ export interface ChatTurnProps {
   readonly onRetry: (turnId: string) => void;
   /** Speaks a short status through the chat's live region ("Copied"). */
   readonly onAnnounce: (message: string) => void;
+  /**
+   * While Under the hood folds, the conversation scrolls up to make room (lib/chat/collapse.ts); this
+   * keeps that scroll from counting as the reader leaving the bottom. Returns the release.
+   */
+  readonly onHoldFollow?: () => () => void;
 }
 
 const SOURCE_KIND: Readonly<Record<SourceItem['source_type'], string>> = {
@@ -107,7 +112,7 @@ function Sources({
   );
 }
 
-export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps) {
+export function ChatTurn({ turn, canRetry, onRetry, onAnnounce, onHoldFollow }: ChatTurnProps) {
   const id = useId();
   const [copied, setCopied] = useState(false);
   // Under the hood starts collapsed under every answer (SPEC US-A9).
@@ -119,12 +124,15 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
     scrolled: false,
     cancel: () => undefined,
   });
+  // Releases the hold on following (onHoldFollow) once the folded panel's space has gone.
+  const releaseFollow = useRef<() => void>(() => undefined);
   const timer = useRef<number | undefined>(undefined);
   const article = useRef<HTMLElement | null>(null);
   useEffect(
     () => () => {
       window.clearTimeout(timer.current);
       closing.current.cancel();
+      releaseFollow.current();
     },
     [],
   );
@@ -151,10 +159,20 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
     if (closing.current.faded && closing.current.scrolled) setHood('closed');
   };
 
+  // Closed: the panel's space has gone (this runs after the DOM update), so following can read the
+  // position again.
+  useEffect(() => {
+    if (hood !== 'closed') return;
+    releaseFollow.current();
+    releaseFollow.current = () => undefined;
+  }, [hood]);
+
   const toggleHood = (): void => {
     if (hood !== 'open') {
       // Reopened while closing: the scroll that made room for closing stops where it is.
       closing.current.cancel();
+      releaseFollow.current();
+      releaseFollow.current = () => undefined;
       setHood('open');
       return;
     }
@@ -166,6 +184,7 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
     // While the panel fades, the conversation scrolls smoothly by as much as hiding the panel would
     // make it jump (lib/chat/collapse.ts; Ivan, 2026-11-06), then the panel's space goes.
     closing.current = { faded: false, scrolled: false, cancel: () => undefined };
+    releaseFollow.current = onHoldFollow?.() ?? (() => undefined);
     setHood('closing');
     const panel = hoodRef.current;
     const scrolled = (): void => {

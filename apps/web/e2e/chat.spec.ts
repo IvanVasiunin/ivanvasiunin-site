@@ -175,6 +175,9 @@ test.describe('chat', () => {
     expect(hiddenAt).toBeGreaterThan(0);
     const jump = Math.abs((frames[hiddenAt]?.top ?? 0) - (frames[hiddenAt - 1]?.top ?? 0));
     expect(jump).toBeLessThan(2);
+    // Still at the bottom: the room-making scroll moved up, but "Jump to latest" has no reason to
+    // appear (Ivan, 2026-11-06). Its state is read from `inert`: hidden, it is inert.
+    await expect(page.getByRole('button', { name: 'Jump to latest' })).toBeHidden();
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
 
