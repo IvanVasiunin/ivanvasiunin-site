@@ -6,14 +6,18 @@
 import { useEffect, useId, useRef, useState } from 'react';
 
 import type { SourceItem } from '../../lib/api/types';
+import { scrollBeforeCollapse } from '../../lib/chat/collapse';
 import { errorText } from '../../lib/chat/messages';
 import { type Turn, isActive } from '../../lib/chat/state';
 import { ChatMarkdown } from '../ChatMarkdown';
 import { ElioAvatar } from '../ElioAvatar';
 import { ThinkingSteps } from '../ThinkingSteps';
-import { UnderTheHood, usageSummary } from '../UnderTheHood';
+import { type HoodState, UnderTheHood, usageSummary } from '../UnderTheHood';
 
 import './ChatTurn.scss';
+
+const prefersReducedMotion = (): boolean =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** How long "Copied" replaces "Copy" (ms). */
 export const COPIED_MS = 2000;
@@ -107,12 +111,20 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
   const id = useId();
   const [copied, setCopied] = useState(false);
   // Under the hood starts collapsed under every answer (SPEC US-A9).
-  const [hoodOpen, setHoodOpen] = useState(false);
+  const [hood, setHood] = useState<HoodState>('closed');
+  const hoodRef = useRef<HTMLDivElement | null>(null);
+  // Closing ends when both the fade and the scroll that makes room for it have finished.
+  const closing = useRef<{ faded: boolean; scrolled: boolean; cancel: () => void }>({
+    faded: false,
+    scrolled: false,
+    cancel: () => undefined,
+  });
   const timer = useRef<number | undefined>(undefined);
   const article = useRef<HTMLElement | null>(null);
   useEffect(
     () => () => {
       window.clearTimeout(timer.current);
+      closing.current.cancel();
     },
     [],
   );
@@ -124,6 +136,48 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
   // Only a finished answer has its `usage` (sent right before `done`).
   const usage = turn.status === 'done' ? turn.usage : null;
   const hoodId = `${id}-hood`;
+
+  // Opened: the whole panel scrolls into view (Ivan, 2026-11-06: only its top showed). `nearest`
+  // moves only as far as needed; the panel's scroll margin keeps it clear of the docked input.
+  useEffect(() => {
+    if (hood !== 'open') return;
+    hoodRef.current?.scrollIntoView({
+      block: 'nearest',
+      behavior: prefersReducedMotion() ? 'instant' : 'smooth',
+    });
+  }, [hood]);
+
+  const closeIfDone = (): void => {
+    if (closing.current.faded && closing.current.scrolled) setHood('closed');
+  };
+
+  const toggleHood = (): void => {
+    if (hood !== 'open') {
+      // Reopened while closing: the scroll that made room for closing stops where it is.
+      closing.current.cancel();
+      setHood('open');
+      return;
+    }
+    if (prefersReducedMotion()) {
+      // Without motion there is no closing animation to wait for.
+      setHood('closed');
+      return;
+    }
+    // While the panel fades, the conversation scrolls smoothly by as much as hiding the panel would
+    // make it jump (lib/chat/collapse.ts; Ivan, 2026-11-06), then the panel's space goes.
+    closing.current = { faded: false, scrolled: false, cancel: () => undefined };
+    setHood('closing');
+    const panel = hoodRef.current;
+    const scrolled = (): void => {
+      closing.current.scrolled = true;
+      closeIfDone();
+    };
+    if (panel === null) {
+      scrolled();
+      return;
+    }
+    closing.current.cancel = scrollBeforeCollapse(panel, scrolled);
+  };
 
   const copy = (): void => {
     // Inside the click handler: browsers allow clipboard writes only from a user gesture.
@@ -224,11 +278,9 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
                 <button
                   className="chat-turn__action"
                   type="button"
-                  aria-expanded={hoodOpen}
+                  aria-expanded={hood === 'open'}
                   aria-controls={hoodId}
-                  onClick={() => {
-                    setHoodOpen((open) => !open);
-                  }}
+                  onClick={toggleHood}
                 >
                   <HoodIcon />
                   Under the hood{' '}
@@ -243,7 +295,12 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
             // Rendered while collapsed too, so `aria-controls` always points at an element.
             <UnderTheHood
               id={hoodId}
-              hidden={!hoodOpen}
+              state={hood}
+              onClosed={() => {
+                closing.current.faded = true;
+                closeIfDone();
+              }}
+              panelRef={hoodRef}
               route={turn.route}
               language={turn.language}
               sources={turn.sources}

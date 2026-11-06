@@ -104,6 +104,80 @@ test.describe('chat', () => {
     });
   }
 
+  test('Under the hood scrolls fully into view above the input, and closes smoothly', async ({
+    page,
+  }) => {
+    // Ivan, 2026-11-06: only the panel's top showed; it opened and closed without motion. A screen
+    // tall enough for the whole panel: a panel taller than the chat's visible area is scrolled to its
+    // top instead (`block: 'nearest'`), which no viewport size can avoid.
+    const width = page.viewportSize()?.width ?? 1280;
+    await page.setViewportSize({ width, height: 1400 });
+    await mockChat(page);
+    await page.goto('/');
+    await ask(page, 'What did Ivan do at BrainRocket?');
+    await input(page).blur();
+    const toggle = page.getByRole('button', { name: /^Under the hood/ });
+    const panel = page.locator(`[id="${(await toggle.getAttribute('aria-controls')) ?? ''}"]`);
+
+    await toggle.click();
+
+    // The panel's end comes to rest above the input (the docked input on a phone).
+    await expect
+      .poll(async () => {
+        const [box, field] = await Promise.all([panel.boundingBox(), input(page).boundingBox()]);
+        return (box?.y ?? 0) + (box?.height ?? 0) - (field?.y ?? 0);
+      })
+      .toBeLessThanOrEqual(0);
+    await expect(panel).toBeInViewport();
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(panel).toBeHidden();
+  });
+
+  test('closing Under the hood never makes the conversation jump', async ({ page }) => {
+    // Ivan, 2026-11-06: at the very end of the closing animation everything leapt down (the panel's
+    // space went at once and the scroll position was clamped).
+    await mockChat(page);
+    await page.goto('/');
+    await ask(page, 'What did Ivan do at BrainRocket?');
+    await input(page).blur();
+    const toggle = page.getByRole('button', { name: /^Under the hood/ });
+    await toggle.click();
+    // Reading at the end of the conversation, where the clamp happens.
+    await page.evaluate(() => {
+      const area = document.querySelector('.chat__scroll');
+      area?.scrollTo({ top: area.scrollHeight, behavior: 'instant' });
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+    });
+    await page.waitForTimeout(500);
+
+    // The toggle's position on screen and whether the panel is hidden, every frame for a second.
+    // The smooth scroll before the hide may move fast; the frame where the panel's space goes must
+    // not move at all (that was the jump).
+    const frames = await toggle.evaluate(
+      (button) =>
+        new Promise<{ top: number; hidden: boolean }[]>((resolve) => {
+          const panel = document.getElementById(button.getAttribute('aria-controls') ?? '');
+          const seen: { top: number; hidden: boolean }[] = [];
+          const started = performance.now();
+          const sample = (): void => {
+            seen.push({ top: button.getBoundingClientRect().top, hidden: panel?.hidden === true });
+            if (performance.now() - started < 1000) requestAnimationFrame(sample);
+            else resolve(seen);
+          };
+          (button as HTMLButtonElement).click();
+          requestAnimationFrame(sample);
+        }),
+    );
+
+    const hiddenAt = frames.findIndex((frame) => frame.hidden);
+    expect(hiddenAt).toBeGreaterThan(0);
+    const jump = Math.abs((frames[hiddenAt]?.top ?? 0) - (frames[hiddenAt - 1]?.top ?? 0));
+    expect(jump).toBeLessThan(2);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
   test('a source under an answer links to its place on the CV (ROADMAP 5.3)', async ({ page }) => {
     await mockChat(page);
     await page.goto('/');

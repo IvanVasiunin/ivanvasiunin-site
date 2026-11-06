@@ -1,6 +1,6 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SourceItem } from '../../lib/api/types';
 import type { Turn } from '../../lib/chat/state';
@@ -231,6 +231,25 @@ describe('ChatTurn', () => {
     };
     const WITH_USAGE = { ...DONE, usage: USAGE, language: 'en' };
     const toggle = () => screen.getByRole('button', { name: /Under the hood/ });
+    const panel = () => document.getElementById(toggle().getAttribute('aria-controls') ?? '');
+    let scrollIntoView: ReturnType<typeof vi.fn>;
+
+    /** jsdom has neither `matchMedia` nor `scrollIntoView`; `reduce` answers the motion query. */
+    function stubBrowser(reduce: boolean): void {
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: reduce && query.includes('reduce'),
+      }));
+      scrollIntoView = vi.fn();
+      Element.prototype.scrollIntoView = scrollIntoView as unknown as Element['scrollIntoView'];
+    }
+
+    beforeEach(() => {
+      stubBrowser(false);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
 
     it('is a collapsed toggle with the time and cost in its name', () => {
       setup(WITH_USAGE);
@@ -256,6 +275,44 @@ describe('ChatTurn', () => {
 
       await user.click(toggle());
       expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('scrolls the whole panel into view when it opens', async () => {
+      const user = userEvent.setup();
+      setup(WITH_USAGE);
+
+      await user.click(toggle());
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', behavior: 'smooth' });
+    });
+
+    it('closes with an animation: hidden once it has played', async () => {
+      const user = userEvent.setup();
+      setup(WITH_USAGE);
+      await user.click(toggle());
+
+      await user.click(toggle());
+
+      // Closed for assistive tech at once; still painted while the closing animation plays.
+      expect(toggle().getAttribute('aria-expanded')).toBe('false');
+      expect(panel()?.dataset.state).toBe('closing');
+      expect(panel()?.hidden).toBe(false);
+      // jsdom has no AnimationEvent, so React listens for the prefixed name there.
+      const card = panel()?.querySelector('.under-the-hood__card') ?? document.body;
+      fireEvent(card, new Event('webkitAnimationEnd', { bubbles: true }));
+      expect(panel()?.hidden).toBe(true);
+    });
+
+    it('with reduced motion it closes at once and scrolls without animation', async () => {
+      stubBrowser(true);
+      const user = userEvent.setup();
+      setup(WITH_USAGE);
+
+      await user.click(toggle());
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', behavior: 'instant' });
+      await user.click(toggle());
+
+      expect(panel()?.hidden).toBe(true);
     });
 
     it('works from the keyboard with Enter and Space', async () => {

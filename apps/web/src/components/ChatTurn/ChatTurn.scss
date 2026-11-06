@@ -194,13 +194,13 @@
     @include visually-hidden;
   }
 
-  // Actions: quiet text buttons; the start edge of the first one lines up with the answer text.
+  // Actions: quiet text buttons inside the card's padding (Ivan, 2026-11-06: pulled out to line the
+  // icon up with the text, their hover layer spilled over the card's edge).
   .chat-turn__actions {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2xs);
     align-items: center;
-    margin-inline-start: calc(-1 * var(--space-sm));
   }
 
   .chat-turn__tag {

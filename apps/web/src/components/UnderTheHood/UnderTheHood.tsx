@@ -6,7 +6,7 @@
 // Allow-list rendering: only the fields named here reach the page, each through its own formatter.
 // The `usage` and `sources` events were already reduced to the contract's fields by lib/sse/parse.ts;
 // nothing else of the answer (no prompt, no model settings) ever reaches this component.
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 import type { SourceItem } from '../../lib/api/types';
 import type { Turn, TurnUsage } from '../../lib/chat/state';
@@ -16,11 +16,18 @@ import './UnderTheHood.scss';
 type NodeUsage = TurnUsage['nodes'][number];
 type Route = NonNullable<Turn['route']>;
 
+/** `closing` plays the closing animation; the panel is hidden once it ends (`onClosed`). */
+export type HoodState = 'open' | 'closing' | 'closed';
+
 export interface UnderTheHoodProps {
   /** The panel's id: the toggle in ChatTurn points at it with `aria-controls`. */
   readonly id: string;
-  /** Collapsed: in the page but hidden from everyone, screen readers included. */
-  readonly hidden: boolean;
+  /** Closed: in the page but hidden from everyone, screen readers included. */
+  readonly state: HoodState;
+  /** The closing animation has ended. */
+  readonly onClosed: () => void;
+  /** The panel element (ChatTurn scrolls it into view when it opens). */
+  readonly panelRef?: Ref<HTMLDivElement>;
   readonly route: Turn['route'];
   readonly language: string | null;
   readonly sources: readonly SourceItem[];
@@ -65,14 +72,14 @@ export function formatCost(usd: number): string {
   return usd < 0.01 ? `$${usd.toFixed(4)}` : `$${usd.toFixed(3)}`;
 }
 
-/** "4,380 in (1,536 cached) → 402 out", or null for a step that called no model. */
+/** "Tokens: 4,380 in (1,536 cached) → 402 out", or null for a step that called no model. */
 export function formatTokens(node: NodeUsage): string | null {
   if (node.input_tokens === null || node.output_tokens === null) return null;
   const cached =
     node.cached_input_tokens !== null && node.cached_input_tokens > 0
       ? ` (${count.format(node.cached_input_tokens)} cached)`
       : '';
-  return `${count.format(node.input_tokens)} in${cached} → ${count.format(node.output_tokens)} out`;
+  return `Tokens: ${count.format(node.input_tokens)} in${cached} → ${count.format(node.output_tokens)} out`;
 }
 
 /** The summary next to the toggle's name: "2.3 s · $0.0061". */
@@ -97,8 +104,12 @@ function Step({
           <span className="under-the-hood__step-time">{formatDuration(node.ms)}</span>
         )}
       </p>
-      {node?.model != null && <p className="under-the-hood__detail">{node.model}</p>}
-      {tokens !== null && <p className="under-the-hood__detail">{tokens}</p>}
+      {/* The model and its tokens on one line: a step stays short enough to see whole. */}
+      {(node?.model != null || tokens !== null) && (
+        <p className="under-the-hood__detail">
+          {[node?.model, tokens].filter((part) => part != null).join(' · ')}
+        </p>
+      )}
       {node?.embedding_tokens != null && (
         <p className="under-the-hood__detail">{`${count.format(node.embedding_tokens)} embedding tokens`}</p>
       )}
@@ -138,7 +149,9 @@ function Sources({ items }: { readonly items: readonly SourceItem[] }) {
 
 export function UnderTheHood({
   id,
-  hidden,
+  state,
+  onClosed,
+  panelRef,
   route,
   language,
   sources,
@@ -152,32 +165,46 @@ export function UnderTheHood({
     !byName.has('generate') && (finishReason === 'templated' || finishReason === 'no_info');
 
   return (
-    <div className="under-the-hood" id={id} hidden={hidden}>
-      <ol className="under-the-hood__steps">
-        {steps.map((name) => (
-          <Step key={name} name={name} node={byName.get(name) ?? null}>
-            {name === 'router' && route !== null && (
-              <p className="under-the-hood__detail">
-                {language === null ? ROUTE_LABEL[route] : `${ROUTE_LABEL[route]} · ${language}`}
-              </p>
-            )}
-            {name === 'retrieval' && <Sources items={sources} />}
-            {name === 'relevance_gate' && (
-              <p className="under-the-hood__detail">
-                {sources.length > 0 ? 'Passed' : 'Nothing above the threshold'}
-              </p>
-            )}
-          </Step>
-        ))}
-        {templated && (
-          <Step name="generate" node={null}>
-            <p className="under-the-hood__detail">Ready-made reply, no model call</p>
-          </Step>
-        )}
-      </ol>
-      <p className="under-the-hood__total">
-        {`Total ${formatDuration(usage.total_ms)} · about ${formatCost(usage.estimated_cost_usd)}`}
-      </p>
+    <div
+      ref={panelRef}
+      className="under-the-hood"
+      id={id}
+      hidden={state === 'closed'}
+      data-state={state}
+    >
+      <div
+        className="under-the-hood__card"
+        onAnimationEnd={(event) => {
+          // Only the card's own animation, not one bubbling up from inside it.
+          if (event.target === event.currentTarget && state === 'closing') onClosed();
+        }}
+      >
+        <ol className="under-the-hood__steps">
+          {steps.map((name) => (
+            <Step key={name} name={name} node={byName.get(name) ?? null}>
+              {name === 'router' && route !== null && (
+                <p className="under-the-hood__detail">
+                  {language === null ? ROUTE_LABEL[route] : `${ROUTE_LABEL[route]} · ${language}`}
+                </p>
+              )}
+              {name === 'retrieval' && <Sources items={sources} />}
+              {name === 'relevance_gate' && (
+                <p className="under-the-hood__detail">
+                  {sources.length > 0 ? 'Passed' : 'Nothing above the threshold'}
+                </p>
+              )}
+            </Step>
+          ))}
+          {templated && (
+            <Step name="generate" node={null}>
+              <p className="under-the-hood__detail">Ready-made reply, no model call</p>
+            </Step>
+          )}
+        </ol>
+        <p className="under-the-hood__total">
+          {`Total ${formatDuration(usage.total_ms)} · about ${formatCost(usage.estimated_cost_usd)}`}
+        </p>
+      </div>
     </div>
   );
 }

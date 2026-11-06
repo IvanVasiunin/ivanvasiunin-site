@@ -77,7 +77,8 @@ const SOURCES: SourceItem[] = [
 function setup(overrides: Partial<UnderTheHoodProps> = {}) {
   const props: UnderTheHoodProps = {
     id: 'hood',
-    hidden: false,
+    state: 'open',
+    onClosed: () => undefined,
     route: 'about_ivan',
     language: 'en',
     sources: SOURCES,
@@ -114,12 +115,13 @@ describe('UnderTheHood', () => {
 
     const router = within(step('Router'));
     expect(router.getByText('310 ms')).toBeTruthy();
-    expect(router.getByText('gpt-6-luna')).toBeTruthy();
-    expect(router.getByText('412 in → 18 out')).toBeTruthy();
+    expect(router.getByText('gpt-6-luna · Tokens: 412 in → 18 out')).toBeTruthy();
     expect(router.getByText('About Ivan · en')).toBeTruthy();
     const answer = within(step('Answer'));
     expect(answer.getByText('1.8 s')).toBeTruthy();
-    expect(answer.getByText('4,380 in (1,536 cached) → 402 out')).toBeTruthy();
+    expect(
+      answer.getByText('gpt-6.1-terra · Tokens: 4,380 in (1,536 cached) → 402 out'),
+    ).toBeTruthy();
     expect(within(step('Retrieval')).getByText('9 embedding tokens')).toBeTruthy();
     expect(within(step('Relevance gate')).getByText('Passed')).toBeTruthy();
     expect(screen.getByText('Total 2.3 s · about $0.0061')).toBeTruthy();
@@ -183,8 +185,8 @@ describe('UnderTheHood', () => {
     expect(stepNames()).toEqual(['Router']);
   });
 
-  it('is in the page but hidden while collapsed', () => {
-    const { container } = setup({ hidden: true });
+  it('is in the page but hidden while closed', () => {
+    const { container } = setup({ state: 'closed' });
 
     const panel = container.querySelector('#hood');
     expect(panel?.hasAttribute('hidden')).toBe(true);
@@ -212,7 +214,7 @@ describe('formatters', () => {
   });
 
   it('formats tokens only for a step that called a model', () => {
-    expect(formatTokens(ROUTER)).toBe('412 in → 18 out');
+    expect(formatTokens(ROUTER)).toBe('Tokens: 412 in → 18 out');
     expect(formatTokens({ ...NONE, name: 'retrieval', ms: 1 })).toBeNull();
   });
 });
