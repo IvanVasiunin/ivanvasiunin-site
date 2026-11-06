@@ -286,21 +286,54 @@ describe('ChatTurn', () => {
       expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', behavior: 'smooth' });
     });
 
-    it('closes with an animation: hidden once it has played', async () => {
+    /** The end of the panel's fold (jsdom has no TransitionEvent: both names, with the property). */
+    function foldEnds(target: Element, propertyName = 'grid-template-rows'): void {
+      for (const name of ['transitionend', 'webkitTransitionEnd']) {
+        fireEvent(target, Object.assign(new Event(name, { bubbles: true }), { propertyName }));
+      }
+    }
+
+    it('folds when closed: hidden once the fold has ended', async () => {
       const user = userEvent.setup();
       setup(WITH_USAGE);
       await user.click(toggle());
 
       await user.click(toggle());
 
-      // Closed for assistive tech at once; still painted while the closing animation plays.
+      // Closed for assistive tech at once; still painted while it folds.
       expect(toggle().getAttribute('aria-expanded')).toBe('false');
       expect(panel()?.dataset.state).toBe('closing');
       expect(panel()?.hidden).toBe(false);
-      // jsdom has no AnimationEvent, so React listens for the prefixed name there.
-      const card = panel()?.querySelector('.under-the-hood__card') ?? document.body;
-      fireEvent(card, new Event('webkitAnimationEnd', { bubbles: true }));
+      // A transition inside the panel (the card's fade) does not end the fold.
+      foldEnds(panel()?.querySelector('.under-the-hood__card') ?? document.body, 'opacity');
+      expect(panel()?.hidden).toBe(false);
+      foldEnds(panel() ?? document.body);
       expect(panel()?.hidden).toBe(true);
+    });
+
+    it('closes anyway if the fold never reports its end', () => {
+      vi.useFakeTimers();
+      setup(WITH_USAGE);
+      fireEvent.click(toggle());
+      fireEvent.click(toggle());
+
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(panel()?.hidden).toBe(true);
+    });
+
+    it('reopens while folding', async () => {
+      const user = userEvent.setup();
+      setup(WITH_USAGE);
+      await user.click(toggle());
+      await user.click(toggle());
+
+      await user.click(toggle());
+
+      expect(toggle().getAttribute('aria-expanded')).toBe('true');
+      expect(panel()?.dataset.state).toBe('open');
     });
 
     it('with reduced motion it closes at once and scrolls without animation', async () => {

@@ -8,10 +8,7 @@
 //
 // Only the reader pauses it: following stops when the page moves *up* (or on an upward wheel / key /
 // touch gesture, before the next token can pull the page back). Programmatic scrolls and a smooth
-// "Jump to latest" only move down, so they never pause it by accident. The one that moves up, the
-// scroll that makes room for a folding Under the hood (lib/chat/collapse.ts), holds the state while
-// it runs (`hold`); afterwards the position is read again (Ivan, 2026-11-06: "Jump to latest"
-// appeared after closing the panel at the bottom).
+// "Jump to latest" only move down, so they never pause it by accident.
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /** Within this distance of the bottom, the reader counts as "at the bottom" (px). */
@@ -86,11 +83,6 @@ export interface FollowScroll {
   readonly jumpToLatest: (smooth?: boolean) => void;
   /** Stop following, as if the reader had scrolled up (a restored reading position). */
   readonly pause: () => void;
-  /**
-   * Scrolls that follow now are the page's own, not the reader's: they do not pause following.
-   * Returns the release, which reads the position again (at the bottom: following).
-   */
-  readonly hold: () => () => void;
 }
 
 /**
@@ -118,8 +110,6 @@ export function useFollowScroll(
     setFollowing(value);
   }, []);
   const last = useRef<ScrollSample | null>(null);
-  // How many holds are active (`hold`): while any is, scroll events do not change following.
-  const holds = useRef(0);
 
   useEffect(() => {
     const scrollArea = areaRef?.current ?? null;
@@ -141,7 +131,6 @@ export function useFollowScroll(
       const current = sample(scrollArea, dock());
       const previous = last.current ?? current;
       last.current = current;
-      if (holds.current > 0) return;
       setFollow(nextFollowing(followingRef.current, previous, current));
     };
     const onWheel = (event: WheelEvent): void => {
@@ -202,19 +191,5 @@ export function useFollowScroll(
     setFollow(false);
   }, [setFollow]);
 
-  const hold = useCallback(() => {
-    holds.current += 1;
-    let released = false;
-    return () => {
-      if (released) return;
-      released = true;
-      holds.current -= 1;
-      if (holds.current > 0) return;
-      const current = sample(areaRef?.current ?? null, dockRef?.current ?? null);
-      last.current = current;
-      if (current.distanceToBottom <= FOLLOW_THRESHOLD_PX) setFollow(true);
-    };
-  }, [areaRef, dockRef, setFollow]);
-
-  return { following, jumpToLatest, pause, hold };
+  return { following, jumpToLatest, pause };
 }

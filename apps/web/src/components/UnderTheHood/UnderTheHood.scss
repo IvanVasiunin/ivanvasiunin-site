@@ -4,10 +4,21 @@
 @use '../../styles/mixins' as *;
 
 @layer components {
-  // The outer box never moves: it is what ChatTurn scrolls into view when the panel opens, so the
-  // scroll lands on the panel's real size, not on its shrunken first animation frame (the card
-  // inside, `__card`, carries the look and the motion).
+  // The outer box never moves when the panel opens: it is what ChatTurn scrolls into view, so the
+  // scroll lands on the panel's real size, not on the card's shrunken first animation frame.
+
+  // Closing folds it for real: its single grid row goes from its full height to zero while the card
+  // fades, and everything below follows smoothly (Ivan, 2026-11-06: fading only the picture and
+  // dropping the space at the end made the page jump). This animates a size, an exception to
+  // css-scss.md → Motion, accepted for this one panel: one element, 320 ms, on a click.
   .under-the-hood {
+    display: grid;
+    grid-template-rows: 1fr;
+
+    // The space the answer card's gap leaves above the panel folds with it: the box takes the gap
+    // back (negative margin) and the card puts it inside the fold.
+    margin-block-start: calc(-1 * var(--space-sm));
+
     // Below `md` the page scrolls and the docked input covers the bottom of the screen: keep the
     // panel's end above the input as well as above the mode switch (the page's own scroll padding).
     // From `md` the chat area scrolls above the input.
@@ -20,9 +31,30 @@
     &[hidden] {
       display: none;
     }
+
+    &[data-state='closing'] {
+      grid-template-rows: 0fr;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      // stylelint-disable-next-line declaration-property-value-allowed-list -- the one size animation of the site, see above
+      transition: grid-template-rows var(--duration-slow) var(--ease-in-out);
+    }
+  }
+
+  // The row's content: may shrink below its own height (min size 0), clipped only while folding, so
+  // the card's opening motion is never cut at the top.
+  .under-the-hood__fold {
+    display: flow-root;
+    min-block-size: 0;
+
+    .under-the-hood[data-state='closing'] & {
+      overflow: clip;
+    }
   }
 
   .under-the-hood__card {
+    margin-block-start: var(--space-sm);
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
@@ -35,17 +67,16 @@
     background-color: var(--color-highlight-soft);
 
     // Opening: the card unfolds from under the toggle, fading in while it slides down and grows to
-    // full size from its top edge; closing plays it backwards. Transform and opacity only
-    // (css-scss.md → Motion: no height animation), so the panel takes its full height at once and
-    // only its picture moves. With reduced motion it simply appears and disappears.
+    // full size from its top edge (transform and opacity). Closing: it fades while the box above
+    // folds. With reduced motion it simply appears and disappears.
     transform-origin: top;
 
     @media (prefers-reduced-motion: no-preference) {
       animation: under-the-hood-in var(--duration-slow) var(--ease-out);
 
       .under-the-hood[data-state='closing'] & {
-        // As long as the opening: the scroll that makes room for the closing runs alongside.
-        animation: under-the-hood-out var(--duration-slow) var(--ease-in-out) both;
+        opacity: 0;
+        transition: opacity var(--duration-slow) var(--ease-in-out);
       }
     }
 
@@ -229,13 +260,6 @@
 
   @keyframes under-the-hood-in {
     from {
-      opacity: 0;
-      transform: translateY(calc(-1 * var(--space-md))) scaleY(0.92);
-    }
-  }
-
-  @keyframes under-the-hood-out {
-    to {
       opacity: 0;
       transform: translateY(calc(-1 * var(--space-md))) scaleY(0.92);
     }

@@ -67,6 +67,7 @@ Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` revie
 ## Motion
 - State changes animate via `transition` with duration and easing tokens. `transition: all` is forbidden; properties are listed explicitly. `[lint]` (`declaration-property-value-disallowed-list: { transition: [/\ball\b/], transition-property: [/\ball\b/] }`)
 - Animate **only** `transform` and `opacity`. Never `width`, `height`, `top`, `left`, `margin`, `padding`, `filter`, `mask`, `clip-path` or `box-shadow`. `[lint]` (`declaration-property-value-allowed-list` for `transition-property`) `[review]`
+  - **Exception (Ivan, 2026-11-06):** Under the hood folds its height (`grid-template-rows` 1fr → 0fr, 320 ms) when it closes; fading only its picture made the page jump. One element, on a click; the lint disable at that line names the reason. Any other size animation needs Ivan's OK. `[review]`
 - `@media (prefers-reduced-motion: reduce)`: animations are removed or reduced to opacity fades ≤ the shortest duration token. `[review]` `[test]` (e2e with `reducedMotion: 'reduce'`)
 - Scroll-driven animations only inside `@supports (animation-timeline: view())` / `scroll()`. View Transitions only via `@view-transition` and `if (document.startViewTransition)`. The page is fully usable without them. `[review]`
 - JS animation libraries (GSAP, Motion / Framer Motion, anime.js, Lottie) are forbidden. `[lint]` (ESLint `no-restricted-imports`)

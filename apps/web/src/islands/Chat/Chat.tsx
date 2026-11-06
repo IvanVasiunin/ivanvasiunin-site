@@ -84,7 +84,7 @@ function ChatView(options: ChatProps) {
   const last = lastTurn(state);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const dockRef = useRef<HTMLDivElement | null>(null);
-  const { following, jumpToLatest, pause, hold } = useFollowScroll(
+  const { following, jumpToLatest, pause } = useFollowScroll(
     `${String(state.turns.length)}:${String(last?.answer.length ?? 0)}:${last?.status ?? ''}`,
     state.turns.length > 0,
     scrollRef,
@@ -179,7 +179,6 @@ function ChatView(options: ChatProps) {
                   canRetry={canRetry(state, turn.id)}
                   onRetry={retry}
                   onAnnounce={announce}
-                  onHoldFollow={hold}
                 />
               ))}
             </div>

@@ -24,7 +24,7 @@ export interface UnderTheHoodProps {
   readonly id: string;
   /** Closed: in the page but hidden from everyone, screen readers included. */
   readonly state: HoodState;
-  /** The closing animation has ended. */
+  /** The closing transition has ended. */
   readonly onClosed: () => void;
   /** The panel element (ChatTurn scrolls it into view when it opens). */
   readonly panelRef?: Ref<HTMLDivElement>;
@@ -171,39 +171,41 @@ export function UnderTheHood({
       id={id}
       hidden={state === 'closed'}
       data-state={state}
+      onTransitionEnd={(event) => {
+        // Only the fold of this box itself, not a transition bubbling up from inside it.
+        const folded =
+          event.target === event.currentTarget && event.propertyName === 'grid-template-rows';
+        if (folded && state === 'closing') onClosed();
+      }}
     >
-      <div
-        className="under-the-hood__card"
-        onAnimationEnd={(event) => {
-          // Only the card's own animation, not one bubbling up from inside it.
-          if (event.target === event.currentTarget && state === 'closing') onClosed();
-        }}
-      >
-        <ol className="under-the-hood__steps">
-          {steps.map((name) => (
-            <Step key={name} name={name} node={byName.get(name) ?? null}>
-              {name === 'router' && route !== null && (
-                <p className="under-the-hood__detail">
-                  {language === null ? ROUTE_LABEL[route] : `${ROUTE_LABEL[route]} · ${language}`}
-                </p>
-              )}
-              {name === 'retrieval' && <Sources items={sources} />}
-              {name === 'relevance_gate' && (
-                <p className="under-the-hood__detail">
-                  {sources.length > 0 ? 'Passed' : 'Nothing above the threshold'}
-                </p>
-              )}
-            </Step>
-          ))}
-          {templated && (
-            <Step name="generate" node={null}>
-              <p className="under-the-hood__detail">Ready-made reply, no model call</p>
-            </Step>
-          )}
-        </ol>
-        <p className="under-the-hood__total">
-          {`Total ${formatDuration(usage.total_ms)} · about ${formatCost(usage.estimated_cost_usd)}`}
-        </p>
+      <div className="under-the-hood__fold">
+        <div className="under-the-hood__card">
+          <ol className="under-the-hood__steps">
+            {steps.map((name) => (
+              <Step key={name} name={name} node={byName.get(name) ?? null}>
+                {name === 'router' && route !== null && (
+                  <p className="under-the-hood__detail">
+                    {language === null ? ROUTE_LABEL[route] : `${ROUTE_LABEL[route]} · ${language}`}
+                  </p>
+                )}
+                {name === 'retrieval' && <Sources items={sources} />}
+                {name === 'relevance_gate' && (
+                  <p className="under-the-hood__detail">
+                    {sources.length > 0 ? 'Passed' : 'Nothing above the threshold'}
+                  </p>
+                )}
+              </Step>
+            ))}
+            {templated && (
+              <Step name="generate" node={null}>
+                <p className="under-the-hood__detail">Ready-made reply, no model call</p>
+              </Step>
+            )}
+          </ol>
+          <p className="under-the-hood__total">
+            {`Total ${formatDuration(usage.total_ms)} · about ${formatCost(usage.estimated_cost_usd)}`}
+          </p>
+        </div>
       </div>
     </div>
   );
