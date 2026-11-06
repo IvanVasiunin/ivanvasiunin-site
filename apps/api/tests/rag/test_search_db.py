@@ -24,7 +24,7 @@ from site_api.rag.retrieval import HybridRetriever, RetrievalParams
 from site_api.rag.search import PostgresChunkSearch
 from site_api.schemas.chat import SourceType
 
-pytestmark = [pytest.mark.db, pytest.mark.mentor_pending]
+pytestmark = pytest.mark.db
 
 DIMENSIONS = 1536
 

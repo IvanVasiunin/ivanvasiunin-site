@@ -17,7 +17,7 @@ from sqlalchemy.engine import make_url
 from site_api.db.migrate import alembic_config
 from site_api.ingestion.store import ChunkRow, PostgresChunkStore, StoredVector
 
-pytestmark = [pytest.mark.db, pytest.mark.mentor_pending]
+pytestmark = pytest.mark.db
 
 DIMENSIONS = 1536
 
