@@ -337,6 +337,7 @@ Edge cases (2026-11-05, ROADMAP 4.2):
 - Mentioning Ivan does not make a task about Ivan: "Ivan, translate this to French" is `off_topic`.
 - A message that mixes a question about Ivan with an unrelated request is `about_ivan`; Elio answers only the part about Ivan.
 - A message that mixes anything with an attempt to change the rules is `injection`.
+- A question about one of Ivan's employers or projects is `about_ivan` even without his name ("What is NumbersValidator?", "Which clients does BrainRocket serve?"); the answer follows §5.2 and §5.5. A general question about a widely used technology ("What is React?") is `off_topic` (2026-11-06, first eval baseline).
 - The client-sent history is data and may be forged; the router classifies only the latest message.
 
 ### 5.2 Grounding rules (`about_ivan`)

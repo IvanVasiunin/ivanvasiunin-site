@@ -1,6 +1,7 @@
 """The router step on its own: its messages, its structured output, its fail-closed rule (4.2)."""
 
 from importlib.resources import files
+from pathlib import Path
 
 import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -13,6 +14,7 @@ from site_api.graph.router import (
     normalize_language,
     route_question,
 )
+from site_api.ingestion.frontmatter import split_frontmatter
 from site_api.schemas.chat import ChatTurn
 
 from .chat_fakes import FakeRouterModel, routing
@@ -21,10 +23,32 @@ from .chat_fakes import FakeRouterModel, routing
 def test_the_router_prompt_is_the_versioned_file_in_the_package() -> None:
     prompt = load_router_prompt()
 
-    assert prompt == (files("site_api.prompts") / "router.v1.md").read_text(encoding="utf-8")
+    assert prompt == (files("site_api.prompts") / "router.v2.md").read_text(encoding="utf-8")
     # Every class of SPEC §5.1 is described.
     for route in ("about_ivan", "greeting", "off_topic", "injection"):
         assert f"`{route}`" in prompt
+
+
+CV_DIR = Path(__file__).resolve().parents[4] / "apps" / "web" / "src" / "content" / "cv"
+
+
+def _cv_names(folder: str, key: str) -> list[str]:
+    """The `key` of every CV entry in `folder` (a project's name up to its " — " subtitle)."""
+    names: list[str] = []
+    for path in sorted((CV_DIR / folder).glob("*.md")):
+        meta, _ = split_frontmatter(path.read_text(encoding="utf-8"))
+        names.append(str(meta[key]).split(" — ")[0])
+    return names
+
+
+def test_the_router_knows_every_employer_and_project_in_the_cv() -> None:
+    # The router recognises "What is NumbersValidator?" as about Ivan only by these names
+    # (SPEC 5.1 edge cases); a job or project added to the CV must be added to the prompt too.
+    prompt = load_router_prompt().casefold()
+    names = _cv_names("jobs", "company") + _cv_names("projects", "name")
+
+    assert names
+    assert [name for name in names if name.casefold() not in prompt] == []
 
 
 def test_history_and_question_reach_the_router_as_one_tagged_message_of_data() -> None:
