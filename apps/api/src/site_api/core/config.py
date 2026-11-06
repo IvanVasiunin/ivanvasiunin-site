@@ -112,6 +112,19 @@ class Settings(BaseSettings):
     chunk_size: int = Field(default=1200, ge=200, le=8000)
     chunk_overlap: int = Field(default=150, ge=0, le=1000)
 
+    # The 2D map (ROADMAP 6.1, ADR-0006): UMAP over the chunk embeddings, at ingestion. Starting
+    # values, tuned at the decision gate (6.5). A fixed random_state makes the layout deterministic.
+    projection_n_neighbors: int = Field(default=15, ge=2, le=200)
+    projection_min_dist: float = Field(default=0.1, ge=0, le=1)
+    projection_metric: Literal["cosine", "euclidean"] = "cosine"
+    projection_random_state: int = 42
+    # The fitted model (a joblib file) that places new chunks on the existing map; kept with the
+    # data, not in git (RUNBOOK). Relative paths are under the repository root.
+    projection_model_path: Path = Path("apps/api/artifacts/projection.joblib")
+    # Where ingestion writes points.json (SPEC §4.4): the dev site serves apps/web/public; the
+    # server writes to the volume Caddy serves at /data (ARCHITECTURE §5).
+    points_json_path: Path = Path("apps/web/public/data/points.json")
+
     # GitHub READMEs (ROADMAP 3.5). Only these repositories are fetched, only from this owner,
     # without a token: the API then serves public repositories only. Proposed default: the one
     # CV project whose README describes the project (the Little Lemon repository still has the

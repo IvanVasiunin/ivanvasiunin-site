@@ -3,8 +3,9 @@
 Embedding costs money, so the CLI forces a choice, like the evals CLI (CLAUDE.md golden rule 13):
 `--estimate` loads, chunks and compares with the database and prints the plan and its cost
 without any paid call (it does fetch the allow-listed GitHub READMEs, which is free); `--apply`
-also embeds the new texts and writes the changes. The 2D projection and `points.json` join in
-ROADMAP 6.1.
+also embeds the new texts and writes the changes, then puts every chunk on the 2D map and writes
+`points.json` (ROADMAP 6.1, ingestion/points.py). `--refit` (with `--apply`) fits the whole map
+again; otherwise new chunks are placed on the existing one, so the map stays put (ADR-0006).
 """
 
 import argparse
@@ -20,6 +21,7 @@ from site_api.core.config import Settings
 from site_api.ingestion.chunking import chunk_documents
 from site_api.ingestion.embeddings import create_embeddings
 from site_api.ingestion.github import create_github_client, load_github_readmes
+from site_api.ingestion.points import PointStore, export_points, update_points
 from site_api.ingestion.sources import load_all
 from site_api.ingestion.store import ChunkStore, PostgresChunkStore
 from site_api.ingestion.sync import SyncPlan, apply_sync, plan_sync
@@ -34,6 +36,11 @@ def build_parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--estimate", action="store_true", help="print the plan and cost, no calls")
     mode.add_argument("--apply", action="store_true", help="embed new texts and write (paid)")
+    parser.add_argument(
+        "--refit",
+        action="store_true",
+        help="with --apply: fit the whole 2D map again instead of placing new chunks on it",
+    )
     parser.add_argument(
         "--root",
         type=Path,
@@ -83,6 +90,21 @@ def run(
     return f"{report}\nApplied."
 
 
+def run_map(store: PointStore, settings: Settings, root: Path, refit: bool) -> str:
+    """Put every chunk on the 2D map and write `points.json`; returns the report. No paid call."""
+    update = update_points(store, settings, root, refit)
+    if update.refitted:
+        done = f"fitted anew for all {update.total} chunks"
+    elif update.placed:
+        done = (
+            f"{update.placed} new chunks placed, {update.total - update.placed} kept their points"
+        )
+    else:
+        done = f"all {update.total} chunks already placed"
+    path, count, size = export_points(store, settings, root)
+    return f"Map: {done}.\npoints.json: {count} points, {size / 1024:.1f} KB gzipped, {path}."
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Parse arguments, run against the configured database and return the exit code.
 
@@ -90,7 +112,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     mismatch, duplicate ids) is a usage problem: it is printed as one line and the exit code
     is 1, without a traceback.
     """
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.refit and not args.apply:
+        parser.error("--refit needs --apply")
     settings = Settings()  # pyright: ignore[reportCallIssue] (fields come from the environment)
     try:
         root: Path = args.root or find_repo_root(Path.cwd())
@@ -100,11 +125,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         engine = create_engine(settings.database_url.get_secret_value())
         try:
             store = PostgresChunkStore(engine)
-            report = run(args.apply, docs, settings, store, create_embeddings)
+            # Printed before the map step: a paid sync is reported even if the map then fails.
+            print(run(args.apply, docs, settings, store, create_embeddings))
+            if args.apply:
+                print(run_map(store, settings, root, args.refit))
         finally:
             engine.dispose()
     except ValueError as error:
         print(f"ingestion: {error}", file=sys.stderr)
         return 1
-    print(report)
     return 0

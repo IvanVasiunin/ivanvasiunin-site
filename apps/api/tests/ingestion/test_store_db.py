@@ -137,3 +137,20 @@ def test_a_new_row_takes_the_map_point_passed_in(store: PostgresChunkStore, engi
     store.apply([(row("cv:acme:5", "I build UI."), StoredVector(vector(0), 0.25, 0.75))], [])
 
     assert coordinates(engine, "cv:acme:5") == (0.25, 0.75)
+
+
+def test_points_are_saved_and_loaded_with_their_kind_and_section(
+    store: PostgresChunkStore,
+) -> None:
+    # ROADMAP 6.1: the map step reads every chunk with its embedding and writes its point.
+    a, b = row("cv:acme:0", "I build UI."), row("cv:acme:1", "I review code.")
+    store.apply([(a, StoredVector(vector(0))), (b, StoredVector(vector(1)))], [])
+
+    store.save_points({"cv:acme:1": (0.25, 0.75)})
+    loaded = store.load_points()
+
+    assert [point.id for point in loaded] == ["cv:acme:0", "cv:acme:1"]
+    assert (loaded[0].x, loaded[0].y) == (None, None)
+    assert (loaded[1].x, loaded[1].y) == (0.25, 0.75)
+    assert (loaded[1].source_type, loaded[1].section) == ("cv", "Acme — Dev")
+    assert loaded[1].embedding == pytest.approx(vector(1))

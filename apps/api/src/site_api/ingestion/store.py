@@ -6,7 +6,7 @@ its columns for building queries.
 """
 
 import datetime
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import asdict, dataclass, fields
 from typing import Protocol
 
@@ -14,6 +14,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import insert
 
 from site_api.db.tables import CHUNKS
+from site_api.ingestion.points import PointRow
 from site_api.schemas.chat import SourceType
 
 
@@ -131,6 +132,43 @@ class PostgresChunkStore:
                 connection.execute(upsert_statement(), params)
             if delete_ids:
                 connection.execute(sa.delete(CHUNKS).where(CHUNKS.c.id.in_(list(delete_ids))))
+
+    def load_points(self) -> list[PointRow]:
+        """Every chunk as the map sees it (ingestion/points.py), ordered by id."""
+        query = sa.select(
+            CHUNKS.c.id,
+            CHUNKS.c.source_type,
+            CHUNKS.c.section,
+            CHUNKS.c.embedding,
+            CHUNKS.c.x,
+            CHUNKS.c.y,
+        ).order_by(CHUNKS.c.id)
+        with self._engine.connect() as connection:
+            return [
+                PointRow(
+                    id=row["id"],
+                    source_type=row["source_type"],
+                    section=row["section"],
+                    embedding=[float(value) for value in row["embedding"]],
+                    x=row["x"],
+                    y=row["y"],
+                )
+                for row in connection.execute(query).mappings()
+            ]
+
+    def save_points(self, points: Mapping[str, tuple[float, float]]) -> None:
+        """Write these map points by chunk id, in one transaction."""
+        if not points:
+            return
+        # One UPDATE per chunk, executed as a batch (executemany): `bindparam` names the values.
+        statement = (
+            sa.update(CHUNKS)
+            .where(CHUNKS.c.id == sa.bindparam("point_id"))
+            .values(x=sa.bindparam("point_x"), y=sa.bindparam("point_y"))
+        )
+        params = [{"point_id": key, "point_x": x, "point_y": y} for key, (x, y) in points.items()]
+        with self._engine.begin() as connection:
+            connection.execute(statement, params)
 
 
 def upsert_statement() -> sa.Insert:

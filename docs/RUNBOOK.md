@@ -86,7 +86,7 @@ It uses no third-party actions.
 
 - **Schedule:** daily `pg_dump -Fc` from the `db` container via a host cron or systemd timer.
 - **Retention:** 7 daily + 4 weekly copies, stored off-server (destination to be decided).
-- **Also back up** the fitted UMAP model artifact and the last `points.json`.
+- **Also back up** the fitted UMAP model artifact (`PROJECTION_MODEL_PATH`) and the last `points.json`. Losing the model is safe but moves the map: the next `--apply` refits it (aligned to the stored points, ADR-0006).
 - **Restore drill:**
   1. restore into a fresh container;
   2. run `alembic current`;

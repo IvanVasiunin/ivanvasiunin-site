@@ -45,3 +45,12 @@ Coordinates are computed at ingestion, not in the browser.
 - **Model artifact:** the fitted model must be stored and versioned with the data, and losing it forces a refit. This is documented in the [RUNBOOK](../RUNBOOK.md).
 - **numba** is a heavy dependency. It is kept out of the API's runtime import path: the projection is imported only by ingestion.
 - **Mentor zone:** Ivan implements this himself ([ADR-0007](0007-mentor-mode.md)).
+
+## Amendments
+
+- **2026-11-06 (ROADMAP 6.1) — status: Proposed** (Ivan pre-approved routine stages):
+  - **The UNVERIFIED behaviour is checked** (umap-learn 0.5.12, numba 0.68.1, 240 synthetic chunks in 5 clusters, 1536 dimensions): a fixed `random_state` gives identical layouts; `transform()` of the fitted model places new points next to their cluster, deterministically; the model survives a `joblib` save and load (≈1.5 MB).
+  - **A refit is aligned, not initialized.** `init=` the previous coordinates barely helps: the median point still moves by 36% of the map's span (50% without it). A Procrustes alignment of the new layout onto the old points (rotation, reflection, uniform scale, shift) brings it to 15%, and `init=` adds nothing on top. So a refit fits from scratch and is then aligned to the chunks that already had points (`ingestion/projection.py`).
+  - **The 0..1 mapping is stored with the model** (an affine map), so chunks placed later land in the same coordinates as the points around them; the first fit fills the middle 90% of the square, one scale for both axes, leaving room at the edges; anything placed outside is clipped.
+  - **Paths are config:** `PROJECTION_MODEL_PATH` (default `apps/api/artifacts/projection.joblib`, git-ignored) and `POINTS_JSON_PATH` (default `apps/web/public/data/points.json` for the dev site). The first real run: 241 chunks, `points.json` 5.1 KB gzipped.
+  - A test keeps `umap` and `numba` out of the API's imports.
