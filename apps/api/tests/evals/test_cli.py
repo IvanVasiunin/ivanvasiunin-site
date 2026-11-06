@@ -1,5 +1,6 @@
 """The eval CLI: a free estimate, a run only on explicit request (never a paid call in tests)."""
 
+import asyncio
 import json
 import subprocess
 import sys
@@ -86,6 +87,26 @@ def test_run_prints_the_report_and_saves_it(
     report = json.loads(saved.read_text(encoding="utf-8"))
     assert report["passed"] is True
     assert report["prompt"].startswith("system.v")
+
+
+def test_a_run_uses_the_selector_event_loop(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Async psycopg refuses Windows' default Proactor loop: a run there failed every database
+    # search with "upstream_unavailable" (the first real baseline, 2026-11-06).
+    loops: list[type[asyncio.AbstractEventLoop]] = []
+
+    async def fake_suite(
+        cases: list[EvalCase], settings: Settings, max_cost_usd: float
+    ) -> list[CaseResult]:
+        loops.append(type(asyncio.get_running_loop()))
+        return [_passing_result(case) for case in cases]
+
+    monkeypatch.setattr("site_api.evals.runner.run_suite", fake_suite)
+    monkeypatch.setattr(cli, "reports_dir", lambda: tmp_path)
+
+    assert cli.main(["--run", "--yes", "--case", "greeting-en"], SETTINGS) == 0
+    assert loops == [asyncio.SelectorEventLoop]
 
 
 def test_a_run_without_yes_stops_after_the_estimate(

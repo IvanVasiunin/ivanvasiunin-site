@@ -94,7 +94,11 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
 
     max_cost = estimate.total_usd * settings.eval_max_cost_factor
     try:
-        results = asyncio.run(run_suite(cases, settings, max_cost))
+        # The selector loop on every OS: async psycopg refuses Windows' default Proactor loop
+        # (production and `fastapi dev` use the selector loop too; tests/conftest.py).
+        results = asyncio.run(
+            run_suite(cases, settings, max_cost), loop_factory=asyncio.SelectorEventLoop
+        )
     except (ModelConfigError, ValueError) as error:
         # A missing API key: say which, without a stack trace.
         print(f"Cannot run the evals: {error}")
