@@ -92,6 +92,26 @@ cases:
     sources: true
     judged: true
 
+  # data/github-projects.md (2026-11-07): what his code shows, beyond the READMEs.
+  - id: in-scope-smart-test-task-en
+    type: in_scope
+    language: en
+    question: How did Ivan manage state in his Smart-business test task?
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    contains_any: [Redux Toolkit, createSlice, slice]
+    judged: true
+  - id: in-scope-tanstack-uk
+    type: in_scope
+    language: uk
+    question: Як Іван використовував TanStack Query у своїх проєктах?
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    contains_any: [useQuery, useMutation, invalidateQueries, signal]
+    judged: true
+
   # ── personal: only shared facts; "hasn't shared"; do-not-discuss ─────────────────────────────
   - id: personal-dog-en
     type: personal
@@ -306,6 +326,23 @@ cases:
     question: Какая машина у Ивана?
     route: about_ivan
     finish: [no_info, stop]
+  - id: unknown-graphql-en
+    type: unknown_fact
+    language: en
+    question: Which GraphQL client did Ivan use in his GitHub projects?
+    route: about_ivan
+    finish: [no_info, stop]
+    contains_any:
+      [
+        "don't have information",
+        'no information',
+        'not mentioned',
+        'not mention',
+        'not list',
+        'no indication',
+        'does not use',
+        "doesn't use",
+      ]
 
   # ── nda_salary: policy wording, no numbers, no internals ─────────────────────────────────────
   - id: salary-range-en

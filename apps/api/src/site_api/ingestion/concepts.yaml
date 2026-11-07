@@ -23,6 +23,9 @@
 - { id: own-websites, label: Own websites, aliases: [own websites, google adsense, adsense] }
 - { id: numbersvalidator, label: NumbersValidator, aliases: [numbersvalidator, numbers validator] }
 - { id: little-lemon, label: Little Lemon, aliases: [little lemon] }
+# Hiring test tasks (data/github-projects.md)
+- { id: smart-business, label: Smart-business, aliases: [smart-business, smart-test-task] }
+- { id: blaize, label: Blaize, aliases: [blaize] }
 - {
     id: this-website,
     label: This website,
@@ -47,6 +50,13 @@
 - { id: responsive, label: Responsive design, aliases: [responsive design, responsive] }
 - { id: git, label: Git, aliases: [git, github, gitlab] }
 - { id: figma, label: Figma, aliases: [figma] }
+# Seen in his GitHub code (data/github-projects.md)
+- { id: react-router, label: React Router, aliases: [react router, react-router, react-router-dom] }
+- { id: framer-motion, label: Framer Motion, aliases: [framer motion, framer-motion] }
+- { id: recharts, label: Recharts, aliases: [recharts] }
+- { id: chakra-ui, label: Chakra UI, aliases: [chakra ui, chakra] }
+- { id: php, label: PHP, aliases: [php] }
+- { id: jest, label: Jest, aliases: [jest, react testing library] }
 
 # AI engineering and AI tools (CV skills)
 - { id: python, label: Python, aliases: [python] }

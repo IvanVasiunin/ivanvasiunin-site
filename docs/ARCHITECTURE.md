@@ -54,7 +54,7 @@ flowchart LR
 │  │     ├─ lib/            sse/, api/ (generated types), viz/
 │  │     └─ styles/         tokens, layers, mixins
 │  └─ api/             FastAPI + LangGraph (see §3)
-├─ data/               experience-notes.md, about-me-personal.md
+├─ data/               experience-notes.md, github-projects.md, about-me-personal.md
 │  └─ raw/             CV in Word — git-ignored
 ├─ infra/              docker-compose.yml, Caddyfile, scripts
 └─ docs/               ARCHITECTURE, ROADMAP, TESTING, RUNBOOK, CREDITS, adr/
@@ -148,6 +148,7 @@ flowchart LR
   subgraph sources[Sources]
     cv[CV content collection<br/>apps/web/src/content/cv]
     exp[data/experience-notes.md]
+    ghp[data/github-projects.md]
     per[data/about-me-personal.md]
     docs[SPEC · ARCHITECTURE · ADRs]
     gh[GitHub READMEs<br/>allow-list]

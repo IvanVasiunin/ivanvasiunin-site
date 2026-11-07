@@ -23,7 +23,7 @@ The repo is public and is itself a portfolio piece. This is Ivan's first AI proj
 ```
 apps/web/     Astro 7 + React islands, TS 6 strict, SCSS + BEM     → apps/web/CLAUDE.md
 apps/api/     FastAPI + LangChain/LangGraph, Python 3.13, uv       → apps/api/CLAUDE.md
-data/         experience-notes.md, about-me-personal.md (RAG sources; edit only with Ivan's OK)
+data/         experience-notes.md, github-projects.md, about-me-personal.md (RAG sources; edit only with Ivan's OK)
 data/raw/     Word CV with phone number — git-ignored, never read, never ingested
 infra/        docker-compose, Caddyfile, scripts
 docs/         ARCHITECTURE, ROADMAP, TESTING, RUNBOOK, CREDITS, adr/, phase-0-setup.md

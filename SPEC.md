@@ -492,6 +492,7 @@ Never name numbers or ranges, even if asked repeatedly or hypothetically. Use th
 | CV, structured source | `apps/web/src/content/cv/*.md` | Markdown + YAML frontmatter (Zod schema). One file per job and per CV section; frontmatter: company, title, start / end, location, stack, `brief`, `order`; body = full version | To do in Phase 2 | Review the version Claude drafts from the Word CV and the experience notes |
 | CV, original | `data/raw/CV_Ivan_Vasiunin.docx` | Word, **git-ignored** (contains a phone number) | Done | None |
 | Experience notes | `data/experience-notes.md` | Markdown with frontmatter `category: experience` | Done | Keep updated. After Phase 2 this is the source of details, not a second CV |
+| GitHub projects | `data/github-projects.md` | Markdown with frontmatter `category: experience`: what Ivan's public repositories' code shows (technologies, approaches), study projects labelled | Done (2026-11-07) | Keep updated when new repositories appear |
 | Personal facts | `data/about-me-personal.md` | Markdown Q&A with frontmatter `category: personal` and a "Do not discuss" section | Done | Keep updated; extend the Q&A as needed |
 | Site documentation | `SPEC.md`, `docs/ARCHITECTURE.md`, `docs/adr/*.md` | Markdown | In progress | — |
 | GitHub READMEs (allow-list) | Fetched at ingestion from public repos | Markdown, `type=github_readme`, deduplicated per project | Allow-list confirmed 2026-11-01 | — |
