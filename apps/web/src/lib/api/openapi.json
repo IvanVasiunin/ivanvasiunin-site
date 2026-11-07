@@ -57,7 +57,10 @@
             "type": "string"
           }
         },
-        "required": ["message", "session_id"],
+        "required": [
+          "message",
+          "session_id"
+        ],
         "title": "ChatRequest",
         "type": "object"
       },
@@ -70,12 +73,18 @@
             "type": "string"
           },
           "role": {
-            "enum": ["user", "assistant"],
+            "enum": [
+              "user",
+              "assistant"
+            ],
             "title": "Role",
             "type": "string"
           }
         },
-        "required": ["role", "content"],
+        "required": [
+          "role",
+          "content"
+        ],
         "title": "ChatTurn",
         "type": "object"
       },
@@ -83,7 +92,12 @@
         "description": "The successful end of the stream.",
         "properties": {
           "finish_reason": {
-            "enum": ["stop", "length", "templated", "no_info"],
+            "enum": [
+              "stop",
+              "length",
+              "templated",
+              "no_info"
+            ],
             "title": "Finish Reason",
             "type": "string"
           },
@@ -98,7 +112,11 @@
             "type": "string"
           }
         },
-        "required": ["type", "message_id", "finish_reason"],
+        "required": [
+          "type",
+          "message_id",
+          "finish_reason"
+        ],
         "title": "DoneEvent",
         "type": "object"
       },
@@ -137,7 +155,10 @@
             "title": "Retry After S"
           }
         },
-        "required": ["code", "message"],
+        "required": [
+          "code",
+          "message"
+        ],
         "title": "ErrorBody",
         "type": "object"
       },
@@ -182,7 +203,11 @@
             "type": "string"
           }
         },
-        "required": ["type", "code", "message"],
+        "required": [
+          "type",
+          "code",
+          "message"
+        ],
         "title": "ErrorEvent",
         "type": "object"
       },
@@ -193,7 +218,9 @@
             "$ref": "#/components/schemas/ErrorBody"
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "title": "ErrorResponse",
         "type": "object"
       },
@@ -201,12 +228,18 @@
         "description": "Liveness of the API and reachability of its database.",
         "properties": {
           "db": {
-            "enum": ["ok", "down"],
+            "enum": [
+              "ok",
+              "down"
+            ],
             "title": "Db",
             "type": "string"
           },
           "status": {
-            "enum": ["ok", "unavailable"],
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
             "title": "Status",
             "type": "string"
           },
@@ -215,7 +248,11 @@
             "type": "string"
           }
         },
-        "required": ["status", "db", "version"],
+        "required": [
+          "status",
+          "db",
+          "version"
+        ],
         "title": "HealthResponse",
         "type": "object"
       },
@@ -296,7 +333,10 @@
             "title": "Output Tokens"
           }
         },
-        "required": ["name", "ms"],
+        "required": [
+          "name",
+          "ms"
+        ],
         "title": "NodeUsage",
         "type": "object"
       },
@@ -310,7 +350,12 @@
             "type": "string"
           },
           "route": {
-            "enum": ["about_ivan", "greeting", "off_topic", "injection"],
+            "enum": [
+              "about_ivan",
+              "greeting",
+              "off_topic",
+              "injection"
+            ],
             "title": "Route",
             "type": "string"
           },
@@ -320,7 +365,11 @@
             "type": "string"
           }
         },
-        "required": ["type", "route", "language"],
+        "required": [
+          "type",
+          "route",
+          "language"
+        ],
         "title": "RouteEvent",
         "type": "object"
       },
@@ -355,7 +404,13 @@
             "type": "string"
           },
           "source_type": {
-            "enum": ["cv", "experience", "personal", "site_docs", "github_readme"],
+            "enum": [
+              "cv",
+              "experience",
+              "personal",
+              "site_docs",
+              "github_readme"
+            ],
             "title": "Source Type",
             "type": "string"
           },
@@ -376,7 +431,13 @@
             "title": "Url"
           }
         },
-        "required": ["chunk_id", "score", "source_type", "title", "snippet"],
+        "required": [
+          "chunk_id",
+          "score",
+          "source_type",
+          "title",
+          "snippet"
+        ],
         "title": "SourceItem",
         "type": "object"
       },
@@ -396,7 +457,10 @@
             "type": "string"
           }
         },
-        "required": ["type", "items"],
+        "required": [
+          "type",
+          "items"
+        ],
         "title": "SourcesEvent",
         "type": "object"
       },
@@ -413,7 +477,10 @@
             "type": "string"
           }
         },
-        "required": ["type", "text"],
+        "required": [
+          "type",
+          "text"
+        ],
         "title": "TokenEvent",
         "type": "object"
       },
@@ -443,7 +510,12 @@
             "type": "string"
           }
         },
-        "required": ["type", "nodes", "total_ms", "estimated_cost_usd"],
+        "required": [
+          "type",
+          "nodes",
+          "total_ms",
+          "estimated_cost_usd"
+        ],
         "title": "UsageEvent",
         "type": "object"
       }
@@ -524,7 +596,9 @@
                       "type": "integer"
                     }
                   },
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "type": "object"
                 }
               }
@@ -583,7 +657,9 @@
           }
         },
         "summary": "Chat",
-        "tags": ["chat"]
+        "tags": [
+          "chat"
+        ]
       }
     },
     "/api/health": {
@@ -633,7 +709,9 @@
           }
         },
         "summary": "Health",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     }
   }
