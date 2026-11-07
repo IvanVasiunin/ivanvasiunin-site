@@ -6,6 +6,7 @@ from site_api.rag.retrieval import (
     HybridRetriever,
     RetrievalParams,
     RetrievedChunk,
+    above_floor,
     limit_per_project,
 )
 from site_api.rag.search import Candidate
@@ -125,3 +126,31 @@ def test_limit_keeps_the_best_of_each_project() -> None:
     kept = limit_per_project(items, max_per_project=1)
 
     assert [item.chunk.chunk_id for item in kept] == ["cv:a:0", "cv:b:0"]
+
+
+def test_weak_tail_sources_below_the_floor_are_dropped() -> None:
+    # Found by both searches (~0.98) vs by one only (~0.5): the one-search tail is left out.
+    best, weak = candidate("personal:pet:0"), candidate("site_docs:spec:40")
+    ranked = [
+        RetrievedChunk(best, 0.98),
+        RetrievedChunk(candidate("personal:name:0"), 0.87),
+        RetrievedChunk(weak, 0.5),
+    ]
+
+    kept = above_floor(ranked, 0.6)
+
+    assert [item.chunk.chunk_id for item in kept] == ["personal:pet:0", "personal:name:0"]
+
+
+def test_when_every_score_is_low_none_is_dropped() -> None:
+    # A question in Russian: full text finds nothing, every chunk scores about the same.
+    ranked = [RetrievedChunk(candidate(f"cv:job:{i}"), 0.5 - i * 0.01) for i in range(4)]
+
+    assert len(above_floor(ranked, 0.6)) == 4
+
+
+def test_a_zero_floor_keeps_everything_and_nothing_stays_nothing() -> None:
+    ranked = [RetrievedChunk(candidate("cv:a:0"), 0.9), RetrievedChunk(candidate("cv:b:0"), 0.1)]
+
+    assert len(above_floor(ranked, 0.0)) == 2
+    assert above_floor([], 0.6) == []

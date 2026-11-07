@@ -154,6 +154,10 @@ class Settings(BaseSettings):
     # The RRF constant: 60 is the value of the original paper (Cormack et al., 2009); a larger k
     # flattens the difference between ranks.
     retrieval_rrf_k: int = Field(default=60, ge=1, le=1000)
+    # A chunk scoring below this share of the best one is dropped: the top_k slots are a ceiling,
+    # not a quota (Ivan, 2026-11-07: a dog question also "read" two weak spec sections). Relative,
+    # not absolute: a question in Russian finds nothing by full text, so every score is low.
+    retrieval_min_relative_score: float = Field(default=0.6, ge=0, le=1)
     # Evals (ROADMAP 4.5, docs/TESTING.md): a cheap judge model scores in-scope answers
     # (faithfulness to the sources, relevancy to the question); a run below any threshold fails.
     eval_judge_provider: ModelProvider = "openai"

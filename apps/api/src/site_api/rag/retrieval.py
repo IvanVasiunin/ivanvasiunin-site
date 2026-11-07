@@ -34,6 +34,8 @@ class RetrievalParams:
     top_k: int
     max_per_project: int
     rrf_k: int
+    # Chunks below this share of the best score are dropped (0 keeps all).
+    min_relative_score: float = 0.0
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "RetrievalParams":
@@ -43,6 +45,7 @@ class RetrievalParams:
             top_k=settings.retrieval_top_k,
             max_per_project=settings.retrieval_max_per_project,
             rrf_k=settings.retrieval_rrf_k,
+            min_relative_score=settings.retrieval_min_relative_score,
         )
 
 
@@ -70,7 +73,20 @@ class HybridRetriever:
             [[c.chunk_id for c in by_vector], [c.chunk_id for c in by_text]], self._params.rrf_k
         )
         ranked = [RetrievedChunk(candidates[chunk_id], score) for chunk_id, score in scores.items()]
-        return limit_per_project(ranked, self._params.max_per_project)[: self._params.top_k]
+        best = limit_per_project(ranked, self._params.max_per_project)[: self._params.top_k]
+        return above_floor(best, self._params.min_relative_score)
+
+
+def above_floor(chunks: Sequence[RetrievedChunk], share: float) -> list[RetrievedChunk]:
+    """The chunks scoring at least `share` of the best one (best first, as given).
+
+    RRF gives a chunk found by both searches about twice the score of one found by only one of
+    them, so a 0.6 floor drops the tail that only one search liked when the head was liked by both.
+    """
+    if not chunks:
+        return []
+    floor = chunks[0].score * share
+    return [chunk for chunk in chunks if chunk.score >= floor]
 
 
 def limit_per_project(

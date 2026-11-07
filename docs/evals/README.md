@@ -16,3 +16,4 @@ A report names the system prompt only; this table adds the router version and th
 |---|---|---|---|---|---|---|---|---|
 | `2026-11-06T064528Z-system.v2.json` | v2 / v1 | 42 | 0.95 | 0.95 | 1.00 | 0.94 | $0.054 | failed: judge coverage 0.89 (two questions about Ivan's work routed `off_topic`) |
 | `2026-11-06T065756Z-system.v2.json` | v2 / v2 | 46 | 1.00 | 0.98 | 1.00 | 1.00 | $0.019 | passed (one phrase check too narrow for an honest "does not list"; widened afterwards) |
+| `2026-11-07T061950Z-system.v2.json` | v2 / v2 | 46 | 1.00 | 1.00 | 1.00 | 0.99 | $0.053 | passed after two retrieval changes: SPEC §5.6 example Q&A left out of the knowledge base, and a relative floor (`RETRIEVAL_MIN_RELATIVE_SCORE` 0.6) drops sources below 60% of the best |
