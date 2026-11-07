@@ -144,6 +144,15 @@
       background-color: var(--color-highlight-soft);
       content: '';
     }
+
+    // Its star is pointed at on the knowledge map (lib/viz/events.ts).
+    &[data-linked] {
+      color: var(--color-text);
+    }
+
+    &[data-linked]::before {
+      box-shadow: 0 0 0 var(--border-width) var(--color-focus);
+    }
   }
 
   .chat-turn__source-dot {

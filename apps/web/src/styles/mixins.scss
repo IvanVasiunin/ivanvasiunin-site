@@ -6,6 +6,8 @@ $breakpoints: (
   sm: 480px,
   md: 768px,
   lg: 1024px,
+  wide: 80rem,
+  // 80rem: the knowledge map joins the chat (ADR-0012)
   xl: 1440px,
 );
 

@@ -86,6 +86,20 @@
   --color-source-site-docs: #6a4fb0;
   --color-source-github: #5b6478;
 
+  // Knowledge map (ADR-0012): a "night window" - its sky is dark in both themes, so these are set
+  // once here and never redefined by the dark theme. Stars use the dark theme's source colours.
+  --color-map-sky-1: #0a0f26;
+  --color-map-sky-2: #141c40;
+  --color-map-edge: #2a3460;
+  --color-map-text: #dde4f5;
+  --color-map-muted: #a3aecb;
+  --color-map-topics: #ffd35c;
+  --color-map-cv: #8db2ff;
+  --color-map-experience: #6ed3c8;
+  --color-map-personal: #f29ac0;
+  --color-map-site-docs: #bba6ff;
+  --color-map-github: #a9b3cc;
+
   // Typography. Self-hosted OFL fonts (astro.config.mjs → `fonts`); the <Font> components in BaseLayout
   // define the family variables, including Astro's metric-matched fallback faces. The stacks after the
   // comma apply only where <Font> is absent (isolated component tests).

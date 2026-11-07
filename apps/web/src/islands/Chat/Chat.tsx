@@ -16,6 +16,7 @@ import { type UseChatOptions, useChat } from './useChat';
 import { useFollowScroll } from './useFollowScroll';
 import { useKeyboardInset } from './useKeyboardInset';
 import { useScrollAnchor } from './useScrollAnchor';
+import { useMapBridge } from './useMapBridge';
 import { usePageReady } from './usePageReady';
 
 import './Chat.scss';
@@ -92,6 +93,8 @@ function ChatView(options: ChatProps) {
   );
   // Back from a link in an answer (the CV): the reader returns to that answer, not to the end.
   useScrollAnchor({ areaRef: scrollRef, following, pause, restored, ready });
+  // The knowledge map (another island, desktop only) shows what the latest answer read.
+  useMapBridge(state, restored);
 
   // Announce each answer's end once, on the change of its status.
   const announced = useRef<string | null>(null);

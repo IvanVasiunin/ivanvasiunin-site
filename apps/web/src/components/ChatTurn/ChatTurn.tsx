@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 import type { SourceItem } from '../../lib/api/types';
 import { errorText } from '../../lib/chat/messages';
+import { emitMapEvent, onMapEvent } from '../../lib/viz/events';
 import { type Turn, isActive } from '../../lib/chat/state';
 import { ChatMarkdown } from '../ChatMarkdown';
 import { ElioAvatar } from '../ElioAvatar';
@@ -84,14 +85,65 @@ function Sources({
   readonly items: readonly SourceItem[];
   readonly headingId: string;
 }) {
+  // The knowledge map (desktop) and the Sources point at each other (lib/viz/events.ts): a source
+  // hovered or focused here rings its star; a star hovered there marks its source here.
+  const [linked, setLinked] = useState<string | null>(null);
+  useEffect(
+    () =>
+      onMapEvent('knowledge-map:point-star', ({ id }) => {
+        setLinked(id);
+      }),
+    [],
+  );
+  // One delegated listener on the list (pointing is an enhancement of plain list items): the
+  // item under the pointer or holding focus names its chunk in `data-chunk`.
+  const listRef = useRef<HTMLUListElement | null>(null);
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const chunkOf = (target: EventTarget | null): string | null =>
+      target instanceof Element
+        ? (target.closest<HTMLElement>('[data-chunk]')?.dataset.chunk ?? null)
+        : null;
+    let current: string | null = null;
+    const point = (id: string | null): void => {
+      if (id === current) return;
+      current = id;
+      emitMapEvent('knowledge-map:point-source', { id });
+    };
+    const onOver = (event: Event): void => {
+      point(chunkOf(event.target));
+    };
+    const onOut = (event: Event): void => {
+      point(chunkOf((event as MouseEvent | FocusEvent).relatedTarget));
+    };
+    list.addEventListener('mouseover', onOver);
+    list.addEventListener('mouseout', onOut);
+    list.addEventListener('focusin', onOver);
+    list.addEventListener('focusout', onOut);
+    return () => {
+      list.removeEventListener('mouseover', onOver);
+      list.removeEventListener('mouseout', onOut);
+      list.removeEventListener('focusin', onOver);
+      list.removeEventListener('focusout', onOut);
+      if (current !== null) emitMapEvent('knowledge-map:point-source', { id: null });
+    };
+  }, []);
+
   return (
     <section className="chat-turn__sources" aria-labelledby={headingId}>
       <h3 className="chat-turn__sources-title" id={headingId}>
         Sources
       </h3>
-      <ul className="chat-turn__source-list">
+      <ul className="chat-turn__source-list" ref={listRef}>
         {items.map((item) => (
-          <li key={item.chunk_id} className="chat-turn__source" data-source={item.source_type}>
+          <li
+            key={item.chunk_id}
+            className="chat-turn__source"
+            data-source={item.source_type}
+            data-chunk={item.chunk_id}
+            data-linked={linked === item.chunk_id ? '' : undefined}
+          >
             <span className="chat-turn__source-dot" aria-hidden="true" />
             {item.url === null ? (
               <span>{item.title}</span>

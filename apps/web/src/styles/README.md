@@ -64,28 +64,29 @@ text keep a resting underline (WCAG 1.4.1).
 a white outline for both themes. Applied in `base.scss` only under `(hover: hover) and (pointer: fine)`,
 each with the native keyword as fallback.
 
-| Token                       | Light     | Dark      | Use                                        |
-| --------------------------- | --------- | --------- | ------------------------------------------ |
-| `--color-bg`                | `#f4efe5` | `#0e1430` | Page background (warm chart paper / space) |
-| `--color-surface`           | `#fcf9f3` | `#161e40` | Raised panels, chat input                  |
-| `--color-text`              | `#182036` | `#dde4f5` | Body text (navy ink)                       |
-| `--color-text-muted`        | `#454a62` | `#a3aecb` | Secondary text                             |
-| `--color-grid`              | `#d8cfbf` | `#232c52` | Decorative lines only (no contrast floor)  |
-| `--color-border`            | `#5f6274` | `#7c88b0` | UI boundaries (inputs, toggles)            |
-| `--color-accent`            | `#2b54b0` | `#8db2ff` | Links, primary actions (cobalt)            |
-| `--color-accent-2`          | `#6a4fb0` | `#bba6ff` | Second gradient stop (violet)              |
-| `--color-accent-3`          | `#1f7373` | `#6ed3c8` | Third gradient stop (teal)                 |
-| `--color-on-accent`         | `#fff`    | `#0e1430` | Text on accent gradients (≥ 4.5:1, tested) |
-| `--color-focus`             | `#2b54b0` | `#8db2ff` | Focus ring                                 |
-| `--color-highlight`         | `#8f5d00` | `#f2c14e` | Relevance highlight on the map (star gold) |
-| `--color-glow-1…3`          | pastels   | deep hues | Backdrop nebulae (translucent)             |
-| `--color-star`              | `#4a5a8a` | `#e6ecff` | Backdrop stars                             |
-| `--color-chart-line`        | `#7d8ab0` | `#5a6cb0` | Backdrop celestial chart (decoration)      |
-| `--color-source-cv`         | `#2b54b0` | `#8db2ff` | Map key: CV                                |
-| `--color-source-experience` | `#1f7373` | `#6ed3c8` | Map key: experience notes                  |
-| `--color-source-personal`   | `#a6466e` | `#f29ac0` | Map key: personal facts                    |
-| `--color-source-site-docs`  | `#6a4fb0` | `#bba6ff` | Map key: site docs                         |
-| `--color-source-github`     | `#5b6478` | `#a9b3cc` | Map key: GitHub READMEs                    |
+| Token                       | Light     | Dark      | Use                                                                                  |
+| --------------------------- | --------- | --------- | ------------------------------------------------------------------------------------ |
+| `--color-bg`                | `#f4efe5` | `#0e1430` | Page background (warm chart paper / space)                                           |
+| `--color-surface`           | `#fcf9f3` | `#161e40` | Raised panels, chat input                                                            |
+| `--color-text`              | `#182036` | `#dde4f5` | Body text (navy ink)                                                                 |
+| `--color-text-muted`        | `#454a62` | `#a3aecb` | Secondary text                                                                       |
+| `--color-grid`              | `#d8cfbf` | `#232c52` | Decorative lines only (no contrast floor)                                            |
+| `--color-border`            | `#5f6274` | `#7c88b0` | UI boundaries (inputs, toggles)                                                      |
+| `--color-accent`            | `#2b54b0` | `#8db2ff` | Links, primary actions (cobalt)                                                      |
+| `--color-accent-2`          | `#6a4fb0` | `#bba6ff` | Second gradient stop (violet)                                                        |
+| `--color-accent-3`          | `#1f7373` | `#6ed3c8` | Third gradient stop (teal)                                                           |
+| `--color-on-accent`         | `#fff`    | `#0e1430` | Text on accent gradients (≥ 4.5:1, tested)                                           |
+| `--color-focus`             | `#2b54b0` | `#8db2ff` | Focus ring                                                                           |
+| `--color-highlight`         | `#8f5d00` | `#f2c14e` | Relevance highlight on the map (star gold)                                           |
+| `--color-glow-1…3`          | pastels   | deep hues | Backdrop nebulae (translucent)                                                       |
+| `--color-star`              | `#4a5a8a` | `#e6ecff` | Backdrop stars                                                                       |
+| `--color-chart-line`        | `#7d8ab0` | `#5a6cb0` | Backdrop celestial chart (decoration)                                                |
+| `--color-source-cv`         | `#2b54b0` | `#8db2ff` | Map key: CV                                                                          |
+| `--color-source-experience` | `#1f7373` | `#6ed3c8` | Map key: experience notes                                                            |
+| `--color-source-personal`   | `#a6466e` | `#f29ac0` | Map key: personal facts                                                              |
+| `--color-source-site-docs`  | `#6a4fb0` | `#bba6ff` | Map key: site docs                                                                   |
+| `--color-source-github`     | `#5b6478` | `#a9b3cc` | Map key: GitHub READMEs                                                              |
+| `--color-map-*`             | dark      | dark      | Knowledge map sky, text and stars: the same "night window" in both themes (ADR-0012) |
 
 ## Typography
 
@@ -101,18 +102,18 @@ each with the native keyword as fallback.
 
 ## Spacing, shape, motion, layering
 
-| Group      | Tokens                                                                                                                                                                  |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Spacing    | `--space-3xs` 2px · `2xs` 4 · `xs` 8 · `sm` 12 · `md` 16 · `lg` 24 · `xl` 32 · `2xl` 48 · `3xl` 64 · `4xl` 96                                                           |
-| Gutter     | `--gutter`: 16px, 32px from `md`                                                                                                                                        |
+| Group      | Tokens                                                                                                                                                                                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Spacing    | `--space-3xs` 2px · `2xs` 4 · `xs` 8 · `sm` 12 · `md` 16 · `lg` 24 · `xl` 32 · `2xl` 48 · `3xl` 64 · `4xl` 96                                                                                                                                                  |
+| Gutter     | `--gutter`: 16px, 32px from `md`                                                                                                                                                                                                                               |
 | Sizes      | `--size-touch` 44px · `--size-container` 75rem · `--size-cv` 56rem (CV width) · `--size-cv-rail` 7.5rem (CV date rail from `md`) · `--size-cv-star` 8px (timeline star) · `--size-meter` 3rem × `--size-meter-thickness` 4px (relevance bar in Under the hood) |
-| Radius     | `--radius-sm` 4px (chips, inputs) · `md` 8px (panels) · `pill` (toggles)                                                                                                |
-| Lines      | `--border-width` 1px · `--focus-ring-width` 2px                                                                                                                         |
-| Shadow     | `--shadow-raised` (ink-tinted in light, deeper in dark)                                                                                                                 |
-| Duration   | `--duration-fast` 120ms · `base` 200ms · `slow` 320ms; all collapse to `fast` under reduced motion                                                                      |
-| Easing     | `--ease-out`, `--ease-in-out`                                                                                                                                           |
-| Z-index    | `--z-backdrop` −2 · `map` −1 · `base` 0 · `raised` 10 · `header` 100 · `overlay` 200 · `toast` 300 · `skip-link` 400                                                    |
-| Breakpoint | Sass `mq()`: `sm` 480 · `md` 768 · `lg` 1024 · `xl` 1440 (px, `min-width`)                                                                                              |
+| Radius     | `--radius-sm` 4px (chips, inputs) · `md` 8px (panels) · `pill` (toggles)                                                                                                                                                                                       |
+| Lines      | `--border-width` 1px · `--focus-ring-width` 2px                                                                                                                                                                                                                |
+| Shadow     | `--shadow-raised` (ink-tinted in light, deeper in dark)                                                                                                                                                                                                        |
+| Duration   | `--duration-fast` 120ms · `base` 200ms · `slow` 320ms; all collapse to `fast` under reduced motion                                                                                                                                                             |
+| Easing     | `--ease-out`, `--ease-in-out`                                                                                                                                                                                                                                  |
+| Z-index    | `--z-backdrop` −2 · `map` −1 · `base` 0 · `raised` 10 · `header` 100 · `overlay` 200 · `toast` 300 · `skip-link` 400                                                                                                                                           |
+| Breakpoint | Sass `mq()`: `sm` 480 · `md` 768 · `lg` 1024 · `xl` 1440 (px, `min-width`)                                                                                                                                                                                     |
 
 ## Scroll motion and page transitions (ROADMAP 2.6)
 

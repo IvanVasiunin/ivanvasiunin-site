@@ -1,6 +1,8 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { test as base, expect, type Page } from '@playwright/test';
 
+import { MAP_POINTS } from './map-points';
+
 export interface NetworkConditions {
   readonly latencyMs: number;
   readonly downloadKbps: number;
@@ -25,8 +27,20 @@ export const SLOW_4G: NetworkConditions = {
 
 const kbpsToBytesPerSecond = (kbps: number): number => (kbps * 1024) / 8;
 
-export const test = base.extend<ThrottleOptions & { applyThrottle: undefined }>({
+export const test = base.extend<
+  ThrottleOptions & { applyThrottle: undefined; mapPoints: undefined }
+>({
   throttle: [null, { option: true }],
+
+  // The knowledge map's data: a fixed file for every page (map-points.ts), so the map looks the
+  // same everywhere; a test may route the file again to override it.
+  mapPoints: [
+    async ({ page }, use) => {
+      await page.route('**/data/points.json', (route) => route.fulfill({ json: MAP_POINTS }));
+      await use(undefined);
+    },
+    { auto: true },
+  ],
 
   applyThrottle: [
     async ({ page, throttle, browserName }, use) => {

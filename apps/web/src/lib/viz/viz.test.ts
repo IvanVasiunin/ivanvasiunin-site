@@ -119,6 +119,15 @@ describe('layout', () => {
     expect(mean(5, 10)).toBeLessThan(mean(0, 5));
   });
 
+  it('keeps the stars out of the insets (the Topics line and the legend)', () => {
+    const { positions } = placeStars(strip, tall, undefined, { top: 30, bottom: 50 });
+
+    for (const p of positions) {
+      expect(p.y).toBeGreaterThanOrEqual(30);
+      expect(p.y).toBeLessThanOrEqual(tall.height - 50);
+    }
+  });
+
   it('keeps the orientation it is given (a resize never re-picks the angle)', () => {
     const first = placeStars(strip, tall);
     const resized = placeStars(strip, { width: 380, height: 560 }, first.orientation);

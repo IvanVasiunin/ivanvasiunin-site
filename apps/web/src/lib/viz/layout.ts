@@ -20,6 +20,14 @@ export interface Orientation {
   readonly flipped: boolean;
 }
 
+/** Bands of the box kept free of stars (px). */
+export interface Insets {
+  readonly top: number;
+  readonly bottom: number;
+}
+
+const NO_INSETS: Insets = { top: 0, bottom: 0 };
+
 export const ANGLE_STEP_DEGREES = 3;
 export const PADDING_PX = 34;
 
@@ -80,12 +88,18 @@ export function placeStars(
   points: readonly MapPoint[],
   box: Box,
   orientation?: Orientation,
+  insets: Insets = NO_INSETS,
 ): { readonly positions: Placed[]; readonly orientation: Orientation } {
   if (points.length === 0)
     return { positions: [], orientation: orientation ?? { degrees: 0, flipped: false } };
-  const fit = fitAt(points, orientation?.degrees ?? bestAngle(points, box), box);
+  // The stars fit between the insets (room for the Topics line on top and the legend below).
+  const area: Box = {
+    width: box.width,
+    height: Math.max(1, box.height - insets.top - insets.bottom),
+  };
+  const fit = fitAt(points, orientation?.degrees ?? bestAngle(points, area), area);
   const offsetX = (box.width - fit.width * fit.scale) / 2;
-  const offsetY = (box.height - fit.height * fit.scale) / 2;
+  const offsetY = insets.top + (area.height - fit.height * fit.scale) / 2;
   let positions = fit.rotated.map((q) => ({
     x: offsetX + (q.x - fit.minX) * fit.scale,
     y: offsetY + (q.y - fit.minY) * fit.scale,
@@ -100,6 +114,8 @@ export function placeStars(
     return ys.length === 0 ? 0 : ys.reduce((sum, y) => sum + y, 0) / ys.length;
   };
   const flipped = orientation?.flipped ?? meanY(isIvans) > meanY((p) => !isIvans(p));
-  if (flipped) positions = positions.map((q) => ({ x: box.width - q.x, y: box.height - q.y }));
+  // Turned around the middle of the area between the insets, so the stars stay inside it.
+  const turnY = insets.top + area.height / 2;
+  if (flipped) positions = positions.map((q) => ({ x: box.width - q.x, y: 2 * turnY - q.y }));
   return { positions, orientation: { degrees: fit.degrees, flipped } };
 }

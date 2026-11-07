@@ -30,6 +30,8 @@ interface MapEvents {
   'knowledge-map:point-source': { readonly id: string | null };
   /** Map → chat: a star is hovered (null: none). */
   'knowledge-map:point-star': { readonly id: string | null };
+  /** Map → chat: the map hydrated (after the chat); the chat sends the turn it shows. */
+  'knowledge-map:ready': Record<string, never>;
 }
 
 export type MapEventName = keyof MapEvents;

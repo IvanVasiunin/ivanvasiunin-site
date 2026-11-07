@@ -23,6 +23,12 @@
       flex: 1;
       min-block-size: 0;
     }
+
+    // From `wide` the greeting and the panel go into the AI-mode grid's cells (AiModeLayout.scss),
+    // so the knowledge map card beside the panel is level with it at the top and the bottom.
+    @include mq(wide) {
+      display: contents;
+    }
   }
 
   // The greeting: the live avatar next to a short heading and one line of help (Ivan: smaller, and
@@ -31,6 +37,11 @@
     display: flex;
     gap: var(--space-sm);
     align-items: center;
+
+    @include mq(wide) {
+      grid-row: 1;
+      grid-column: 1;
+    }
   }
 
   .chat__intro-text {
@@ -71,6 +82,11 @@
       padding: var(--space-md) var(--space-lg);
       border-radius: var(--radius-panel);
       box-shadow: var(--shadow-raised);
+    }
+
+    @include mq(wide) {
+      grid-row: 2;
+      grid-column: 1;
     }
   }
 
