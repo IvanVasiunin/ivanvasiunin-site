@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Protocol
 
 from site_api.core.config import Settings
+from site_api.graph.sources import SOURCE_LABELS
+from site_api.ingestion.concepts import concepts_in, load_concepts
 from site_api.schemas.chat import SourceType
 
 # SPEC §4.4 and the budget in CLAUDE.md: points.json is at most 50 KB gzipped.
@@ -34,6 +36,8 @@ class PointRow:
     embedding: list[float]
     x: float | None
     y: float | None
+    # The chunk's text: read to find the concepts it mentions, never exported.
+    content: str = ""
 
 
 class PointStore(Protocol):
@@ -119,21 +123,37 @@ def _point(xy: Sequence[float]) -> tuple[float, float]:
 def points_document(rows: Sequence[PointRow], version: datetime.datetime) -> dict[str, object]:
     """The `points.json` content (SPEC §4.4): only placed chunks, and no chunk text.
 
-    `version` is the time of the run, so every `--apply` gives the browser a new version to fetch.
+    Each point carries the title the `sources` event gives it and the ids of the concepts its text
+    mentions; `concepts` lists those concepts once, with the aliases the browser matches answers
+    with. `version` is the time of the run, so every `--apply` gives the browser a new version.
     """
-    return {
-        "version": version.isoformat().replace("+00:00", "Z"),
-        "points": [
+    points: list[dict[str, object]] = []
+    used: set[str] = set()
+    for row in rows:
+        if row.x is None or row.y is None:
+            continue
+        mentioned = concepts_in(row.content, row.source_type)
+        used.update(mentioned)
+        points.append(
             {
                 "id": row.id,
                 "x": round(row.x, DECIMALS),
                 "y": round(row.y, DECIMALS),
                 "source_type": row.source_type,
                 "section": row.section,
+                "title": f"{SOURCE_LABELS[row.source_type]} — {row.section}",
+                "c": mentioned,
             }
-            for row in rows
-            if row.x is not None and row.y is not None
-        ],
+        )
+    concepts = [
+        {"id": concept.id, "label": concept.label, "aliases": list(concept.aliases)}
+        for concept in load_concepts()
+        if concept.id in used
+    ]
+    return {
+        "version": version.isoformat().replace("+00:00", "Z"),
+        "points": points,
+        "concepts": concepts,
     }
 
 

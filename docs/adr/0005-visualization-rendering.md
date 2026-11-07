@@ -1,6 +1,6 @@
 # ADR-0005: Vector-space visualization rendering — SVG with a decision gate
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0012
 - **Date:** 2026-11-01
 - **Deciders:** Ivan Vasiunin
 

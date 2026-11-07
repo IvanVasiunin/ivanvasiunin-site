@@ -21,12 +21,12 @@ Budgets: SPEC §6.1 and `docs/TESTING.md` §5. Verification tags: `[test]`, `[re
 
   `[test]` (WebKit iPhone profile) `[review]` (manual iPhone check before release)
 - The mode switcher is reachable with one hand (bottom-safe placement or a large sticky control on small screens). `[review]`
-- On mobile, the visualization is dimmed and never covers chat text. `[test]`
+- The knowledge map is desktop-only (`min-width: 80rem`): phones never load it (ADR-0012). `[test]`
 
 ## Weak devices
 - **Light visualization mode:**
   - triggers: `navigator.hardwareConcurrency ≤ 4`, `navigator.deviceMemory ≤ 4` (where available), `navigator.connection?.saveData`, or long frames detected at runtime;
-  - in light mode there is no drift, highlight only.
+  - in light mode the knowledge map shows final states at once (no camera move, no staggered ignition).
 
   `[test]`
 - The visualization loads after the chat (`client:idle` / `client:visible`) and never blocks input. `[review]` `[test]` (INP budget)
@@ -40,7 +40,7 @@ Budgets: SPEC §6.1 and `docs/TESTING.md` §5. Verification tags: `[test]`, `[re
   - `/cv` mobile: LCP < 2.5 s, CLS < 0.1, INP < 200 ms, all four Lighthouse categories ≥ 95.
 
   `[test]`
-- Playwright projects emulate mobile devices with Slow 4G and CPU throttling 4× / 6× (Chromium CDP). Long frames during drift and highlight are measured and compared with the threshold. `[test]`
+- Playwright projects emulate mobile devices with Slow 4G and CPU throttling 4× / 6× (Chromium CDP). Long frames during the knowledge map's ignition are measured and compared with the threshold. `[test]`
 - After noticeable visualization changes, profile with Chrome DevTools MCP (performance trace) and include the findings in the report. `[review]`
 - Fonts: self-hosted, `font-display: swap`, a preloaded critical subset only. `[review]` `[test]` (CLS)
 - Images: explicit dimensions, modern formats, lazy below the fold. `[review]`

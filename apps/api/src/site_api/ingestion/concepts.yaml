@@ -1,0 +1,104 @@
+# The knowledge map's concepts (ROADMAP 6.2, SPEC §4.4, ADR-0012): the names a guest recognises.
+# A chunk "mentions" a concept when one of its aliases occurs in the text as a whole word, any case.
+# The map's "Topics" line lists the concepts an answer names that the read chunks also mention.
+#
+# - id: stable, used in points.json;
+# - label: what the page shows;
+# - aliases: lowercase spellings to match (English first; RU / UK stems where a guest may ask so);
+# - not_in: source types where the word means something else (site docs speak of "mentor mode",
+#   a way of working in this repository, not of mentoring people).
+#
+# Every skill, company and project of the CV must have a concept here (a test checks it).
+
+# Companies and projects (CV)
+- { id: brainrocket, label: BrainRocket, aliases: [brainrocket] }
+- { id: digital-web, label: Digital Web, aliases: [digital web] }
+- { id: liketelecom, label: Liketelecom, aliases: [liketelecom] }
+- { id: pe-computer, label: PE «Computer», aliases: [pe «computer», pe computer] }
+- {
+    id: university,
+    label: University of educational medicine,
+    aliases: [university of educational medicine],
+  }
+- { id: own-websites, label: Own websites, aliases: [own websites, google adsense, adsense] }
+- { id: numbersvalidator, label: NumbersValidator, aliases: [numbersvalidator, numbers validator] }
+- { id: little-lemon, label: Little Lemon, aliases: [little lemon] }
+- {
+    id: this-website,
+    label: This website,
+    aliases: [this website, this site, cv with ai assistant],
+  }
+
+# Frontend & web (CV skills)
+- { id: html, label: HTML, aliases: [html, html5] }
+- { id: css, label: CSS, aliases: [css, css3] }
+- { id: scss, label: SCSS, aliases: [scss, sass] }
+- { id: bem, label: BEM, aliases: [bem] }
+- { id: javascript, label: JavaScript, aliases: [javascript] }
+- { id: typescript, label: TypeScript, aliases: [typescript] }
+- { id: react, label: React, aliases: [react] }
+- { id: nextjs, label: Next.js, aliases: [next.js, nextjs] }
+- { id: redux, label: Redux, aliases: [redux] }
+- { id: tanstack-query, label: TanStack Query, aliases: [tanstack query, react query] }
+- { id: tailwind, label: Tailwind CSS, aliases: [tailwind css, tailwind] }
+- { id: bootstrap, label: Bootstrap, aliases: [bootstrap] }
+- { id: styled-components, label: styled-components, aliases: [styled-components] }
+- { id: angular, label: Angular, aliases: [angular] }
+- { id: responsive, label: Responsive design, aliases: [responsive design, responsive] }
+- { id: git, label: Git, aliases: [git, github, gitlab] }
+- { id: figma, label: Figma, aliases: [figma] }
+
+# AI engineering and AI tools (CV skills)
+- { id: python, label: Python, aliases: [python] }
+- { id: nlp, label: NLP, aliases: [nlp] }
+- { id: llms, label: LLMs, aliases: [llms, llm, transformers, gpt, bert] }
+- { id: langchain, label: LangChain, aliases: [langchain] }
+- { id: langgraph, label: LangGraph, aliases: [langgraph] }
+- { id: hugging-face, label: Hugging Face, aliases: [hugging face] }
+- {
+    id: vector-db,
+    label: Vector databases,
+    aliases: [vector databases, vector database, pgvector, embeddings],
+  }
+- { id: model-apis, label: Model APIs, aliases: [foundation model apis, openai, anthropic] }
+- { id: claude-code, label: Claude Code, aliases: [claude code, claude skills, claude cowork] }
+- { id: prompt-engineering, label: Prompt engineering, aliases: [prompt engineering] }
+- { id: rag, label: RAG, aliases: [rag, retrieval-augmented] }
+- { id: ai-engineering, label: AI engineering, aliases: [ai engineering, ai engineer] }
+
+# Engineering practices (CV skills) and other topics guests ask about
+- {
+    id: code-review,
+    label: Code review,
+    aliases: [code review, code reviews, reviews code, reviewed code, reviewing code],
+  }
+- {
+    id: mentoring,
+    label: Mentoring,
+    aliases: [mentoring, mentor, mentors, mentored, onboarding, onboarded, ментор, наставни],
+    not_in: [site_docs],
+  }
+- { id: performance, label: Performance, aliases: [performance tuning, performance, lighthouse] }
+- { id: agile, label: Agile, aliases: [agile, scrum] }
+- { id: documentation, label: Technical documentation, aliases: [technical documentation] }
+- {
+    id: collaboration,
+    label: Cross-team collaboration,
+    aliases: [cross-team collaboration, cross-team],
+  }
+- { id: igaming, label: iGaming, aliases: [igaming] }
+- { id: team-lead, label: Team lead, aliases: [team lead, acting team lead] }
+- { id: formula-1, label: Formula 1, aliases: [formula 1, f1], not_in: [site_docs] }
+- { id: monty, label: Monty the corgi, aliases: [monty, corgi, dog], not_in: [site_docs] }
+- {
+    id: languages,
+    label: Languages,
+    aliases: [english, russian, ukrainian, spanish],
+    not_in: [site_docs],
+  }
+- {
+    id: education,
+    label: Education,
+    aliases: [degree, bachelor, specialist degree],
+    not_in: [site_docs],
+  }

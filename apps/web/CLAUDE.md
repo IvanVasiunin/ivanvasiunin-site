@@ -1,13 +1,13 @@
 # apps/web — Astro + React islands
 
-Static Astro 7 site with two React islands (Chat, VectorSpace). TypeScript **6.0.x** strict (TS 7 is not supported by typescript-eslint / @astrojs/check yet). SCSS + BEM. Node 24. Rules load automatically from `.claude/rules/` (html-a11y, css-scss, typescript, react, visualization, mobile-performance, testing).
+Static Astro 7 site with two React islands (Chat, KnowledgeMap). TypeScript **6.0.x** strict (TS 7 is not supported by typescript-eslint / @astrojs/check yet). SCSS + BEM. Node 24. Rules load automatically from `.claude/rules/` (html-a11y, css-scss, typescript, react, visualization, mobile-performance, testing).
 
 ## Layout
 ```
 src/pages/          index.astro (AI mode, SSR'd intro + islands), cv.astro, privacy.astro
 src/content/cv/     CV source: one Markdown file per job/section; Zod schema in src/lib/cv/schema.ts
 src/components/     one folder per component (Astro or React)
-src/islands/        Chat/, VectorSpace/ — the only hydrated code
+src/islands/        Chat/, KnowledgeMap/ — the only hydrated code
 src/lib/api/        schema.d.ts GENERATED from FastAPI OpenAPI — never edit by hand
 src/lib/sse/        SSE client + ChatEvent parsing
 src/lib/viz/        pure visualization logic (scaling, highlight, intensity)
@@ -30,7 +30,7 @@ e2e/                Playwright tests (desktop, iPhone/WebKit, Android/Chromium w
 
 ## App-specific notes
 - `/cv` ships no framework runtime: Brief/Full and theme toggle are tiny scripts. JS budget ≤ 30 KB gzip.
-- Chat island `client:load`, VectorSpace `client:idle`/`client:visible`. Islands talk via typed DOM `CustomEvent`s, no global store.
+- Chat island `client:load`, KnowledgeMap `client:media="(min-width: 80rem)"` (desktop only, Canvas 2D, ADR-0012). Islands talk via typed DOM `CustomEvent`s, no global store.
 - Mode switcher is `<nav>` + links with `aria-current="page"`, not ARIA tabs. Mode switching uses native cross-document View Transitions (no `<ClientRouter>`).
 - Mobile chat keyboard: `visualViewport` handling is the primary mechanism (iOS Safari lacks `interactive-widget`).
 - Until the real `/api/chat` exists (ROADMAP 3.8), `astro dev` serves a mocked one (`src/lib/chat/mock/`): the question picks the scenario (`hello`, `google`, `fail`, `limit`, `markdown`, anything else). `CHAT_MOCK=off` disables it. E2E mocks the same scenarios with `page.route`.

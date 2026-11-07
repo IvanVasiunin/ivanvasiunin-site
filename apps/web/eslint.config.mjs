@@ -40,7 +40,7 @@ const REACT_RESTRICTIONS = [
 ];
 
 const VIZ_RAF_MESSAGE =
-  'No per-frame JS in the visualization: animate transform / opacity with CSS transitions.';
+  'No per-frame JS here: only the knowledge map renderer (islands/KnowledgeMap/renderer.ts) runs a frame loop.';
 
 export default defineConfig(
   globalIgnores(['dist/', '**/.astro/', '**/node_modules/', 'src/lib/api/schema.d.ts']),
@@ -121,11 +121,13 @@ export default defineConfig(
     rules: { 'no-restricted-syntax': ['error', ...NO_DEFAULT_EXPORTS, ...REACT_RESTRICTIONS] },
   },
 
-  // Visualization: drift and highlight are CSS transitions, never per-frame JS (visualization.md).
-  // A heuristic, not a guarantee (aliases slip through), so the rule is also [review]. Any
-  // justified exception needs a disable comment with a reason.
+  // Knowledge map (ADR-0012, visualization.md): per-frame code lives only in the canvas renderer,
+  // whose loop runs while something moves and draws to its canvas, never to DOM attributes or
+  // styles. Everything else (pure lib/viz functions, the island's React code) stays frame-free.
+  // A heuristic, not a guarantee (aliases slip through), so the rule is also [review].
   {
-    files: ['src/lib/viz/**/*.{ts,tsx}', 'src/islands/VectorSpace/**/*.{ts,tsx}'],
+    files: ['src/lib/viz/**/*.{ts,tsx}', 'src/islands/KnowledgeMap/**/*.{ts,tsx}'],
+    ignores: ['src/islands/KnowledgeMap/renderer.ts', 'src/islands/KnowledgeMap/renderer.test.ts'],
     rules: {
       'no-restricted-globals': [
         'error',

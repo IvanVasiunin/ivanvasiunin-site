@@ -125,19 +125,20 @@ Notation: **US-A** = AI mode, **US-T** = Text mode, **US-X** = cross-cutting.
 **US-A10. AI disclosure.**
 - A visible note near the input says: Elio is an AI assistant, answers may be inaccurate, and Ivan is the source of truth. It links to `/privacy`.
 
-**US-A11. Vector-space background.**
-- A 2D map of all knowledge-base chunks is rendered behind the chat as decorative SVG (`aria-hidden="true"`).
-- Points drift slowly.
-- Drift pauses when the map is off-screen or the tab is hidden.
-- Drift is off under `prefers-reduced-motion: reduce` and in light mode for weak devices (§6.3).
-- Point colour encodes the source type (CV, experience, personal, site docs, GitHub) using design tokens.
-- A legend explains the points.
+**US-A11. Knowledge map.** ([ADR-0012](docs/adr/0012-knowledge-map-canvas-panel.md); Ivan, 2026-11-07)
+- On wide screens (`min-width: 80rem`) a framed card "Knowledge map", in the chat panel's style, stands to the right of the chat. Below that width there is no map.
+- It shows every knowledge-base chunk as a star on one map: the 2D projection of the embeddings (ADR-0006), rotated to fill the card, Ivan's material on top. The canvas is decoration (`aria-hidden="true"`); its content is text elsewhere.
+- Star colour encodes the source type (CV, experience notes, personal facts, GitHub, site docs) using design tokens; site docs are drawn dimmer than Ivan's own material. A legend explains the colours.
+- A caption says what the map is ("Each dot is a passage Elio can read. Similar meanings sit close together."); a "What is this?" button opens a short explainer (embeddings, the projection, "area isn't amount").
+- At rest nothing moves.
 
 **US-A12. Highlight retrieved points.**
-- When a `sources` event arrives, the matching points fade in a highlight. Higher relevance means a brighter highlight.
-- The highlight stays until the next question.
-- Everything shown by the highlight is also available as text in Under the hood.
-- On mobile, the map is dimmed and never covers the chat text.
+- When a question is sent, the map dims (~0.9 s) and the caption says it is looking.
+- When a `sources` event arrives, the matching stars ignite one by one in the neon of their source's colour (~2.2 s each, staggered by rank): a near-white hot core, the colour around it, a halo. Higher relevance means a brighter, slightly larger star; the rest of the map stays dimmed. A camera eases onto the lit stars (~2.6 s).
+- The caption says how many passages were read and lists the **Topics**: concepts named in the answer that also occur in the read passages (e.g. BrainRocket · Angular · Mentoring). No names light up on the map itself.
+- Hovering a star shows a ring in its colour and a tooltip: the title, the topics it mentions and, if read, "Read for this answer · relevance 0.94". Hovering or focusing a source in the answer shows the same ring and tooltip on its star, and hovering a star marks its source in the answer.
+- The highlight stays until the next question. No sources: nothing lights up and the caption says so.
+- Reduced motion: the final states appear without animation.
 
 **US-A13. Input limits.**
 - Maximum question length, from config (default 500 characters). A live counter appears near the limit, and the input prevents longer text.
@@ -301,14 +302,18 @@ Stack traces and internal messages are never returned; an unexpected failure is 
 ### 4.4 `points.json`
 
 ```jsonc
-{ "version": "2026-11-01T12:00:00Z",  // ingestion timestamp
+{ "version": "2026-11-07T12:00:00Z",  // ingestion timestamp
   "points": [
     { "id": "cv:brainrocket:3", "x": 0.42, "y": 0.77,   // normalized 0..1
-      "source_type": "cv", "section": "BrainRocket" }
-  ] }
+      "source_type": "cv", "section": "BrainRocket",
+      "title": "CV — BrainRocket",                        // as in the `sources` event
+      "c": ["brainrocket", "angular", "scss"] } ],       // concept ids the chunk mentions
+  "concepts": [
+    { "id": "angular", "label": "Angular", "aliases": ["angular"] } ] }  // whole-word, case-insensitive
 ```
 
-- No chunk text.
+- No chunk text: titles and concept ids only.
+- Concepts come from a catalogue at ingestion (companies, projects and skills from the CV, plus a few topics); matching is whole-word and case-insensitive.
 - ≤ 50 KB gzip.
 - `id` values are identical to `chunk_id` in `sources` events (contract test).
 
@@ -417,12 +422,12 @@ Never name numbers or ranges, even if asked repeatedly or hypothetically. Use th
 - The mode switcher is reachable with one hand.
 
 ### 6.3 Weak devices
-- **Light visualization mode:** no drift, highlight only.
+- **Light visualization mode:** the knowledge map shows its final states without the camera move and the staggered ignition (the map is desktop-only and never moves at rest).
 - It is enabled by any of:
   - `navigator.hardwareConcurrency ≤ 4`;
   - `navigator.deviceMemory ≤ 4` (Chromium only);
   - `navigator.connection.saveData`;
-  - more than N long frames during drift (runtime detection).
+  - more than N long frames during an ignition (runtime detection).
 
   Thresholds live in config.
 - The visualization never blocks chat interaction. It is decoration.
@@ -474,7 +479,7 @@ Never name numbers or ranges, even if asked repeatedly or hypothetically. Use th
 ## 7. Non-goals
 
 - AI avatar and voice mode (TTS, voice cloning). The architecture is not complicated for them.
-- WebGL, as long as SVG passes the visual decision gate ([ADR-0005](docs/adr/0005-visualization-rendering.md)).
+- WebGL: Canvas 2D carries the knowledge map ([ADR-0012](docs/adr/0012-knowledge-map-canvas-panel.md)).
 - User accounts, chat history persisted across devices, analytics trackers.
 - LinkedIn export as a RAG source: it is not copied into the repo.
 

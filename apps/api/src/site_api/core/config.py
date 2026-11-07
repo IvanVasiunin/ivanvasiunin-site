@@ -114,8 +114,11 @@ class Settings(BaseSettings):
 
     # The 2D map (ROADMAP 6.1, ADR-0006): UMAP over the chunk embeddings, at ingestion. Starting
     # values, tuned at the decision gate (6.5). A fixed random_state makes the layout deterministic.
-    projection_n_neighbors: int = Field(default=15, ge=2, le=200)
-    projection_min_dist: float = Field(default=0.1, ge=0, le=1)
+    # n_neighbors 20, min_dist 0.8, spread 1.2 give one compact, evenly spread map (Ivan,
+    # 2026-11-07: nearest-neighbour spacing varies 0.40 instead of 0.77 with 15 / 0.1 / 1.0).
+    projection_n_neighbors: int = Field(default=20, ge=2, le=200)
+    projection_min_dist: float = Field(default=0.8, ge=0, le=3)
+    projection_spread: float = Field(default=1.2, gt=0, le=5)
     projection_metric: Literal["cosine", "euclidean"] = "cosine"
     projection_random_state: int = 42
     # The fitted model (a joblib file) that places new chunks on the existing map; kept with the

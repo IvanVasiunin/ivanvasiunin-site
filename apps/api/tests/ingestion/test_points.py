@@ -134,15 +134,17 @@ def test_two_chunks_are_too_few_for_a_map(map_settings: Settings, tmp_path: Path
         update_points(FakePointStore(rows(2)), map_settings, tmp_path, refit=False)
 
 
-def test_points_json_has_ids_points_kinds_and_sections_only() -> None:
+def test_points_json_carries_titles_and_concepts_never_text() -> None:
+    text = "Senior Markup Developer at BrainRocket: Angular, SCSS. A private sentence."
     placed = [
-        PointRow("cv:brainrocket:3", "cv", "BrainRocket", [0.1], 0.123456, 0.987654),
-        PointRow("about:dog:0", "personal", "Monty", [0.2], None, None),
+        PointRow("cv:brainrocket:3", "cv", "BrainRocket", [0.1], 0.123456, 0.987654, text),
+        PointRow("about:dog:0", "personal", "Monty", [0.2], None, None, "Monty is a corgi."),
     ]
 
     document = points_document(placed, datetime.datetime(2026, 11, 6, 12, tzinfo=datetime.UTC))
 
-    # SPEC §4.4: no chunk text, no embedding; ids equal the `chunk_id` of `sources` events.
+    # SPEC §4.4 v2: ids equal the `chunk_id` of `sources` events; titles as in that event; the
+    # concepts the text mentions, and the catalogue entries for them. No chunk text, no embedding.
     assert document == {
         "version": "2026-11-06T12:00:00Z",
         "points": [
@@ -152,9 +154,17 @@ def test_points_json_has_ids_points_kinds_and_sections_only() -> None:
                 "y": 0.9877,
                 "source_type": "cv",
                 "section": "BrainRocket",
+                "title": "CV — BrainRocket",
+                "c": ["brainrocket", "scss", "angular"],
             }
         ],
+        "concepts": [
+            {"id": "brainrocket", "label": "BrainRocket", "aliases": ["brainrocket"]},
+            {"id": "scss", "label": "SCSS", "aliases": ["scss", "sass"]},
+            {"id": "angular", "label": "Angular", "aliases": ["angular"]},
+        ],
     }
+    assert "private sentence" not in json.dumps(document)
 
 
 def test_points_json_for_a_large_base_stays_within_50_kb_gzipped(tmp_path: Path) -> None:

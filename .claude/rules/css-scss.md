@@ -25,7 +25,7 @@ Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` revie
 
 ## Layout
 - Layout is Grid / Flex only. `float` is forbidden. `[lint]` (`property-disallowed-list: [float]`)
-- `position: absolute | fixed` only for overlays and decoration (e.g. the vector-space background), never for layout. `[review]`
+- `position: absolute | fixed` only for overlays and decoration (e.g. tooltips over the knowledge map), never for layout. `[review]`
 - Mobile-first: base styles target 360 px, and enhancements go in `min-width` media queries through the breakpoint mixins (`@include mq(md)`). Container queries for components whose layout depends on their container. `[review]`
 - Logical properties: `margin-inline`, `padding-block`, `inset-inline-start`, `inline-size`, etc., instead of physical left / right / top / bottom equivalents. `[lint]` (stylelint-use-logical: `csstools/use-logical`)
 - Viewport heights use `svh` / `dvh` / `lvh`; the `vh` unit is forbidden. Safe areas via `env(safe-area-inset-*)`. `[lint]` (`unit-disallowed-list: [vh]`)

@@ -142,6 +142,7 @@ class PostgresChunkStore:
             CHUNKS.c.embedding,
             CHUNKS.c.x,
             CHUNKS.c.y,
+            CHUNKS.c.content,
         ).order_by(CHUNKS.c.id)
         with self._engine.connect() as connection:
             return [
@@ -152,6 +153,7 @@ class PostgresChunkStore:
                     embedding=[float(value) for value in row["embedding"]],
                     x=row["x"],
                     y=row["y"],
+                    content=row["content"],
                 )
                 for row in connection.execute(query).mappings()
             ]

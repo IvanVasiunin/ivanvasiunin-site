@@ -48,6 +48,8 @@ class ProjectionParams:
     min_dist: float
     metric: str
     random_state: int
+    # How far apart the clusters sit; min_dist must not exceed it (UMAP).
+    spread: float = 1.0
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "ProjectionParams":
@@ -57,6 +59,7 @@ class ProjectionParams:
             min_dist=settings.projection_min_dist,
             metric=settings.projection_metric,
             random_state=settings.projection_random_state,
+            spread=settings.projection_spread,
         )
 
 
@@ -90,6 +93,7 @@ def _fit_model(vectors: Matrix, params: ProjectionParams) -> tuple[umap.UMAP, Ma
     model = umap.UMAP(
         n_neighbors=min(params.n_neighbors, len(vectors) - 1),
         min_dist=params.min_dist,
+        spread=params.spread,
         metric=params.metric,
         random_state=params.random_state,
         # One thread: a fixed random_state needs it anyway (UMAP warns when it has to override).

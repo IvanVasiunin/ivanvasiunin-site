@@ -93,7 +93,7 @@ All commands run from the repository root.
 | JS on `/` total | ≤ 200 KB gzip; ≤ 150 KB before the visualization loads |
 | `points.json` | ≤ 50 KB gzip |
 | TTFT, production p50 | < 2 s |
-| Long frames during drift / highlight at 6× CPU | Threshold defined after the prototype (start: < 5% of frames > 50 ms) |
+| Long frames during the knowledge map's ignition at 6× CPU | Threshold defined after the prototype (start: < 5% of frames > 50 ms) |
 | Coverage | `apps/api` services and graph ≥ 80%; frontend logic ≥ 70% |
 
 ## 6. Device matrix

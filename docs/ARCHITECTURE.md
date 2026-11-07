@@ -50,7 +50,7 @@ flowchart LR
 │  │     ├─ pages/          index.astro (AI mode), cv.astro, privacy.astro
 │  │     ├─ content/cv/     CV source (Markdown + frontmatter)
 │  │     ├─ components/     Astro and React components, one folder each
-│  │     ├─ islands/        Chat/, VectorSpace/
+│  │     ├─ islands/        Chat/, KnowledgeMap/
 │  │     ├─ lib/            sse/, api/ (generated types), viz/
 │  │     └─ styles/         tokens, layers, mixins
 │  └─ api/             FastAPI + LangGraph (see §3)
@@ -194,7 +194,7 @@ sequenceDiagram
   autonumber
   participant U as User
   participant C as Chat island
-  participant V as VectorSpace island
+  participant V as KnowledgeMap island
   participant A as API (FastAPI)
   participant G as LangGraph
   participant L as OpenAI
@@ -212,7 +212,7 @@ sequenceDiagram
   D-->>G: chunks + scores
   A-->>C: event sources
   C->>V: highlight(chunk_ids, scores)
-  V->>V: set data-attributes / CSS vars → CSS transitions
+  V->>V: ignite the read stars on its canvas (frame loop only while animating)
   G->>L: generate (terra, stream)
   loop tokens
     L-->>G: delta
