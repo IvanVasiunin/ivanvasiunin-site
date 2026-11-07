@@ -25,7 +25,7 @@ Budgets: SPEC §6.1 and `docs/TESTING.md` §5. Verification tags: `[test]`, `[re
 
 ## Weak devices
 - **Light visualization mode:**
-  - triggers: `navigator.hardwareConcurrency ≤ 4`, `navigator.deviceMemory ≤ 4` (where available), `navigator.connection?.saveData`, or long frames detected at runtime;
+  - triggers: `navigator.hardwareConcurrency ≤ 4`, `navigator.deviceMemory ≤ 4` (where available), `navigator.connection?.saveData`, or long frames detected at runtime (over 25% of an animation's frames longer than 50 ms, `lib/viz/frames.ts`);
   - in light mode the knowledge map shows final states at once (no camera move, no staggered ignition).
 
   `[test]`

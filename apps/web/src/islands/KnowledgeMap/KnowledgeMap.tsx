@@ -110,6 +110,8 @@ export function KnowledgeMap() {
   const [turn, setTurn] = useState<MapTurn>(REST);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
   const [explaining, setExplaining] = useState(false);
+  // The frames showed the device is too slow for the motion: light mode for the rest of the visit.
+  const [slowFrames, setSlowFrames] = useState(false);
   const skyRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<KnowledgeMapRenderer | null>(null);
@@ -149,6 +151,9 @@ export function KnowledgeMap() {
       instant: () => prefersStillMap(),
       regionLabels: { career: 'CAREER', personal: 'PERSONAL', site: 'THIS SITE' },
       insets: { top: 28, bottom: 40 },
+      onSlow: () => {
+        setSlowFrames(true);
+      },
     });
     renderer.setPalette(readPalette(sky));
     const observer = new ResizeObserver(() => {
@@ -304,6 +309,8 @@ export function KnowledgeMap() {
       aria-labelledby={titleId}
       // Shown once its data is in: without JS (or before hydration) the card stays invisible.
       data-ready={data ? '' : undefined}
+      // Light mode switched on by slow frames (e2e and the perf check read it).
+      data-slow-frames={slowFrames ? '' : undefined}
     >
       <div className="knowledge-map__head">
         <h2 className="knowledge-map__title" id={titleId}>

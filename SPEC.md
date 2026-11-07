@@ -427,9 +427,9 @@ Never name numbers or ranges, even if asked repeatedly or hypothetically. Use th
   - `navigator.hardwareConcurrency ≤ 4`;
   - `navigator.deviceMemory ≤ 4` (Chromium only);
   - `navigator.connection.saveData`;
-  - more than N long frames during an ignition (runtime detection).
+  - runtime detection: more than a quarter of an animation's frames longer than 50 ms, judged when an animation of 1 s or more ends (a gap over 1 s, such as a hidden tab, is idle time, not a long frame); from then on for the rest of the visit.
 
-  Thresholds live in config.
+  Thresholds are named constants in `apps/web/src/lib/viz/frames.ts`. A share, not a count: the chat's own rendering of an answer makes a short burst of long frames that must not switch a capable device off.
 - The visualization never blocks chat interaction. It is decoration.
 
 ### 6.4 Accessibility

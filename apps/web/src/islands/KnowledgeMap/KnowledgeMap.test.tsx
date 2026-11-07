@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { emitMapEvent } from '../../lib/viz/events';
 import { KnowledgeMap, MAX_TOPICS, caption, prefersStillMap } from './KnowledgeMap';
+import { KnowledgeMapRenderer } from './renderer';
 
 // The canvas renderer is replaced: jsdom draws nothing, and the island's job here is the markup,
 // the caption and the wiring. The renderer has its own tests.
@@ -138,6 +139,23 @@ describe('KnowledgeMap', () => {
     expect(renderer.pointAt).toHaveBeenLastCalledWith('cv:brainrocket:0', true);
     expect(screen.getByText('CV — BrainRocket')).toBeDefined();
     expect(screen.getByText('Read for this answer · relevance 0.83')).toBeDefined();
+  });
+
+  it('marks the card when slow frames switch the map to light mode', async () => {
+    stubFetch(DATA);
+    render(<KnowledgeMap />);
+    await waitFor(() => {
+      expect(KnowledgeMapRenderer).toHaveBeenCalled();
+    });
+    const card = screen.getByRole('region', { name: 'Knowledge map' });
+    expect(card.hasAttribute('data-slow-frames')).toBe(false);
+
+    const options = vi.mocked(KnowledgeMapRenderer).mock.calls[0]?.[2];
+    act(() => {
+      options?.onSlow?.();
+    });
+
+    expect(card.hasAttribute('data-slow-frames')).toBe(true);
   });
 
   it('opens the explainer, moves focus into it and back on Escape', async () => {

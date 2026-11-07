@@ -1,6 +1,6 @@
 # ADR-0012: Knowledge map — a framed Canvas 2D panel beside the chat
 
-- **Status:** Proposed
+- **Status:** Accepted (Ivan, 2026-11-07; ROADMAP 6.5 decision gate)
 - **Date:** 2026-11-07
 - **Deciders:** Ivan Vasiunin
 

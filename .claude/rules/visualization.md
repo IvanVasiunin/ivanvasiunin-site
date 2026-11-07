@@ -32,7 +32,7 @@ Decision record: [ADR-0012](../../docs/adr/0012-knowledge-map-canvas-panel.md) (
 ## Animation
 - `requestAnimationFrame` runs **only while something moves** (dimming, ignition, camera, hover ring) and stops at rest: no ambient drift, twinkle or pulse. Allowed only in the renderer module (`islands/KnowledgeMap/renderer.ts`); banned in `lib/viz/**`. The renderer never writes DOM attributes or styles per frame. `[lint]` (`no-restricted-globals` with the renderer excepted) `[test]` (the loop stops when idle)
 - Timings are named constants (dim, ignite, stagger, camera in / out) and easing is a pure function. `[review]` `[test]`
-- `prefers-reduced-motion: reduce` and light mode for weak devices (SPEC §6.3): final states at once, no camera move, no stagger. `[test]`
+- `prefers-reduced-motion: reduce` and light mode for weak devices (SPEC §6.3): final states at once, no camera move, no stagger. Light mode also switches on at runtime when over 25% of an animation's frames are long (`lib/viz/frames.ts`, judged when it ends; the card gets `data-slow-frames`). `[test]` (unit + `e2e/knowledge-map-perf.spec.ts`)
 
 ## Highlight
 - Intensity is a pure function of relevance (`0.55 + 0.45 × score`), unit-tested. `[test]`

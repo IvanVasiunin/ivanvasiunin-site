@@ -15,4 +15,4 @@ Each ADR records one decision: its context, the options considered, the decision
 | [0009](0009-mode-switch-navigation.md) | Mode switch navigation — cross-document View Transitions with prerender on intent | Accepted |
 | [0010](0010-self-hosted-fonts.md) | Self-hosted fonts from pinned Fontsource packages | Accepted |
 | [0011](0011-guided-mentor-mode.md) | Guided mentor mode — Claude dictates, Ivan writes, every line explained | Accepted |
-| [0012](0012-knowledge-map-canvas-panel.md) | Knowledge map — a framed Canvas 2D panel beside the chat | Proposed |
+| [0012](0012-knowledge-map-canvas-panel.md) | Knowledge map — a framed Canvas 2D panel beside the chat | Accepted |

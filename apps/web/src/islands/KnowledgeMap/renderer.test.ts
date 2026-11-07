@@ -18,10 +18,10 @@ function fakeContext(): CanvasRenderingContext2D {
 let frames: FrameRequestCallback[] = [];
 let clock = 0;
 
-function runFrames(ms: number): void {
+function runFrames(ms: number, step = 16): void {
   const end = clock + ms;
   while (frames.length > 0 && clock < end) {
-    clock += 16;
+    clock += step;
     const due = frames;
     frames = [];
     for (const callback of due) callback(clock);
@@ -70,10 +70,11 @@ const PALETTE: MapPalette = {
   font: 'sans-serif',
 };
 
-function make(instant = false): KnowledgeMapRenderer {
+function make(instant = false, onSlow?: () => void): KnowledgeMapRenderer {
   const renderer = new KnowledgeMapRenderer(document.createElement('canvas'), POINTS, {
     instant: () => instant,
     regionLabels: { career: 'CAREER', personal: 'PERSONAL', site: 'THIS SITE' },
+    ...(onSlow ? { onSlow } : {}),
   });
   renderer.setPalette(PALETTE);
   renderer.resize(400, 600, 1);
@@ -111,6 +112,36 @@ describe('KnowledgeMapRenderer', () => {
     runFrames(50);
 
     expect(renderer.animating).toBe(false);
+  });
+
+  it('switches to light mode when an ignition stutters, and stays there', () => {
+    const onSlow = vi.fn();
+    const renderer = make(false, onSlow);
+    runFrames(100);
+
+    renderer.light([{ id: 'cv:p:1', score: 0.9 }]);
+    // 80 ms a frame all the way through: judged slow when the ignition ends.
+    runFrames(6000, 80);
+
+    expect(onSlow).toHaveBeenCalledOnce();
+    expect(renderer.animating).toBe(false);
+
+    // The next answer: final state in one frame, at normal frame times too.
+    renderer.light([{ id: 'cv:p:2', score: 0.9 }]);
+    runFrames(50);
+    expect(renderer.animating).toBe(false);
+    expect(onSlow).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the motion on a device with smooth frames', () => {
+    const onSlow = vi.fn();
+    const renderer = make(false, onSlow);
+
+    renderer.light([{ id: 'cv:p:1', score: 0.9 }]);
+    runFrames(1000);
+
+    expect(onSlow).not.toHaveBeenCalled();
+    expect(renderer.animating).toBe(true);
   });
 
   it('finds the star under the pointer, and nothing in empty sky', () => {

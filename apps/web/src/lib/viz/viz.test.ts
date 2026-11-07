@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { emitMapEvent, onMapEvent } from './events';
+import { LONG_FRAME_MS, LongFrameWatch, MIN_ANIMATION_MS } from './frames';
 import { type Box, bestAngle, placeStars } from './layout';
 import { HOME, MAX_ZOOM, between, easeInOut, frame, intensity, smoothstep } from './motion';
 import { type MapPoint, parseMapData } from './points';
@@ -200,6 +201,86 @@ describe('topics', () => {
     expect(aliasPattern(['dog']).test('dogma')).toBe(false);
     expect(aliasPattern(['ментор']).test('мой ментор.')).toBe(true);
     expect(aliasPattern(['ментор']).test('менторство')).toBe(false);
+  });
+});
+
+describe('LongFrameWatch', () => {
+  const LONG = LONG_FRAME_MS + 30;
+  /** Frames `gap` ms apart, `count` of them, after `start`; returns the last frame's time. */
+  const feed = (watch: LongFrameWatch, gap: number, count: number, start = 0): number => {
+    let now = start;
+    for (let i = 0; i < count; i += 1) {
+      now += gap;
+      watch.frame(now);
+    }
+    return now;
+  };
+
+  it('calls a device slow when more than a quarter of an animation stutters', () => {
+    const watch = new LongFrameWatch();
+    const at = feed(watch, 16, 40);
+    feed(watch, LONG, 20, at);
+    watch.pause();
+
+    expect(watch.slow).toBe(true);
+  });
+
+  it('forgives a burst of long frames at the start of a smooth animation', () => {
+    // Measured: the chat renders the answer while the map ignites (10–18 long frames).
+    const watch = new LongFrameWatch();
+    const at = feed(watch, 300, 18);
+    feed(watch, 16, 160, at);
+    watch.pause();
+
+    expect(watch.slow).toBe(false);
+  });
+
+  it('waits for the end of an animation before it decides', () => {
+    const watch = new LongFrameWatch();
+    feed(watch, LONG, 200);
+    expect(watch.slow).toBe(false);
+
+    watch.pause();
+    expect(watch.slow).toBe(true);
+  });
+
+  it('never judges a short animation or the idle time between animations', () => {
+    const watch = new LongFrameWatch();
+    for (let run = 0; run < 5; run += 1) {
+      // A hover ring: shorter than MIN_ANIMATION_MS, however long its frames.
+      feed(watch, LONG, Math.floor(MIN_ANIMATION_MS / LONG) - 1, run * 60_000);
+      watch.pause();
+    }
+
+    expect(watch.slow).toBe(false);
+  });
+
+  it('judges a slow device that draws a whole ignition in a dozen frames', () => {
+    const watch = new LongFrameWatch();
+    feed(watch, 300, 12);
+    watch.pause();
+
+    expect(watch.slow).toBe(true);
+  });
+
+  it('never counts a hidden tab as a long frame', () => {
+    // A hover ring (smooth) with the tab hidden for 30 s in the middle.
+    const watch = new LongFrameWatch();
+    const at = feed(watch, 16, 8);
+    feed(watch, 16, 8, at + 30_000);
+    watch.pause();
+
+    expect(watch.slow).toBe(false);
+  });
+
+  it('stays slow once it has decided', () => {
+    const watch = new LongFrameWatch();
+    feed(watch, 200, 10);
+    watch.pause();
+    feed(watch, 16, 200, 1_000_000);
+    watch.pause();
+
+    expect(watch.slow).toBe(true);
   });
 });
 

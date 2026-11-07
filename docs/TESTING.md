@@ -34,7 +34,7 @@ All commands run from the repository root.
 | Infrastructure (from ROADMAP 1.6) | `node scripts/check-infra.mjs` (Compose / Dockerfile / .dockerignore rules, needs the Docker CLI); against a running stack: `node scripts/check-headers.mjs https://localhost` (CI job `infra` runs both, plus the image build, image scan and `docker compose up`) |
 | Build (+ CV PDF, needs Playwright Chromium) + JS budgets | `pnpm --dir apps/web run build` then `pnpm --dir apps/web run budget` |
 | Lighthouse budgets | `pnpm --dir apps/web run lighthouse` (build, then mobile + desktop; CI job `lighthouse`) |
-| Performance, long frames (from ROADMAP 6.4) | skill `perf-check` |
+| Performance, long frames (from ROADMAP 6.4) | skill `perf-check` (sizes, Lighthouse, `e2e/knowledge-map-perf.spec.ts` at 4× / 6× CPU, real-Chrome frame times via Chrome DevTools MCP) |
 | Evals | `uv run --directory apps/api python -m site_api.evals --estimate` then `… --run` |
 | Mentor-pending report | `uv run --directory apps/api pytest -m mentor_pending --co -q` |
 | CI (`.github/workflows/ci.yml`) | Jobs `web` (fast checks, build, budgets), `api` (fast checks + non-blocking mentor-pending report), `api-db` (migration tests on a Postgres + pgvector service container), `security` (gitleaks over the whole history, repo scripts, `pnpm audit --prod` blocking / dev report-only, pip-audit). Fast checks run with `--strict`, so a missing app fails instead of being skipped |
@@ -93,7 +93,8 @@ All commands run from the repository root.
 | JS on `/` total | ≤ 200 KB gzip; ≤ 150 KB before the visualization loads |
 | `points.json` | ≤ 50 KB gzip |
 | TTFT, production p50 | < 2 s |
-| Long frames during the knowledge map's ignition at 6× CPU | Threshold defined after the prototype (start: < 5% of frames > 50 ms) |
+| Long frames during the knowledge map's ignition, production build, real Chrome (skill `perf-check`) | < 5% of frames > 50 ms at 4× CPU (2026-11-07: 1.9%); at 6× the map may run at ~30 fps, and light mode takes over when > 25% of an ignition's frames are long |
+| The map's work per frame, headless at 4× CPU (`e2e/knowledge-map-perf.spec.ts`) | median < 16.7 ms (2026-11-07: 7–11 ms); the light-mode detector agrees with the frames at 4× and 6× |
 | Coverage | `apps/api` services and graph ≥ 80%; frontend logic ≥ 70% |
 
 ## 6. Device matrix

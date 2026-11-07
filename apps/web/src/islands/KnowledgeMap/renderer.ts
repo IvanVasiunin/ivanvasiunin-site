@@ -6,6 +6,7 @@
 // pre-rendered sprites of its source's colour. Halos add light (`'lighter'`), so overlapping glows
 // brighten like stars; a read star's core is a "neon" sprite, near-white in the centre and the
 // source colour at the edge, painted normally so it never burns to plain white.
+import { LongFrameWatch } from '../../lib/viz/frames';
 import { type Box, type Orientation, type Placed, placeStars } from '../../lib/viz/layout';
 import {
   type Camera,
@@ -39,6 +40,8 @@ export interface RendererOptions {
   readonly regionLabels: Readonly<Record<'career' | 'personal' | 'site', string>>;
   /** Bands kept free of stars: the Topics line on top, the legend below (px). */
   readonly insets?: { readonly top: number; readonly bottom: number };
+  /** Called once when the frames show the device is too slow: light mode from now on. */
+  readonly onSlow?: () => void;
 }
 
 interface Sprites {
@@ -127,6 +130,7 @@ export class KnowledgeMapRenderer {
   private ring: { id: string; start: number } | null = null;
   private focused: string | null = null;
   private frameId: number | null = null;
+  private readonly frames = new LongFrameWatch();
   private destroyed = false;
 
   constructor(
@@ -205,7 +209,7 @@ export class KnowledgeMapRenderer {
     settled = false,
   ): void {
     const now = settled ? performance.now() - LONG_AGO_MS : performance.now();
-    const instant = settled || this.options.instant();
+    const instant = settled || this.isInstant();
     const ranks = new Map(sources.map((s, rank) => [s.id, { rank, score: s.score }]));
     for (const star of this.stars) {
       const read = ranks.get(star.point.id);
@@ -326,7 +330,7 @@ export class KnowledgeMapRenderer {
 
   private dimOf(star: Star, now: number): number {
     if (star.dimStart === null) return star.dimTo;
-    const k = this.options.instant() ? 1 : smoothstep((now - star.dimStart) / TIMING.dim);
+    const k = this.isInstant() ? 1 : smoothstep((now - star.dimStart) / TIMING.dim);
     return star.dimFrom + (star.dimTo - star.dimFrom) * k;
   }
 
@@ -336,7 +340,7 @@ export class KnowledgeMapRenderer {
 
   private labelAlpha(now: number): number {
     const { from, to, start, duration } = this.labels;
-    const k = this.options.instant() || duration === 0 ? 1 : smoothstep((now - start) / duration);
+    const k = this.isInstant() || duration === 0 ? 1 : smoothstep((now - start) / duration);
     return from + (to - from) * k;
   }
 
@@ -345,7 +349,7 @@ export class KnowledgeMapRenderer {
       from: this.cameraAt(now),
       to,
       start: now,
-      duration: this.options.instant() ? 0 : duration,
+      duration: this.isInstant() ? 0 : duration,
     };
     this.kick();
   }
@@ -363,15 +367,25 @@ export class KnowledgeMapRenderer {
 
   private readonly tick = (now: number): void => {
     this.frameId = null;
+    // Long frames while animating switch the map to light mode (SPEC §6.3, lib/viz/frames.ts).
+    const wasSlow = this.frames.slow;
+    this.frames.frame(now);
     if (this.draw(now)) this.kick();
+    else this.frames.pause();
+    if (this.frames.slow && !wasSlow) this.options.onSlow?.();
   };
+
+  /** Final states at once: reduced motion or a weak device (the island), or slow frames (here). */
+  private isInstant(): boolean {
+    return this.frames.slow || this.options.instant();
+  }
 
   /** Draws one frame; returns whether anything is still moving. */
   private draw(now: number): boolean {
     const ctx = this.context;
     const palette = this.palette;
     if (!ctx || !palette || this.box.width === 0) return false;
-    const instant = this.options.instant();
+    const instant = this.isInstant();
     const camera = this.cameraAt(now);
     let moving = !!this.camera && !instant && now - this.camera.start < this.camera.duration;
 
