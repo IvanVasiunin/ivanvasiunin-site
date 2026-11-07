@@ -1,0 +1,172 @@
+@use '../../styles/mixins' as *;
+
+// The privacy page's side card: a gradient-bordered panel like the chat and the knowledge map.
+// Motion: a replaced piece pops in (transform and opacity), nothing with reduced motion.
+@layer components {
+  .privacy-demo {
+    @include gradient-border($fill-image: var(--gradient-surface));
+
+    display: grid;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-raised-glow);
+  }
+
+  .privacy-demo__head {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    margin-block-end: var(--space-xs);
+  }
+
+  .privacy-demo__title {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-snug);
+  }
+
+  .privacy-demo__lead,
+  .privacy-demo__note {
+    margin: var(--space-2xs) 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  .privacy-demo__label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  // 1rem: iOS never zooms into it (css-scss.md → Units).
+  .privacy-demo__input {
+    inline-size: 100%;
+    min-block-size: calc(3 * var(--line-height-body) * 1em + 2 * var(--space-sm));
+    padding: var(--space-sm);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-body);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    resize: vertical;
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    @media (hover: hover) {
+      &:hover:not(:focus-visible) {
+        border-color: var(--color-accent);
+      }
+    }
+
+    // Before the script runs (or without JS), the sample is a worked example.
+    &:read-only {
+      cursor: default;
+    }
+  }
+
+  // A rule with the words in the middle: the question above, what is kept below.
+  .privacy-demo__divider {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    margin: var(--space-2xs) 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+
+    &::before,
+    &::after {
+      flex: 1;
+      block-size: var(--border-width);
+      background-image: linear-gradient(90deg, transparent, var(--color-border), transparent);
+      content: '';
+    }
+  }
+
+  .privacy-demo__output {
+    min-block-size: calc(3 * var(--line-height-body) * 1em + 2 * var(--space-sm));
+    margin: 0;
+    padding: var(--space-sm);
+    border: var(--border-width) dashed var(--color-accent-3);
+    border-radius: var(--radius-md);
+    line-height: var(--line-height-body);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background-color: var(--color-highlight-soft);
+
+    // The visitor cleared the question: a hint instead of an empty box.
+    &:empty::before {
+      color: var(--color-text-muted);
+      content: attr(data-empty);
+    }
+  }
+
+  // A replaced piece: a small gradient chip in the text's line.
+  .privacy-demo__mask {
+    display: inline-block;
+    padding-inline: var(--space-2xs);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-snug);
+    color: var(--color-on-accent);
+    background-image: var(--gradient-accent);
+
+    // Only a piece masked by this keystroke pops in; the chips already there stay still.
+    @media (prefers-reduced-motion: no-preference) {
+      &[data-new] {
+        animation: privacy-demo-pop var(--duration-slow) var(--ease-out);
+      }
+    }
+  }
+
+  // Read out once typing pauses (the script fills it); the visible result is not a live region.
+  .privacy-demo__status {
+    @include visually-hidden;
+  }
+
+  .privacy-demo__facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-xs);
+    margin: var(--space-xs) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .privacy-demo__fact {
+    display: grid;
+    gap: var(--space-3xs);
+    align-content: start;
+    padding: var(--space-sm);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-track);
+  }
+
+  .privacy-demo__value {
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-snug);
+    color: var(--color-accent);
+  }
+
+  .privacy-demo__caption {
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-snug);
+    color: var(--color-text-muted);
+  }
+
+  @keyframes privacy-demo-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+  }
+}

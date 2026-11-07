@@ -6,6 +6,7 @@ phone-shaped literal, even a fake one; scripts/gitleaks-rules.test.mjs does the 
 
 import json
 import time
+from pathlib import Path
 
 import pytest
 
@@ -43,6 +44,15 @@ def test_personal_data_is_replaced_by_placeholders(text: str, masked: str) -> No
 )
 def test_ordinary_questions_stay_as_they_are(text: str) -> None:
     assert mask_text(text) == text
+
+
+# The cases the privacy page's in-browser demo shares with the server (masking_cases.json).
+_SHARED = json.loads((Path(__file__).parent / "masking_cases.json").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize(("text", "masked"), _SHARED["cases"])
+def test_the_shared_cases_mask_as_the_privacy_demo_shows(text: str, masked: str) -> None:
+    assert mask_text(_zeros(text)) == _zeros(masked)
 
 
 def test_an_email_inside_a_url_is_masked_as_the_url() -> None:

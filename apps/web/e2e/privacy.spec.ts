@@ -45,3 +45,39 @@ test('the chat disclosure leads to the notice', async ({ page }) => {
   await expect(page).toHaveURL(/\/privacy\/?$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Privacy' })).toBeVisible();
 });
+
+// The side card (PrivacyDemo, Ivan, 2026-11-07): masking runs in the browser on what the visitor
+// types, with the server's patterns (lib/privacy/mask.ts), and nothing leaves the page.
+test('the masking demo shows what the server keeps and sends nothing', async ({ page }) => {
+  const requests: string[] = [];
+  page.on('request', (request) => requests.push(request.url()));
+  await page.goto('/privacy');
+  await page.waitForLoadState('networkidle');
+  // Only what typing sends counts: the page's own loading is done.
+  requests.length = 0;
+
+  const demo = page.getByRole('complementary', { name: 'Masking demo and key facts' });
+  await expect(demo.getByRole('heading', { name: 'See what the server keeps' })).toBeVisible();
+  const input = demo.getByRole('textbox', { name: 'A question to Elio' });
+  await expect(input).toBeEditable();
+
+  await input.fill('Write to me@site.dev or t.me/someone, I am Bob');
+
+  await expect(demo.getByText('Write to [email] or [url] I am Bob')).toBeVisible();
+  // Screen readers hear the result once typing pauses, not on every key.
+  await expect(demo.getByRole('status')).toHaveText('Kept: Write to [email] or [url] I am Bob');
+  expect(requests).toEqual([]);
+});
+
+test('without JavaScript the demo is a worked example', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto('/privacy');
+
+  const input = page.getByRole('textbox', { name: 'A question to Elio' });
+  await expect(input).not.toBeEditable();
+  await expect(
+    page.getByText("Hi! I'm Anna ([email], [url]). Which stack does Ivan use?"),
+  ).toBeVisible();
+  await context.close();
+});

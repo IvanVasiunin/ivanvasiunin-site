@@ -1,0 +1,34 @@
+{
+  "_comment": "Shared masking cases: services/masking.py (tests/api/test_masking.py) and the privacy page's in-browser demo (apps/web/src/lib/privacy/mask.test.ts) must give the same result for each. Phone-shaped texts are templates: every N becomes 0 at runtime (gitleaks blocks phone-shaped literals).",
+  "cases": [
+    ["Write to jane.doe+cv@example.co.uk please", "Write to [email] please"],
+    ["See https://example.com/path?q=1 for more", "See [url] for more"],
+    ["or www.example.org", "or [url]"],
+    ["Call +NN NNN NNN NNNN today", "Call [phone] today"],
+    ["Call (NNN) NNN-NNNN", "Call [phone]"],
+    ["number NNN.NNN.NNNN", "number [phone]"],
+    ["Call +N NNN NNN\u2013NN\u2013NN", "Call [phone]"],
+    ["Call NNN/NNN/NNNN", "Call [phone]"],
+    ["Call NNN\u00a0NNN\u00a0NNNN", "Call [phone]"],
+    ["my profile linkedin.com/in/someone-N", "my profile [url]"],
+    ["t.me/some_handle please", "[url] please"],
+    ["ftp://files.example.com/cv.pdf", "[url]"],
+    ["o'brien@example.com", "[email]"],
+    ["\u0438\u0432\u0430\u043d@\u043f\u0440\u0438\u043c\u0435\u0440.\u0440\u0444", "[email]"],
+    ["https://example.com/?mail=a@b.co", "[url]"],
+    ["see \"https://example.com/a\", (www.example.org)", "see \"[url]\", ([url])"],
+    [
+      "Hi! I'm Anna (anna.k@example.com, www.anna-dev.io). Which stack does Ivan use?",
+      "Hi! I'm Anna ([email], [url]). Which stack does Ivan use?"
+    ],
+    ["\u0438example.com/x and more", "[url] and more"],
+    ["Call \u0660\u0660\u0660 \u0660\u0660\u0660 \u0660\u0660\u0660\u0660", "Call [phone]"],
+    [
+      "Did Ivan work at BrainRocket from 2016-2024?",
+      "Did Ivan work at BrainRocket from 2016-2024?"
+    ],
+    ["What did Ivan do in 2021?", "What did Ivan do in 2021?"],
+    ["Is 3000 euros a month enough?", "Is 3000 euros a month enough?"],
+    ["What is NumbersValidator?", "What is NumbersValidator?"]
+  ]
+}
