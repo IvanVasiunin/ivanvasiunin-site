@@ -6,8 +6,14 @@ Iván?" finds the BrainRocket chunk), the full-text search finds exact names and
 
 Why deduplicate: one project can have many similar chunks (CV entry, README sections). Keeping
 at most `max_per_project` of them leaves room in the answer's context for other sources.
+
+Why several queries (`retrieve_many`, 2026-11-08): the router writes one query per requirement of
+a job description or per part of a question. Fusing them into one ranking would again favour the
+chunks that match many requirements a little; taking the best chunks of each query in turn gives
+every requirement its own sources.
 """
 
+import asyncio
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -36,6 +42,9 @@ class RetrievalParams:
     rrf_k: int
     # Chunks below this share of the best score are dropped (0 keeps all).
     min_relative_score: float = 0.0
+    # The ceiling when the router wrote several queries (each still gets up to `top_k`); `None`
+    # keeps `top_k`.
+    top_k_multi: int | None = None
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "RetrievalParams":
@@ -43,6 +52,7 @@ class RetrievalParams:
         return cls(
             candidates=settings.retrieval_candidates,
             top_k=settings.retrieval_top_k,
+            top_k_multi=settings.retrieval_top_k_multi,
             max_per_project=settings.retrieval_max_per_project,
             rrf_k=settings.retrieval_rrf_k,
             min_relative_score=settings.retrieval_min_relative_score,
@@ -75,6 +85,32 @@ class HybridRetriever:
         ranked = [RetrievedChunk(candidates[chunk_id], score) for chunk_id, score in scores.items()]
         best = limit_per_project(ranked, self._params.max_per_project)[: self._params.top_k]
         return above_floor(best, self._params.min_relative_score)
+
+    async def retrieve_many(self, queries: Sequence[str]) -> list[RetrievedChunk]:
+        """The best chunks for several queries together, best first, at most `top_k_multi`.
+
+        One query is plain `retrieve`. Several run concurrently; their results are merged in turns
+        (the best of each query, then the second best of each, ...), so every query is represented.
+        """
+        if len(queries) <= 1:
+            return await self.retrieve(queries[0] if queries else "")
+        per_query = await asyncio.gather(*(self.retrieve(query) for query in queries))
+        merged = limit_per_project(interleave(per_query), self._params.max_per_project)
+        chosen = merged[: self._params.top_k_multi or self._params.top_k]
+        # SPEC §4.2: sources are ordered by score; each chunk keeps its score from its own query.
+        return sorted(chosen, key=lambda item: item.score, reverse=True)
+
+
+def interleave(rankings: Sequence[Sequence[RetrievedChunk]]) -> list[RetrievedChunk]:
+    """The rankings merged in turns, each chunk once (at its best rank, the first time it comes)."""
+    merged: list[RetrievedChunk] = []
+    seen: set[str] = set()
+    for rank in range(max((len(ranking) for ranking in rankings), default=0)):
+        for ranking in rankings:
+            if rank < len(ranking) and ranking[rank].chunk.chunk_id not in seen:
+                seen.add(ranking[rank].chunk.chunk_id)
+                merged.append(ranking[rank])
+    return merged
 
 
 def above_floor(chunks: Sequence[RetrievedChunk], share: float) -> list[RetrievedChunk]:

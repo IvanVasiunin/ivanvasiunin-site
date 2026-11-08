@@ -62,6 +62,7 @@ describe('parseChatEvent', () => {
 
   it.each([
     [{ type: 'route', route: 'about_ivan', language: 'en' }],
+    [{ type: 'route', route: 'rude', language: 'ru' }],
     [{ type: 'sources', items: [source] }],
     [{ type: 'sources', items: [] }],
     [{ type: 'token', text: 'Ivan ' }],

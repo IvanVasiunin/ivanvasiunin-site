@@ -7,6 +7,7 @@ from site_api.rag.retrieval import (
     RetrievalParams,
     RetrievedChunk,
     above_floor,
+    interleave,
     limit_per_project,
 )
 from site_api.rag.search import Candidate
@@ -154,3 +155,72 @@ def test_a_zero_floor_keeps_everything_and_nothing_stays_nothing() -> None:
 
     assert len(above_floor(ranked, 0.0)) == 2
     assert above_floor([], 0.6) == []
+
+
+def scored(chunk_id: str, score: float) -> RetrievedChunk:
+    return RetrievedChunk(candidate(chunk_id), score)
+
+
+def test_interleave_takes_each_ranking_in_turn_and_each_chunk_once() -> None:
+    education = [scored("edu", 1.0), scored("shared", 0.9), scored("edu-2", 0.5)]
+    testing = [scored("jest", 1.0), scored("shared", 0.8)]
+
+    merged = interleave([education, testing])
+
+    assert [item.chunk.chunk_id for item in merged] == ["edu", "jest", "shared", "edu-2"]
+
+
+class PerQuerySearch(FakeSearch):
+    """Each query (its fake embedding is its text length) finds its own chunks."""
+
+    def __init__(self, by_length: dict[int, list[Candidate]]) -> None:
+        super().__init__([], [])
+        self.by_length = by_length
+
+    async def by_vector(self, embedding: list[float], limit: int) -> list[Candidate]:
+        return self.by_length[int(embedding[0])][:limit]
+
+    async def by_text(self, question: str, limit: int) -> list[Candidate]:
+        return []
+
+
+class LengthEmbeddings(FakeQueryEmbeddings):
+    """Embeds a query as its length, so each fake query finds its own chunks."""
+
+    def embed_query(self, text: str) -> list[float]:
+        return [float(len(text))]
+
+
+async def test_several_queries_each_bring_their_best_chunks() -> None:
+    # SPEC §5.7: one query per requirement; the education chunk is not drowned by the others.
+    search = PerQuerySearch(
+        {
+            1: [candidate("summary"), candidate("profile"), candidate("skills")],
+            2: [candidate("education")],
+        }
+    )
+    params = RetrievalParams(candidates=10, top_k=3, max_per_project=2, rrf_k=60, top_k_multi=4)
+
+    result = await HybridRetriever(search, LengthEmbeddings(), params).retrieve_many(["a", "bb"])
+
+    ids = {item.chunk.chunk_id for item in result}
+    assert ids == {"summary", "education", "profile", "skills"}
+    # Ordered by score for the sources event (SPEC §4.2).
+    assert [item.score for item in result] == sorted((item.score for item in result), reverse=True)
+
+
+async def test_several_queries_stay_under_their_ceiling() -> None:
+    search = PerQuerySearch({1: [candidate("a"), candidate("b")], 2: [candidate("c")]})
+    params = RetrievalParams(candidates=10, top_k=3, max_per_project=2, rrf_k=60, top_k_multi=2)
+
+    result = await HybridRetriever(search, LengthEmbeddings(), params).retrieve_many(["a", "bb"])
+
+    # The best of each query first: "a" and "c", not "a" and "b".
+    assert {item.chunk.chunk_id for item in result} == {"a", "c"}
+
+
+async def test_one_query_is_plain_retrieval() -> None:
+    search = FakeSearch([candidate("a"), candidate("b")], [])
+    retriever = HybridRetriever(search, FakeQueryEmbeddings(), PARAMS)
+
+    assert await retriever.retrieve_many(["q"]) == await retriever.retrieve("q")

@@ -125,5 +125,6 @@ def test_a_model_price_comes_from_the_environment(monkeypatch: pytest.MonkeyPatc
 def test_the_chat_limits_default_to_spec() -> None:
     settings = IsolatedSettings(database_url=SecretStr(UNREACHABLE_DATABASE_URL))
 
-    assert settings.max_question_chars == 500
+    assert settings.max_question_chars == 5000
+    assert settings.history_turn_max_chars == 5000
     assert settings.history_max_turns == 6

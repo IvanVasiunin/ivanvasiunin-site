@@ -40,9 +40,9 @@ class RecordingRetriever:
         self._inner = inner
         self.last: list[RetrievedChunk] = []
 
-    async def retrieve(self, question: str) -> list[RetrievedChunk]:
+    async def retrieve_many(self, queries: Sequence[str]) -> list[RetrievedChunk]:
         """Retrieve and remember what came back."""
-        self.last = await self._inner.retrieve(question)
+        self.last = await self._inner.retrieve_many(queries)
         return self.last
 
 
@@ -80,7 +80,9 @@ async def run_cases(
             logger.warning("eval run stopped at its cost cap", extra={"count": len(results)})
             break
         retriever.last = []
-        request = ChatRequest(message=case.question, session_id=uuid.uuid4())
+        request = ChatRequest(
+            message=case.question, session_id=uuid.uuid4(), history=list(case.history)
+        )
         events = [event async for event in service.answer(request)]
         answer = read_answer(events)
         faithfulness: float | None = None

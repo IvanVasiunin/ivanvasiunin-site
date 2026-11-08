@@ -21,7 +21,7 @@ from sqlalchemy.exc import OperationalError
 from site_api.core.openapi import contract_schemas
 from site_api.schemas.chat import CHAT_EVENT_ADAPTER
 
-from .chat_fakes import FakeRetriever, answering
+from .chat_fakes import FakeRetriever, answering, routing
 from .conftest import QUESTION, Chat, body, events_of
 
 # A marker that must never appear in a log line (fastapi.md, privacy).
@@ -299,6 +299,42 @@ async def test_only_the_last_history_turns_reach_the_model(client: AsyncClient, 
     assert [message.content for message in messages[1:-1]] == [
         turn["content"] for turn in history[-limit:]
     ]
+
+
+async def test_retrieval_searches_with_the_routers_query_and_the_model_reads_the_question(
+    client: AsyncClient, chat: Chat
+) -> None:
+    # SPEC §5.1 (2026-11-08): the English search query finds the chunks; the answer model still
+    # answers the visitor's own words, in their language.
+    chat.router = routing("about_ivan", "uk", ["Ivan's current job at BrainRocket"])
+
+    await ask(client, "що Іван робить на роботі?")
+
+    assert chat.retriever.questions == ["Ivan's current job at BrainRocket"]
+    (messages,) = chat.model.received
+    assert "що Іван робить на роботі?" in str(messages[-1].content)
+
+
+async def test_a_job_description_is_searched_requirement_by_requirement(
+    client: AsyncClient, chat: Chat
+) -> None:
+    # SPEC §5.7: one query per requirement, so each one finds its own sources.
+    queries = ["Ivan's education", "Ivan's experience with Jest and Playwright"]
+    chat.router = routing("about_ivan", "en", queries)
+
+    await ask(client, "Requirements: a degree in Computer Engineering; Jest or Playwright.")
+
+    assert chat.retriever.questions == queries
+
+
+async def test_without_a_search_query_retrieval_searches_with_the_question(
+    client: AsyncClient, chat: Chat
+) -> None:
+    chat.router = routing("about_ivan", "en", [])
+
+    await ask(client)
+
+    assert chat.retriever.questions == [QUESTION]
 
 
 @pytest.fixture

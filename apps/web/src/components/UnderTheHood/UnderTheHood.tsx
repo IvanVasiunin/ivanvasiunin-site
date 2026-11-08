@@ -49,6 +49,7 @@ const ROUTE_LABEL: Readonly<Record<Route, string>> = {
   greeting: 'Greeting',
   off_topic: 'Off topic',
   injection: 'Attempt to change the rules',
+  rude: 'Rude message',
 };
 
 const SOURCE_KIND: Readonly<Record<SourceItem['source_type'], string>> = {

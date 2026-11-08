@@ -15,8 +15,9 @@ from site_api.evals.cases import EvalCase
 from site_api.graph.generate import TokenUsage
 from site_api.graph.usage import estimate_cost_usd
 
-# Router: its prompt (~600 tokens), up to two history turns, the question; a few tokens of JSON.
-ROUTER_CALL = TokenUsage(input_tokens=900, cached_input_tokens=0, output_tokens=30)
+# Router: its prompt (~1,100 tokens since router.v6), up to two history turns, the question; a few
+# tokens of JSON and a one-line search query.
+ROUTER_CALL = TokenUsage(input_tokens=1400, cached_input_tokens=0, output_tokens=60)
 # Answer: the system prompt (~900), `top_k` chunks of up to ~300 tokens each, the question.
 ANSWER_PROMPT_BASE_TOKENS = 1000
 ANSWER_TOKENS_PER_CHUNK = 300

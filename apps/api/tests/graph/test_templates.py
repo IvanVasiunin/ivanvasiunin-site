@@ -6,7 +6,7 @@ import pytest
 
 from site_api.prompts.localized import TEMPLATE_LANGUAGES, load_templates, template_answer
 
-NAMES = ("greeting", "off_topic", "injection")
+NAMES = ("greeting", "off_topic", "injection", "rude")
 
 
 @pytest.mark.parametrize("language", TEMPLATE_LANGUAGES)

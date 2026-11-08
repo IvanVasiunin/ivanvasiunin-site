@@ -91,13 +91,14 @@ def test_a_missing_key_names_the_variable_to_set(provider: str, variable: str) -
 
 
 def test_the_router_is_the_cheap_model_with_a_small_output_cap() -> None:
-    # ADR-0001: gpt-6-luna, no reasoning; a decision is a few tokens of JSON.
+    # ADR-0001: gpt-6-luna, no reasoning; a decision is a few tokens of JSON and a one-line
+    # search query (SPEC §5.1, 2026-11-08).
     model = build_router_model(make_settings(openai_api_key=OPENAI_KEY))
 
     assert isinstance(model, ChatOpenAI)
     assert model.model_name == "gpt-6-luna"
     assert model.reasoning_effort == "none"
-    assert model.max_tokens == 60
+    assert model.max_tokens == 150
 
 
 def test_the_router_switches_provider_by_config_alone() -> None:

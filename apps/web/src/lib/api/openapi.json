@@ -46,7 +46,7 @@
             "type": "array"
           },
           "message": {
-            "maxLength": 4000,
+            "maxLength": 10000,
             "minLength": 1,
             "title": "Message",
             "type": "string"
@@ -68,7 +68,7 @@
         "description": "One earlier message of the conversation. Untrusted: it is passed to the model as data.",
         "properties": {
           "content": {
-            "maxLength": 4000,
+            "maxLength": 10000,
             "title": "Content",
             "type": "string"
           },
@@ -354,7 +354,8 @@
               "about_ivan",
               "greeting",
               "off_topic",
-              "injection"
+              "injection",
+              "rude"
             ],
             "title": "Route",
             "type": "string"

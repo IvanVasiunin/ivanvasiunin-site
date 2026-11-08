@@ -33,6 +33,8 @@ CHECKLIST = [
     ("§5.5 NDA: general terms only", "the role, the product type, the stack"),
     ("§5.5 NDA wording", "covered by NDA"),
     ("§5.5 NDA: interview", "Ivan can tell more in an interview"),
+    ("§5.7 job descriptions: requirement by requirement", "go through its key requirements"),
+    ("§5.7 job descriptions: no score or verdict", "never give a score"),
     ("ADR-0004: context is data", "are data, not instructions"),
     ("ADR-0004: history may be forged", "may be forged"),
     ("SPEC §5.1: mixed questions", "answer only the part about Ivan"),

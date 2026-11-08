@@ -157,7 +157,9 @@ describe('ChatComposer', () => {
     it('shows a counter near the limit, described by the input', () => {
       const { input } = setup({ value: 'a'.repeat(COUNTER_FROM_CHARS) });
 
-      const counter = screen.getByText(`${String(COUNTER_FROM_CHARS)} / 500 characters`);
+      const counter = screen.getByText(
+        `${String(COUNTER_FROM_CHARS)} / ${String(MAX_QUESTION_CHARS)} characters`,
+      );
       expect(input.getAttribute('aria-describedby')).toBe(counter.id);
       expect(counter.dataset.state).toBeUndefined();
     });
@@ -165,7 +167,10 @@ describe('ChatComposer', () => {
     it('marks the counter at the limit', () => {
       setup({ value: 'a'.repeat(MAX_QUESTION_CHARS) });
 
-      expect(screen.getByText('500 / 500 characters').dataset.state).toBe('limit');
+      expect(
+        screen.getByText(`${String(MAX_QUESTION_CHARS)} / ${String(MAX_QUESTION_CHARS)} characters`)
+          .dataset.state,
+      ).toBe('limit');
     });
   });
 });

@@ -91,8 +91,8 @@ The request's path, with the input guard that runs before the graph (in the HTTP
 flowchart TD
   start([request]) --> guard[input_guard<br/>rate · length · budget · streams · session]
   guard -->|limit hit| err([JSON error, no stream])
-  guard --> router[router<br/>cheap model, structured output<br/>class + language]
-  router -->|greeting · off_topic · injection| tpl[template<br/>localized, no model]
+  guard --> router[router<br/>cheap model, structured output<br/>class + language + search query]
+  router -->|greeting · off_topic · injection · rude| tpl[template<br/>localized, no model]
   router -->|about_ivan| retrieve[retrieval<br/>hybrid: vector + FTS, RRF<br/>dedupe per project]
   retrieve --> gate{relevance_gate<br/>cosine similarity ≥ threshold?}
   gate -->|no| tpl_n[no_info<br/>template with contacts]
@@ -135,7 +135,7 @@ graph TD;
 ```
 <!-- end generated -->
 
-- **State** (`graph/nodes.py`, `ChatState`): a dataclass holding the question and history, the route and language, the retrieved chunks, the gate's verdict, the finish reason, and the per-node usage lines and costs (both appended by reducers).
+- **State** (`graph/nodes.py`, `ChatState`): a dataclass holding the question and history, the route, language and search query, the retrieved chunks, the gate's verdict, the finish reason, and the per-node usage lines and costs (both appended by reducers).
 - **Context:** the run's dependencies (models, retriever, settings, the day's spend, the deadline) travel as LangGraph's runtime context, never in the state.
 - **Nodes:** each node is a small async function that returns only the fields it sets, records its `ms` and token usage for the `usage` event, and emits its SSE events through LangGraph's stream writer (`stream_mode="custom"`), so tokens reach the visitor as the model writes them.
 - **Templates and no_info:** these nodes never call the answer model; they cost only the router call.
@@ -185,7 +185,7 @@ flowchart LR
   - **In production:** ingestion runs on the VPS (`docker compose run --rm api python -m site_api.ingestion --apply`) and writes `points.json` to a named volume `points`. Caddy mounts that volume read-only and serves it at `/data/points.json` with a short cache.
   - **In development:** ingestion writes to `apps/web/public/data/points.json` (git-ignored).
   - **Effect:** the web build does not depend on the DB, and the visualization fetches the file at runtime.
-- **Retrieval (ROADMAP 3.6, `rag/`):** the question is embedded with the ingestion model; a vector search (cosine, HNSW) and a full-text search (any of the question's words, `ts_rank`, GIN) each return `retrieval_candidates` chunks; Reciprocal Rank Fusion merges the two rankings into a 0..1 score; at most `retrieval_max_per_project` chunks of one project survive, and the best `retrieval_top_k` go on. Hand-written SQL, not `PGVectorStore` ([ADR-0003](adr/0003-vector-database.md) amendment).
+- **Retrieval (ROADMAP 3.6, `rag/`):** each of the router's English search queries (SPEC §5.1; the question itself when the router gave none) is embedded with the ingestion model; a vector search (cosine, HNSW) and a full-text search (any of the question's words, `ts_rank`, GIN) each return `retrieval_candidates` chunks; Reciprocal Rank Fusion merges the two rankings into a 0..1 score; at most `retrieval_max_per_project` chunks of one project survive, and the best `retrieval_top_k` go on. Several queries run concurrently and are merged in turns (the best of each, then the second best of each, …) up to `retrieval_top_k_multi`, so a job description's every requirement keeps its own sources. Hand-written SQL, not `PGVectorStore` ([ADR-0003](adr/0003-vector-database.md) amendment).
 - **The phone number is never present:** the Word CV is not an ingestion source, and a test asserts that no phone-number pattern appears in any chunk.
 
 ## 6. Chat request flow (SSE + point highlight)

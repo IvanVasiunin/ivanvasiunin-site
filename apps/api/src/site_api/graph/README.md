@@ -5,7 +5,7 @@ The chat pipeline as a LangGraph `StateGraph` ([ADR-0008](../../../../../docs/ad
 ```
 router ─┬─ about_ivan ─► retrieval ─► relevance_gate ─┬─ generate ─┐
         │                                             └─ no_info ──┤
-        └─ greeting / off_topic / injection ─► template ───────────┴─► finish
+        └─ greeting / off_topic / injection / rude ─► template ────┴─► finish
 ```
 
 The input guard (rate, length, budget, streams, session) runs before the graph, in the HTTP layer (`routers/chat.py`, `services/limits.py`), because its refusals need an HTTP status.

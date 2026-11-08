@@ -18,8 +18,8 @@ from site_api.core.config import ModelProvider
 from site_api.rag.search import Candidate
 from site_api.schemas.chat import ChatTurn
 
-# The prompt in use. New wording goes into a new file (system.v2.md), so evals can compare them.
-SYSTEM_PROMPT_FILE = "system.v2.md"
+# The prompt in use. New wording goes into a new file (system.v5.md), so evals can compare them.
+SYSTEM_PROMPT_FILE = "system.v5.md"
 
 
 @cache

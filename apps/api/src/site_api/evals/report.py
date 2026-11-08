@@ -120,7 +120,7 @@ def build_report(results: Sequence[CaseResult], settings: Settings) -> RunReport
             Threshold("answer_relevancy", relevancy, settings.eval_min_answer_relevancy),
             Threshold("judge_coverage", judge_coverage, 1.0),
         ],
-        failures={r.case.id: r.failed_checks for r in results if not r.rules_passed},
+        failures=_failures(results),
         answers={r.case.id: r.answer.text[:ANSWER_KEPT_CHARS] for r in results},
     )
 
@@ -136,6 +136,22 @@ def format_report(report: RunReport) -> str:
         lines.append(f"  failed {case_id}: {'; '.join(failed)}")
     lines.append("PASSED" if report.passed else "FAILED")
     return "\n".join(lines)
+
+
+def _failures(results: Sequence[CaseResult]) -> dict[str, list[str]]:
+    """The failed rule checks of each case, and the judged cases the judge left unscored.
+
+    An unscored case fails `judge_coverage`; naming it (with the judge's error, when there was one)
+    tells a judge hiccup from an answer without sources.
+    """
+    failures: dict[str, list[str]] = {}
+    for result in results:
+        failed = list(result.failed_checks) if not result.rules_passed else []
+        if result.case.judged and result.faithfulness is None:
+            failed.append(f"judge: {result.judge_error or 'not scored (no answer or no sources)'}")
+        if failed:
+            failures[result.case.id] = failed
+    return failures
 
 
 def _rate(flags: Sequence[bool]) -> float:

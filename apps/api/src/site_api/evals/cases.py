@@ -11,11 +11,18 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from site_api.schemas.chat import FinishReason, Route
+from site_api.schemas.chat import ChatTurn, FinishReason, Route
 
 # ADR-0004 layer 6: the six case types (plus greetings, which the router also has to recognise).
 type CaseType = Literal[
-    "in_scope", "personal", "off_topic", "injection", "greeting", "unknown_fact", "nda_salary"
+    "in_scope",
+    "personal",
+    "off_topic",
+    "injection",
+    "greeting",
+    "unknown_fact",
+    "nda_salary",
+    "rude",
 ]
 EVAL_LANGUAGES: tuple[str, ...] = ("en", "es", "ru", "uk")
 
@@ -28,12 +35,16 @@ class EvalCase(BaseModel):
     id: str = Field(pattern=r"^[a-z0-9-]+$")
     type: CaseType
     language: Literal["en", "es", "ru", "uk"]
-    question: str = Field(min_length=1, max_length=500)
+    question: str = Field(min_length=1, max_length=5000)
+    # Earlier turns, oldest first, sent as the request's history (a continued conversation).
+    history: list[ChatTurn] = Field(default_factory=list[ChatTurn])
     route: Route
     # Any of these finish reasons passes.
     finish: list[FinishReason] = Field(min_length=1)
     sources: bool | None = None
     contains_any: list[str] = Field(default_factory=list[str])
+    # Every one of these (a broad question must cover more than one fact).
+    contains_all: list[str] = Field(default_factory=list[str])
     contains_none: list[str] = Field(default_factory=list[str])
     # In-scope answers also get the judge's faithfulness and relevancy scores (paid).
     judged: bool = False

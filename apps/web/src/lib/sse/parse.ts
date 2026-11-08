@@ -82,7 +82,7 @@ const isNumber = (value: unknown): value is number =>
 const isOptional = (value: unknown, guard: (v: unknown) => boolean): boolean =>
   value === undefined || value === null || guard(value);
 
-const ROUTES = ['about_ivan', 'greeting', 'off_topic', 'injection'] as const;
+const ROUTES = ['about_ivan', 'greeting', 'off_topic', 'injection', 'rude'] as const;
 const SOURCE_TYPES = ['cv', 'experience', 'personal', 'site_docs', 'github_readme'] as const;
 const FINISH_REASONS = ['stop', 'length', 'templated', 'no_info'] as const;
 const ERROR_CODES = [

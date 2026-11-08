@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { HISTORY_STORAGE_KEY, MAX_STORED_TURNS, clearTurns, loadTurns, saveTurns } from './history';
-import type { Turn } from './state';
+import { MAX_QUESTION_CHARS, type Turn } from './state';
 
 /** An in-memory Storage with only the methods history.ts uses. */
 function memoryStorage() {
@@ -97,7 +97,10 @@ describe('conversation history', () => {
       'an unknown error code',
       JSON.stringify([{ ...turn(), error: { code: 'nope', retryAfterS: null } }]),
     ],
-    ['a question over the limit', JSON.stringify([{ ...turn(), question: 'x'.repeat(501) }])],
+    [
+      'a question over the limit',
+      JSON.stringify([{ ...turn(), question: 'x'.repeat(MAX_QUESTION_CHARS + 1) }]),
+    ],
     ['a repeated turn id', JSON.stringify([turn(), turn()])],
     ['an answer over the limit', JSON.stringify([{ ...turn(), answer: 'x'.repeat(20_001) }])],
     ['usage that is not an object', JSON.stringify([{ ...turn(), usage: 'lots' }])],

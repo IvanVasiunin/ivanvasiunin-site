@@ -119,3 +119,18 @@ def test_chat_answers_downgrade_drops_only_that_table() -> None:
 
     assert "DROP TABLE chat_answers" in sql
     assert "chunks" not in sql
+
+
+def test_chat_answers_accepts_the_rude_class() -> None:
+    # Migration 0003 (SPEC §5.1, 2026-11-08): the route constraint lists the new class.
+    sql = render("upgrade", "0002:0003")
+
+    assert "DROP CONSTRAINT ck_chat_answers_route" in sql
+    assert "'injection', 'rude'" in sql
+
+
+def test_the_rude_class_downgrade_keeps_existing_rows_valid() -> None:
+    sql = render("downgrade", "0003:0002")
+
+    # Rows go to the closest old class before the old list comes back.
+    assert sql.index("SET route = 'off_topic' WHERE route = 'rude'") < sql.index("ADD CONSTRAINT")

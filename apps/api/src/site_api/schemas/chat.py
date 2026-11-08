@@ -5,7 +5,7 @@ Every event's `data` is one JSON object with a `type` discriminator; clients dis
 
     about_ivan:                    route → sources → token* → usage → done
     no_info (nothing relevant):    route → sources (empty) → token+ (templated) → usage → done
-    greeting / off_topic / injection:
+    greeting / off_topic / injection / rude:
                                    route → token+ (templated) → usage → done
     any failure:                   … → error   (terminal, no done afterwards)
 
@@ -28,7 +28,7 @@ from site_api.schemas.errors import ErrorCode
 # Hard upper bounds of the request shape. The effective limits are lower and come from config
 # (MAX_QUESTION_CHARS → `input_too_long` in routers/chat.py; HISTORY_MAX_TURNS in services/chat.py);
 # these only stop absurd payloads before any of that runs.
-_MESSAGE_HARD_MAX = 4000
+_MESSAGE_HARD_MAX = 10000
 _HISTORY_HARD_MAX = 40
 
 
@@ -43,7 +43,7 @@ class ChatRequest(BaseModel):
     """A visitor's question with the client's session and recent history."""
 
     # Trimmed here, so a blank question is rejected; the effective maximum, MAX_QUESTION_CHARS
-    # (config, default 500), is checked on the trimmed text by the router.
+    # (config, default 5000), is checked on the trimmed text by the router.
     message: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1, max_length=_MESSAGE_HARD_MAX)
     ]
@@ -55,7 +55,7 @@ class ChatRequest(BaseModel):
 
 # ── Events ────────────────────────────────────────────────────────────────────────────────────
 
-Route = Literal["about_ivan", "greeting", "off_topic", "injection"]
+Route = Literal["about_ivan", "greeting", "off_topic", "injection", "rude"]
 SourceType = Literal["cv", "experience", "personal", "site_docs", "github_readme"]
 FinishReason = Literal["stop", "length", "templated", "no_info"]
 # The longest `snippet` of a source (SPEC §4.2).

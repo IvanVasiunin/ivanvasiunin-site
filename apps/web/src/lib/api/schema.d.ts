@@ -208,7 +208,7 @@ export interface components {
              * Route
              * @enum {string}
              */
-            route: "about_ivan" | "greeting" | "off_topic" | "injection";
+            route: "about_ivan" | "greeting" | "off_topic" | "injection" | "rude";
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}

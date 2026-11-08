@@ -17,7 +17,7 @@ from site_api.prompts.localized import RouteTemplate, template_answer
 from .chat_fakes import FakeRouterModel, routing
 from .conftest import Chat, body, events_of
 
-TEMPLATED: tuple[RouteTemplate, ...] = ("greeting", "off_topic", "injection")
+TEMPLATED: tuple[RouteTemplate, ...] = ("greeting", "off_topic", "injection", "rude")
 OPENAI_REQUEST = httpx2.Request("POST", "https://api.openai.com/v1/chat/completions")
 # A completion the SDK reports as cut off (only its identity matters to the error).
 COMPLETION = ChatCompletion.model_construct(

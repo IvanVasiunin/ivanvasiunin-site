@@ -66,6 +66,12 @@ class FakeRetriever:
             raise self.error
         return self.chunks
 
+    async def retrieve_many(self, queries: Sequence[str]) -> list[RetrievedChunk]:
+        """Every query is remembered; the fixed chunks come back once."""
+        for query in queries[:-1]:
+            self.questions.append(query)
+        return await self.retrieve(queries[-1])
+
 
 class StreamingFakeModel(BaseChatModel):
     """Streams the given chunks (metadata included), then raises `error` if one is set.
@@ -145,7 +151,9 @@ class FakeRouterModel(BaseChatModel):
     decision and the parsing error.
     """
 
-    decision: RouterDecision | None = RouterDecision(route="about_ivan", language="en")
+    decision: RouterDecision | None = RouterDecision(
+        route="about_ivan", language="en", search_queries=["Ivan"]
+    )
     error: Exception | None = None
     # Never answers, like a stalled provider: only the deadline ends the wait.
     hang: bool = False
@@ -179,6 +187,9 @@ class FakeRouterModel(BaseChatModel):
         return RunnableLambda(run)
 
 
-def routing(route: Route = "about_ivan", language: str = "en") -> FakeRouterModel:
-    """A router that sends every question to `route`, in `language`."""
-    return FakeRouterModel(decision=RouterDecision(route=route, language=language))
+def routing(
+    route: Route = "about_ivan", language: str = "en", search_queries: Sequence[str] = ()
+) -> FakeRouterModel:
+    """A router that sends every question to `route`, in `language`, with this search query."""
+    decision = RouterDecision(route=route, language=language, search_queries=list(search_queries))
+    return FakeRouterModel(decision=decision)

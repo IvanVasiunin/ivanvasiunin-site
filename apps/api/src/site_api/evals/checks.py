@@ -81,6 +81,10 @@ def check_answer(case: EvalCase, answer: Answer) -> list[CheckResult]:
     if case.contains_any:
         found = any(contains_phrase(answer.text, phrase) for phrase in case.contains_any)
         results.append(CheckResult("contains_any", found, "none of the expected phrases"))
+    for phrase in case.contains_all:
+        results.append(
+            CheckResult("contains_all", contains_phrase(answer.text, phrase), f"no {phrase!r}")
+        )
     for phrase in case.contains_none:
         results.append(
             CheckResult(

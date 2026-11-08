@@ -2,7 +2,7 @@
 
     router ─┬─ about_ivan ─► retrieval ─► relevance_gate ─┬─ relevant ─► generate ─┐
             │                                             └─ not ─────► no_info ──┤
-            └─ greeting / off_topic / injection ─► template ──────────────────────┴─► finish
+            └─ greeting / off_topic / injection / rude ─► template ───────────────┴─► finish
 
 Why a LangGraph `StateGraph` and not plain calls: the branches (template, no information, answer)
 are explicit edges, every node reads and writes only its own keys of a typed state, and the
@@ -19,7 +19,7 @@ import asyncio
 import operator
 import time
 import uuid
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Sequence
 from contextlib import aclosing
 from dataclasses import dataclass, field
 from typing import Annotated, Literal, Protocol, TypedDict
@@ -59,8 +59,8 @@ from site_api.schemas.chat import (
 class Retriever(Protocol):
     """What the graph needs from retrieval (`HybridRetriever`; a fake in tests)."""
 
-    async def retrieve(self, question: str) -> list[RetrievedChunk]:
-        """The best chunks for the question, best first."""
+    async def retrieve_many(self, queries: Sequence[str]) -> list[RetrievedChunk]:
+        """The best chunks for these search queries together, best first."""
         ...
 
 
@@ -108,6 +108,8 @@ class ChatState:
     history: list[ChatTurn] = field(default_factory=list[ChatTurn])
     route: Route | None = None
     language: str = "en"
+    # The router's English search queries (empty: search with the question itself).
+    search_queries: list[str] = field(default_factory=list[str])
     retrieved: list[RetrievedChunk] = field(default_factory=list[RetrievedChunk])
     relevant: bool = False
     finish_reason: FinishReason | None = None
@@ -125,6 +127,7 @@ class Update(TypedDict, total=False):
 
     route: Route
     language: str
+    search_queries: list[str]
     retrieved: list[RetrievedChunk]
     relevant: bool
     finish_reason: FinishReason
@@ -171,6 +174,7 @@ async def router(state: ChatState, runtime: Runtime[ChatContext]) -> Update:
     return {
         "route": routed.route,
         "language": routed.language,
+        "search_queries": list(routed.search_queries),
         "nodes": [model_node("router", started, settings.router_model, routed.usage)],
         "cost_usd": cost_usd,
     }
@@ -180,7 +184,7 @@ async def template(state: ChatState) -> Update:
     """Greetings, off-topic and injection: a localized template, no retrieval, no answer model."""
     route = state.route
     if route is None or route == "about_ivan":
-        msg = "the template node answers only greeting, off_topic and injection"
+        msg = "the template node answers only greeting, off_topic, injection and rude"
         raise RuntimeError(msg)
     _emit(TokenEvent(type="token", text=template_answer(route, state.language)))
     return {"finish_reason": "templated"}
@@ -191,7 +195,9 @@ async def retrieval(state: ChatState, runtime: Runtime[ChatContext]) -> Update:
     context = runtime.context
     started = time.perf_counter()
     async with asyncio.timeout_at(context.deadline):
-        retrieved = await context.retriever.retrieve(state.question)
+        # The router's search queries: English, standalone, one per part or requirement (router.py).
+        queries = state.search_queries or [state.question]
+        retrieved = await context.retriever.retrieve_many(queries)
     return {"retrieved": retrieved, "nodes": [NodeUsage(name="retrieval", ms=ms_since(started))]}
 
 

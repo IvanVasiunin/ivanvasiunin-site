@@ -5,9 +5,9 @@
 import type { ChatEvent, ChatTurn, ErrorCode, SourceItem } from '../api/types';
 
 /** Questions longer than this are blocked in the input (SPEC US-A13; the API's default limit). */
-export const MAX_QUESTION_CHARS = 500;
-/** The live counter appears from this length on, near the limit. */
-export const COUNTER_FROM_CHARS = 400;
+export const MAX_QUESTION_CHARS = 5000;
+/** The live counter appears from this length on, near the limit (a long pasted job description). */
+export const COUNTER_FROM_CHARS = 4000;
 /** Completed turns sent back as `history` (SPEC §4.1, the API's default). */
 export const HISTORY_TURNS = 6;
 

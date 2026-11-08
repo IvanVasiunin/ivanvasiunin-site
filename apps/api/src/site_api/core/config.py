@@ -152,7 +152,11 @@ class Settings(BaseSettings):
     # candidates; RRF fuses them; at most `retrieval_max_per_project` chunks of one project are
     # kept, and the best `retrieval_top_k` go to the answer model. Starting values, tuned by evals.
     retrieval_candidates: int = Field(default=20, ge=1, le=200)
-    retrieval_top_k: int = Field(default=6, ge=1, le=50)
+    # 8 since 2026-11-08: broad questions (all his jobs, all his projects) need more than 6.
+    retrieval_top_k: int = Field(default=8, ge=1, le=50)
+    # The ceiling when the router wrote several search queries (a job description, a question in
+    # several parts): each query brings up to `retrieval_top_k`, merged in turns (rag/retrieval.py).
+    retrieval_top_k_multi: int = Field(default=20, ge=1, le=60)
     retrieval_max_per_project: int = Field(default=2, ge=1, le=50)
     # The RRF constant: 60 is the value of the original paper (Cormack et al., 2009); a larger k
     # flattens the difference between ranks.
@@ -160,12 +164,15 @@ class Settings(BaseSettings):
     # A chunk scoring below this share of the best one is dropped: the top_k slots are a ceiling,
     # not a quota (Ivan, 2026-11-07: a dog question also "read" two weak spec sections). Relative,
     # not absolute: a question in Russian finds nothing by full text, so every score is low.
-    retrieval_min_relative_score: float = Field(default=0.6, ge=0, le=1)
+    # 0.5 since 2026-11-08 (was 0.6): the router's English search query lets both searches work,
+    # and 0.6 left two chunks for "What projects has Ivan built?".
+    retrieval_min_relative_score: float = Field(default=0.5, ge=0, le=1)
     # Evals (ROADMAP 4.5, docs/TESTING.md): a cheap judge model scores in-scope answers
     # (faithfulness to the sources, relevancy to the question); a run below any threshold fails.
     eval_judge_provider: ModelProvider = "openai"
     eval_judge_model: str = Field(default="gpt-6-luna", min_length=1)
-    eval_judge_max_output_tokens: int = Field(default=1500, ge=100, le=8000)
+    # 3000 since 2026-11-08 (was 1500): a job-fit answer has many statements to list and judge.
+    eval_judge_max_output_tokens: int = Field(default=3000, ge=100, le=8000)
     eval_judge_timeout_s: float = Field(default=60.0, gt=0, le=300)
     eval_judge_max_retries: int = Field(default=1, ge=0, le=3)
     eval_judge_reasoning_effort: Literal["none", "low", "medium", "high"] = "none"
@@ -202,11 +209,12 @@ class Settings(BaseSettings):
 
     # The router (ROADMAP 4.2, ADR-0004 layer 2): a cheap, fast model that sorts every question
     # into one of the SPEC §5 classes and detects its language, before any retrieval or answer.
-    # Its output is a few tokens of structured data, so the cap is small.
+    # Its output is a few tokens of structured data plus a one-line search query (about 40 tokens),
+    # so the cap stays small.
     router_provider: ModelProvider = "openai"
     router_model: str = Field(default="gpt-6-luna", min_length=1)
     router_reasoning_effort: Literal["none", "low", "medium", "high"] = "none"
-    router_max_output_tokens: int = Field(default=60, ge=20, le=500)
+    router_max_output_tokens: int = Field(default=150, ge=20, le=500)
     router_timeout_s: float = Field(default=10.0, gt=0, le=60)
     router_max_retries: int = Field(default=1, ge=0, le=3)
     # Earlier turns the router sees, so a follow-up ("and his skills?") keeps its topic.
@@ -229,9 +237,12 @@ class Settings(BaseSettings):
     # Chat request limits (SPEC §4.1). A longer question is rejected with `input_too_long`; only
     # the last `history_max_turns` turns of the client's history reach the model, each cut to
     # `history_turn_max_chars` (the history is untrusted: without a cap it multiplies the cost).
-    max_question_chars: int = Field(default=500, ge=1, le=4000)
+    # 5000 since 2026-11-08 (was 500): a visitor pastes a whole job description and asks whether
+    # Ivan fits (SPEC §5.7). About 1,300 tokens: roughly $0.0015 more on the answer model.
+    max_question_chars: int = Field(default=5000, ge=1, le=10000)
     history_max_turns: int = Field(default=6, ge=0, le=40)
-    history_turn_max_chars: int = Field(default=2000, ge=1, le=4000)
+    # As long as a question, so a pasted job description survives into the follow-up questions.
+    history_turn_max_chars: int = Field(default=5000, ge=1, le=10000)
     # The longest one answer may take, retrieval included; then it ends with `timeout`. The model's
     # own timeout covers one request only, and a slowly trickling stream could last much longer.
     chat_total_timeout_s: float = Field(default=60.0, gt=0, le=300)

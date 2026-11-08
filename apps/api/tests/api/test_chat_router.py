@@ -7,9 +7,13 @@ import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from site_api.graph.router import (
+    MAX_SEARCH_QUERIES,
+    MAX_SEARCH_QUERY_CHARS,
     RouterDecision,
     RouterError,
     build_router_messages,
+    clean_search_queries,
+    clean_search_query,
     load_router_prompt,
     normalize_language,
     route_question,
@@ -23,10 +27,12 @@ from .chat_fakes import FakeRouterModel, routing
 def test_the_router_prompt_is_the_versioned_file_in_the_package() -> None:
     prompt = load_router_prompt()
 
-    assert prompt == (files("site_api.prompts") / "router.v2.md").read_text(encoding="utf-8")
+    assert prompt == (files("site_api.prompts") / "router.v6.md").read_text(encoding="utf-8")
     # Every class of SPEC §5.1 is described.
-    for route in ("about_ivan", "greeting", "off_topic", "injection"):
+    for route in ("about_ivan", "greeting", "off_topic", "injection", "rude"):
         assert f"`{route}`" in prompt
+    # And the search query retrieval uses (SPEC §5.1, 2026-11-08).
+    assert "`search_queries`" in prompt
 
 
 CV_DIR = Path(__file__).resolve().parents[4] / "apps" / "web" / "src" / "content" / "cv"
@@ -89,13 +95,39 @@ async def test_the_decision_and_the_token_counts_come_back() -> None:
     assert (routed.usage.input_tokens, routed.usage.output_tokens) == (400, 12)
 
 
+async def test_the_search_queries_come_back_cleaned() -> None:
+    model = routing("about_ivan", "uk", ["  Ivan's current job\n at   BrainRocket ", " ", ""])
+
+    routed = await route_question(model, [HumanMessage("що Іван робить на роботі?")])
+
+    assert routed.search_queries == ("Ivan's current job at BrainRocket",)
+
+
+def test_repeated_and_surplus_queries_are_dropped() -> None:
+    # Every query costs an embedding and two searches: their number is capped too.
+    queries = ["Ivan's skills", "Ivan's  skills", *(f"query {n}" for n in range(10))]
+
+    cleaned = clean_search_queries(queries)
+
+    assert cleaned[0] == "Ivan's skills"
+    assert cleaned.count("Ivan's skills") == 1
+    assert len(cleaned) == MAX_SEARCH_QUERIES
+
+
+def test_a_runaway_search_query_is_cut() -> None:
+    # Model output from an untrusted question: never longer than a long question.
+    assert len(clean_search_query("word " * 200)) == MAX_SEARCH_QUERY_CHARS
+
+
 async def test_output_that_does_not_parse_raises_instead_of_guessing() -> None:
     with pytest.raises(RouterError):
         await route_question(FakeRouterModel(decision=None), [HumanMessage("Hi")])
 
 
 async def test_the_language_code_is_normalized() -> None:
-    model = FakeRouterModel(decision=RouterDecision(route="about_ivan", language="pt-BR"))
+    model = FakeRouterModel(
+        decision=RouterDecision(route="about_ivan", language="pt-BR", search_queries=[])
+    )
 
     routed = await route_question(model, [HumanMessage("O que o Ivan faz?")])
 

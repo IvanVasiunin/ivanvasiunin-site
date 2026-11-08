@@ -18,6 +18,7 @@ from site_api.core.config import Settings, find_env_file
 from site_api.evals.cases import EvalCase, load_cases
 from site_api.evals.estimate import estimate_run, format_estimate
 from site_api.evals.report import RunReport, build_report, format_report
+from site_api.graph.router import ROUTER_PROMPT_FILE
 from site_api.prompts.answer import SYSTEM_PROMPT_FILE
 
 
@@ -65,11 +66,18 @@ def reports_dir() -> Path:
 
 
 def save_report(report: RunReport, directory: Path) -> Path:
-    """Write the report as JSON, named by the time and the prompt version; return its path."""
+    """Write the report as JSON, named by the time and the prompt version; return its path.
+
+    Both prompt versions are recorded: a router change alone also changes the answers.
+    """
     directory.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H%M%SZ")
     path = directory / f"{stamp}-{Path(SYSTEM_PROMPT_FILE).stem}.json"
-    data = {"prompt": SYSTEM_PROMPT_FILE, **report.to_json()}
+    data = {
+        "prompt": SYSTEM_PROMPT_FILE,
+        "router_prompt": ROUTER_PROMPT_FILE,
+        **report.to_json(),
+    }
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     return path
 

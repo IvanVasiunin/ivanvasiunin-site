@@ -1,8 +1,8 @@
 """Elio's templated answers (SPEC §5.1): what it says without calling the answer model.
 
-Greetings, off-topic questions and injection attempts get a fixed answer in the question's
-language: no retrieval, no answer model, so they cost only the router call (ADR-0004). So do
-questions nothing retrieved is close to (the relevance gate's `no_info`). The texts
+Greetings, off-topic questions, injection attempts and rude messages get a fixed answer in the
+question's language: no retrieval, no answer model, so they cost only the router call (ADR-0004).
+So do questions nothing retrieved is close to (the relevance gate's `no_info`). The texts
 live in versioned YAML files (`templates/<lang>.yaml`), never in code; English is the fallback for
 any language without a file. (This module is not named `templates.py`: a module and a folder of
 the same name side by side would make `import site_api.prompts.templates` ambiguous to a reader.)
@@ -20,7 +20,7 @@ TEMPLATE_LANGUAGES: tuple[str, ...] = ("en", "es", "ru", "uk")
 FALLBACK_LANGUAGE = "en"
 
 # The router classes answered by a template (all but `about_ivan`), and the relevance gate's answer.
-type RouteTemplate = Literal["greeting", "off_topic", "injection"]
+type RouteTemplate = Literal["greeting", "off_topic", "injection", "rude"]
 type TemplateName = RouteTemplate | Literal["no_info"]
 
 
@@ -32,6 +32,8 @@ class Templates(BaseModel):
     greeting: str = Field(min_length=1)
     off_topic: str = Field(min_length=1)
     injection: str = Field(min_length=1)
+    # Insults and crude jokes (SPEC §5.1, 2026-11-08): keep it respectful, offer real topics.
+    rude: str = Field(min_length=1)
     # The relevance gate's answer (SPEC §5.2): nothing retrieved is close enough to answer from.
     no_info: str = Field(min_length=1)
 
@@ -59,6 +61,8 @@ def template_answer(name: TemplateName, language: str) -> str:
             text = templates.off_topic
         case "injection":
             text = templates.injection
+        case "rude":
+            text = templates.rude
         case "no_info":
             text = templates.no_info
     return text.rstrip("\n")

@@ -1,8 +1,19 @@
 """The router: classify a question before anything expensive runs (ROADMAP 4.2, ADR-0004 layer 2).
 
 A cheap model (`gpt-6-luna` by default) reads the question and returns structured output: one of
-the four classes of SPEC §5.1 and the question's language. Only `about_ivan` goes on to retrieval
-and the answer model; the other classes get a localized template.
+the classes of SPEC §5.1, the question's language and, for `about_ivan`, English search queries.
+Only `about_ivan` goes on to retrieval and the answer model; the other classes get a localized
+template.
+
+Why the router writes the search query (SPEC §5.1, 2026-11-08): the knowledge base is English, so a
+question in Ukrainian found almost nothing by full-text search and too little by vector search; a
+follow-up ("and his skills?") means nothing on its own; and a broad question ("Where has he
+worked?") is far from every single chunk. The router already reads the question and the history, so
+rewriting them costs a few output tokens, not another model call.
+
+Why several queries: one query for a whole job description lands on chunks that resemble the
+vacancy "on average" (the summary, the profile) and misses single requirements such as education
+or testing tools. One query per requirement finds each of them (`rag/retrieval.py` merges them).
 
 **Fail closed** (ADR-0004): when the router call fails or its output does not parse, the request
 ends with an error, never with a free-form answer. The caller maps `RouterError` and provider
@@ -25,10 +36,14 @@ from site_api.graph.generate import TokenUsage, token_usage
 from site_api.schemas.chat import ChatTurn, Route
 
 # The prompt in use. New wording goes into a new file (router.v2.md), so evals can compare them.
-ROUTER_PROMPT_FILE = "router.v2.md"
+ROUTER_PROMPT_FILE = "router.v6.md"
 # For an empty or unusable language code (ISO 639-1, sometimes 639-2).
 DEFAULT_LANGUAGE = "en"
 _LANGUAGE_CODE = re.compile(r"[a-z]{2,3}")
+# The longest search query kept; a question may be 500 characters (MAX_QUESTION_CHARS).
+MAX_SEARCH_QUERY_CHARS = 300
+# The most search queries kept: one per requirement of a job description, or per part of a question.
+MAX_SEARCH_QUERIES = 8
 
 
 class RouterError(RuntimeError):
@@ -52,9 +67,9 @@ _UNUSABLE_OUTPUT: tuple[type[Exception], ...] = (
 
 
 class RouterDecision(BaseModel):
-    """What the router model returns: the class and the language of the latest message.
+    """What the router model returns: the class, the language and the search query.
 
-    Kept to two plain fields: the providers' strict structured output modes accept only simple
+    Kept to plain required fields: the providers' strict structured output modes accept only simple
     schemas (every field required, no extra keys), and fewer output tokens are cheaper and faster.
     """
 
@@ -62,14 +77,24 @@ class RouterDecision(BaseModel):
     language: str = Field(
         description="ISO 639-1 code of the language the latest message is written in, e.g. en."
     )
+    search_queries: list[str] = Field(
+        description=(
+            "For about_ivan: 1 to 8 short standalone search queries in English, one per part or "
+            "requirement of the latest message. For every other class: an empty list."
+        )
+    )
 
 
 @dataclass(frozen=True, slots=True)
 class Routed:
-    """The router's result: the decision (language normalized) and the tokens it cost."""
+    """The router's result: the decision (language normalized) and the tokens it cost.
+
+    `search_queries` is empty when the router gave none; retrieval then searches with the question.
+    """
 
     route: Route
     language: str
+    search_queries: tuple[str, ...]
     usage: TokenUsage
 
 
@@ -121,7 +146,35 @@ async def route_question(model: BaseChatModel, messages: Sequence[BaseMessage]) 
         # A refusal or malformed output: fail closed, never guess a class. The tokens were billed.
         msg = "the router's output did not parse"
         raise RouterError(msg, usage)
-    return Routed(route=parsed.route, language=normalize_language(parsed.language), usage=usage)
+    return Routed(
+        route=parsed.route,
+        language=normalize_language(parsed.language),
+        search_queries=clean_search_queries(parsed.search_queries),
+        usage=usage,
+    )
+
+
+def clean_search_queries(queries: Sequence[str]) -> tuple[str, ...]:
+    """Each query cleaned; blanks and repeats dropped; at most `MAX_SEARCH_QUERIES` of them.
+
+    Model output from an untrusted question: every query costs one embedding and two searches, so
+    their number is capped as well as their length.
+    """
+    kept: list[str] = []
+    for query in queries:
+        cleaned = clean_search_query(query)
+        if cleaned and cleaned not in kept:
+            kept.append(cleaned)
+    return tuple(kept[:MAX_SEARCH_QUERIES])
+
+
+def clean_search_query(query: str) -> str:
+    """The query on one line, without extra spaces, at most `MAX_SEARCH_QUERY_CHARS` long.
+
+    Model output from an untrusted question: it only ever goes to the embedding model and to a
+    parameterized full-text query, but a runaway one must not cost more than a question would.
+    """
+    return " ".join(query.split())[:MAX_SEARCH_QUERY_CHARS]
 
 
 def normalize_language(code: str) -> str:
