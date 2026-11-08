@@ -33,7 +33,7 @@ e2e/                Playwright tests (desktop, iPhone/WebKit, Android/Chromium w
 - Chat island `client:load`, KnowledgeMap `client:media="(min-width: 80rem)"` (desktop only, Canvas 2D, ADR-0012). Islands talk via typed DOM `CustomEvent`s, no global store.
 - Mode switcher is `<nav>` + links with `aria-current="page"`, not ARIA tabs. Mode switching uses native cross-document View Transitions (no `<ClientRouter>`).
 - Mobile chat keyboard: `visualViewport` handling is the primary mechanism (iOS Safari lacks `interactive-widget`).
-- Until the real `/api/chat` exists (ROADMAP 3.8), `astro dev` serves a mocked one (`src/lib/chat/mock/`): the question picks the scenario (`hello`, `google`, `fail`, `limit`, `markdown`, anything else). `CHAT_MOCK=off` disables it. E2E mocks the same scenarios with `page.route`.
+- Until the real `/api/chat` exists (ROADMAP 3.8), `astro dev` serves a mocked one (`src/lib/chat/mock/`): the question picks the scenario (`hello`, `google`, `fail`, `limit`, `markdown`, anything else). `CHAT_MOCK=off` replaces it with a proxy of `/api` to the API running locally (`API_DEV_URL`, default `http://127.0.0.1:8000`), for real answers (docs/TESTING.md §2). E2E mocks the same scenarios with `page.route`.
 - Fonts are self-hosted OFL via the Astro Fonts API; add every asset to `docs/CREDITS.md`.
 - New components: use the `new-ui-component` skill; review with `frontend-reviewer`.
 - Browser checks: Playwright CLI (snapshots to files) rather than an MCP; performance traces via Chrome DevTools MCP.

@@ -2,7 +2,7 @@
 // the real endpoint exists (ROADMAP 3.8). It streams the scenarios of scenarios.ts with realistic
 // pauses. `astro:server:setup` runs only in dev: the build and the e2e preview never include it.
 //
-// Off with CHAT_MOCK=off (once the real API runs locally behind a proxy).
+// Off with CHAT_MOCK=off: astro.config.mjs then forwards /api to the API running locally.
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { AstroIntegration } from 'astro';
 

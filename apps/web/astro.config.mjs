@@ -20,6 +20,17 @@ export default defineConfig({
   site: 'https://ivanvasiunin.com',
   // chatMockIntegration: a mocked /api/chat on `astro dev` only (src/lib/chat/mock/dev-server.ts).
   integrations: [react(), chatMockIntegration()],
+  // CHAT_MOCK=off: `astro dev` forwards /api to the API running on this machine (API_DEV_URL, default
+  // the `fastapi dev` address), so the chat shows Elio's real answers. The browser still talks to one
+  // origin, as behind Caddy in production. Dev server only: the static build has no server.
+  vite: {
+    server: {
+      proxy:
+        process.env.CHAT_MOCK === 'off'
+          ? { '/api': process.env.API_DEV_URL ?? 'http://127.0.0.1:8000' }
+          : {},
+    },
+  },
   // The dev toolbar is dev-only (never in the build); disabled because it overlaps the page bottom
   // during visual review. Accessibility audits run via axe in e2e instead.
   devToolbar: { enabled: false },
