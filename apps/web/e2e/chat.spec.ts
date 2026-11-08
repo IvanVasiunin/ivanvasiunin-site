@@ -1,5 +1,6 @@
 import type { Page, Route } from '@playwright/test';
 
+import type { ChatEvent, SourceItem } from '../src/lib/api/types';
 import { mockScenario, toSse } from '../src/lib/chat/mock/scenarios';
 import { expect, expectNoSeriousA11yViolations, test } from './fixtures';
 
@@ -191,6 +192,55 @@ test.describe('chat', () => {
 
     await expect(page).toHaveURL(/\/cv#job-brainrocket$/);
     await expect(page.locator('#job-brainrocket')).toBeInViewport();
+  });
+
+  test('many sources show two rows, the rest behind "Show N more"', async ({ page }) => {
+    // A vacancy brings up to 20 sources (Ivan, 2026-11-08: they filled the screen).
+    const items = Array.from({ length: 12 }, (_, index): SourceItem => ({
+      chunk_id: `cv:job:${String(index)}`,
+      score: 0.9 - index * 0.01,
+      source_type: 'cv',
+      title: `CV — A job with a fairly long title ${String(index)}`,
+      section: 'Job',
+      url: null,
+      snippet: 'Text',
+    }));
+    const events: ChatEvent[] = [
+      { type: 'route', route: 'about_ivan', language: 'en' },
+      { type: 'sources', items },
+      { type: 'token', text: 'Ivan fits most requirements.' },
+      { type: 'usage', nodes: [], total_ms: 900, estimated_cost_usd: 0.004 },
+      { type: 'done', message_id: 'm-many', finish_reason: 'stop' },
+    ];
+    await page.route(CHAT, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: events.map((event) => toSse(event)).join(''),
+      }),
+    );
+    await page.goto('/');
+    await ask(page, 'Would Ivan fit this vacancy?');
+
+    const sources = page.getByRole('region', { name: 'Sources' });
+    const more = sources.getByRole('button', { name: /^Show \d+ more$/ });
+    await expect(more).toBeVisible();
+    const hidden = Number((await more.textContent())?.match(/\d+/)?.[0]);
+    const shown = sources.getByRole('listitem');
+    await expect(shown).toHaveCount(12 - hidden);
+    // Two rows: every shown chip starts on one of two lines.
+    const tops = await shown.evaluateAll((chips: HTMLElement[]): number[] =>
+      chips.map((chip) => chip.offsetTop),
+    );
+    expect(new Set(tops).size).toBe(2);
+
+    await more.click();
+    await expect(shown).toHaveCount(12);
+    await expect(sources.getByRole('button', { name: 'Show fewer' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    await expectNoSeriousA11yViolations(page);
   });
 
   test('a topic card fills the input with its question and sends nothing', async ({ page }) => {

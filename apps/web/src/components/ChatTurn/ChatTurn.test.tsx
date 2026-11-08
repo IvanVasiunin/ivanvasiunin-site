@@ -103,6 +103,86 @@ describe('ChatTurn', () => {
       expect(screen.queryByRole('list', { name: 'Elio is preparing the answer' })).toBeNull();
       expect(screen.queryByRole('button', { name: 'Copy' })).toBeNull();
     });
+
+    // Sources arrive before the first token; listing them early made the card jump (Ivan, 2026-11-08).
+    it('lists the sources only once the answer is written', () => {
+      const props = { canRetry: false, onRetry: vi.fn(), onAnnounce: vi.fn() };
+      const { rerender } = render(
+        <ChatTurn
+          turn={turnWith({ status: 'pending', step: 'writing', sources: SOURCES })}
+          {...props}
+        />,
+      );
+      expect(screen.queryByRole('region', { name: 'Sources' })).toBeNull();
+
+      rerender(
+        <ChatTurn
+          turn={turnWith({ status: 'streaming', answer: 'Ivan works', sources: SOURCES })}
+          {...props}
+        />,
+      );
+      expect(screen.queryByRole('region', { name: 'Sources' })).toBeNull();
+
+      rerender(
+        <ChatTurn
+          turn={turnWith({ status: 'done', answer: 'Ivan works', sources: SOURCES })}
+          {...props}
+        />,
+      );
+      expect(screen.getByRole('region', { name: 'Sources' })).toBeDefined();
+    });
+  });
+
+  describe('many sources', () => {
+    // jsdom has no layout: each list item reports a top offset as if two chips fit in a row.
+    const offsetTop = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetTop');
+    beforeEach(() => {
+      Object.defineProperty(HTMLElement.prototype, 'offsetTop', {
+        configurable: true,
+        get(this: HTMLElement) {
+          if (this.tagName !== 'LI' || this.parentElement === null) return 0;
+          return Math.floor(Array.from(this.parentElement.children).indexOf(this) / 2) * 52;
+        },
+      });
+    });
+    afterEach(() => {
+      if (offsetTop) Object.defineProperty(HTMLElement.prototype, 'offsetTop', offsetTop);
+    });
+
+    const many: SourceItem[] = Array.from({ length: 6 }, (_, index) => ({
+      chunk_id: `cv:job:${String(index)}`,
+      score: 0.9 - index * 0.01,
+      source_type: 'cv',
+      title: `CV — Job ${String(index)}`,
+      section: 'Job',
+      url: null,
+      snippet: 'Text',
+    }));
+
+    it('shows two rows and offers the rest behind a button', async () => {
+      const user = userEvent.setup();
+      setup({ ...DONE, sources: many });
+
+      const sources = screen.getByRole('region', { name: 'Sources' });
+      expect(within(sources).getAllByRole('listitem')).toHaveLength(4);
+      const more = within(sources).getByRole('button', { name: 'Show 2 more' });
+      expect(more.getAttribute('aria-expanded')).toBe('false');
+
+      await user.click(more);
+
+      expect(within(sources).getAllByRole('listitem')).toHaveLength(6);
+      const fewer = within(sources).getByRole('button', { name: 'Show fewer' });
+      expect(fewer.getAttribute('aria-expanded')).toBe('true');
+      expect(fewer.getAttribute('aria-controls')).toBe(
+        within(sources).getByRole('list').getAttribute('id'),
+      );
+    });
+
+    it('has no button when every source fits', () => {
+      setup({ ...DONE, sources: many.slice(0, 4) });
+
+      expect(screen.queryByRole('button', { name: /more$/ })).toBeNull();
+    });
   });
 
   describe('default (a finished answer)', () => {

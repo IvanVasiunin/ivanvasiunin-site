@@ -27,11 +27,13 @@
     }
   }
 
+  // The same size and line height as the answer (Ivan, 2026-11-08: they looked inconsistent side by
+  // side); the families differ, so the two speakers still read as two voices.
   .chat-turn__question-text {
     margin: 0;
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-medium);
-    line-height: var(--line-height-snug);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-prose);
     overflow-wrap: anywhere;
     white-space: pre-line; // keeps the line breaks typed with Shift+Enter
   }
@@ -124,7 +126,10 @@
     list-style: none;
   }
 
-  // A source is a small tinted pill (::before); the item keeps the 44 px touch height.
+  // A source is a small tinted pill (::before); the item keeps the 44 px touch height. The block
+  // padding keeps a long title that wraps inside the tint (Ivan, 2026-11-08: the second line of
+  // "Experience notes — Technical Specialist — PE «Computer» (…)" hung below the pill), and the
+  // radius turns the pill into a rounded box then.
   .chat-turn__source {
     position: relative;
     isolation: isolate;
@@ -132,15 +137,23 @@
     gap: var(--space-xs);
     align-items: center;
     min-block-size: var(--size-touch);
+    padding-block: calc(var(--space-xs) + var(--space-2xs));
     padding-inline: var(--space-xs) var(--space-sm);
     font-size: var(--font-size-sm);
+    line-height: var(--line-height-snug);
     color: var(--color-text-muted);
+
+    // Past the first rows until "Show N more" (ChatTurn.tsx): `display` above would beat the
+    // browser's own `[hidden]` rule.
+    &[hidden] {
+      display: none;
+    }
 
     &::before {
       position: absolute;
       inset: var(--space-xs) 0;
       z-index: var(--z-below);
-      border-radius: var(--radius-pill);
+      border-radius: var(--radius-chip-pill);
       background-color: var(--color-highlight-soft);
       content: '';
     }
@@ -269,6 +282,11 @@
       background-color: var(--color-highlight-strong);
       opacity: 1;
     }
+  }
+
+  // "Show N more" under the first rows of sources: left-aligned, not stretched across the card.
+  .chat-turn__action--more {
+    align-self: flex-start;
   }
 
   // The time and cost next to "Under the hood": part of its name, quieter than the label.

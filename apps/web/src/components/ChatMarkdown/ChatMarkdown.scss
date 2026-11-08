@@ -5,7 +5,7 @@
   .chat-markdown {
     max-inline-size: var(--measure);
     font-family: var(--font-serif);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md); // the question's size (Ivan, 2026-11-08; was lg)
     line-height: var(--line-height-prose);
     overflow-wrap: anywhere;
 

@@ -3,7 +3,7 @@
 //
 // The question is the turn's heading (h2), so a screen reader can jump between questions; "Sources"
 // is an h3 under it.
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import type { SourceItem } from '../../lib/api/types';
 import { errorText } from '../../lib/chat/messages';
@@ -13,6 +13,8 @@ import { ChatMarkdown } from '../ChatMarkdown';
 import { ElioAvatar } from '../ElioAvatar';
 import { ThinkingSteps } from '../ThinkingSteps';
 import { type HoodState, UnderTheHood, usageSummary } from '../UnderTheHood';
+
+import { firstHiddenIndex } from './sourceRows';
 
 import './ChatTurn.scss';
 
@@ -130,19 +132,55 @@ function Sources({
     };
   }, []);
 
+  // The first rows only, until "Show N more" (sourceRows.ts). Measured with every item shown, then the
+  // rest are hidden (`hidden`: out of the layout, the Tab order and the accessibility tree). A new
+  // width measures again, so a rotation or a resize re-cuts the list.
+  const listId = useId();
+  const [expanded, setExpanded] = useState(false);
+  const [cut, setCut] = useState<number | null>(null);
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list || expanded) return;
+    const tops = Array.from(list.children, (child) =>
+      child instanceof HTMLElement ? child.offsetTop : 0,
+    );
+    setCut(firstHiddenIndex(tops));
+    // `cut` is not a dependency: measuring needs every item shown, which a reset of `cut` gives.
+  }, [items, width, expanded]);
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      const next = Math.round(entry?.contentRect.width ?? 0);
+      setWidth((previous) => {
+        if (previous === next) return previous;
+        setCut(null);
+        return next;
+      });
+    });
+    observer.observe(list);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  const hiddenFrom = expanded ? null : cut;
+  const hiddenCount = cut === null ? 0 : items.length - cut;
+
   return (
     <section className="chat-turn__sources" aria-labelledby={headingId}>
       <h3 className="chat-turn__sources-title" id={headingId}>
         Sources
       </h3>
-      <ul className="chat-turn__source-list" ref={listRef}>
-        {items.map((item) => (
+      <ul className="chat-turn__source-list" id={listId} ref={listRef}>
+        {items.map((item, index) => (
           <li
             key={item.chunk_id}
             className="chat-turn__source"
             data-source={item.source_type}
             data-chunk={item.chunk_id}
             data-linked={linked === item.chunk_id ? '' : undefined}
+            hidden={hiddenFrom !== null && index >= hiddenFrom}
           >
             <span className="chat-turn__source-dot" aria-hidden="true" />
             {item.url === null ? (
@@ -157,6 +195,19 @@ function Sources({
           </li>
         ))}
       </ul>
+      {hiddenCount > 0 && (
+        <button
+          className="chat-turn__action chat-turn__action--more"
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={listId}
+          onClick={() => {
+            setExpanded(!expanded);
+          }}
+        >
+          {expanded ? 'Show fewer' : `Show ${String(hiddenCount)} more`}
+        </button>
+      )}
     </section>
   );
 }
@@ -291,7 +342,11 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
             </div>
           )}
 
-          {turn.sources.length > 0 && <Sources items={turn.sources} headingId={`${id}-sources`} />}
+          {/* After the answer, not while it is written (Ivan, 2026-11-08): sources arrive before the
+          first token, and a list growing under the thinking steps made the card jump. */}
+          {!active && turn.sources.length > 0 && (
+            <Sources items={turn.sources} headingId={`${id}-sources`} />
+          )}
 
           {(showCopy || showRetry || usage !== null || turn.status === 'stopped') && (
             <div className="chat-turn__actions">
