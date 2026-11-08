@@ -114,6 +114,7 @@ All commands run from the repository root.
 - Visual snapshots in CI: the `visual` job only warns until the Linux baselines are created with `e2e:visual:linux --update-snapshots` (needs Docker; ROADMAP 1.8).
 - Mode switch view transitions (ADR-0009). Under CDP CPU + network throttling, Chromium reveals the new page without a view transition even though it loads in about 1.4 s (cause UNVERIFIED), so the throttled Android profile skips the "runs a transition" test.
 - The prerender → activation path. Playwright init scripts do not run in prerendered pages, so it is not observed.
+- Two view transitions in a row on WebKit. Playwright's WebKit build (1.64.1, Windows) crashes on the second cross-document view transition (/ → /cv → /) about one run in three, even without any `view-transition-name`; the keyboard test of the mode switch runs on WebKit with reduced motion (2026-11-08). Whether real iOS Safari is affected is checked on a device after launch.
 
 Check on a real Android Chrome and on iOS Safari 18.2+.
 

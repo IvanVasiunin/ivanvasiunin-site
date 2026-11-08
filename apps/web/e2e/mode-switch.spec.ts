@@ -30,6 +30,12 @@ test('the keyboard switches modes: Tab reaches the links, Enter follows them', a
   page,
   browserName,
 }) => {
+  // Playwright's WebKit build (1.64.1, Windows) crashes ("Target crashed") on the second
+  // cross-document view transition in a row, / → /cv → /, about one run in three; it does so even
+  // with every view-transition-name removed, and never with reduced motion (no transition). This
+  // test is about the keyboard, so WebKit runs it without the transition (Ivan, 2026-11-08); the
+  // transition itself has its own test below. Real iOS Safari is checked after launch (ROADMAP 7.5).
+  if (browserName === 'webkit') await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
 
   // In the DOM (and so in the Tab order) the switch comes right after the brand link.
