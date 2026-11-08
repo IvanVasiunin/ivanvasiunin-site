@@ -12,13 +12,24 @@ Ivan Vasiunin is a Senior Markup Developer with nearly 10 years of commercial ex
 
 In his current role at BrainRocket he works on iGaming platforms and does more than feature development: he reviews code, mentors and onboards developers, investigates complex UI and performance issues, and helps improve UI quality and development workflows. He enjoys solving complex UI challenges and sharing knowledge with teammates.
 
-Ivan is currently transitioning into AI Engineering. He has completed a full AI Engineer training course, and this website is his first AI project.
+Ivan is growing in AI Engineering alongside his frontend work. He has completed a full AI Engineer training course, and this website is his first AI project.
 
 **Languages:** Ukrainian (native), Russian (fluent), English (professional working), Polish (limited working), Spanish (limited working).
 
 **Top skills:** HTML, CSS, JavaScript, performance tuning, mentoring.
 
-**Job title.** His official title at BrainRocket is Senior Markup Developer | UI Engineering. In his CV he presents himself as a Senior Frontend Developer transitioning into AI Engineering, because "frontend developer" describes his overall profile more clearly to recruiters.
+**Job title.** His official title at BrainRocket is Senior Markup Developer | UI Engineering. In his CV he presents himself as a Senior Frontend Developer who is growing in AI Engineering, because "frontend developer" describes his overall profile more clearly to recruiters.
+
+## Career at a glance
+
+Ivan's jobs, most recent first:
+
+- **BrainRocket** — Senior Markup Developer | UI Engineering (Nov 2024 – present, full-time): user interfaces for iGaming platforms; code review, mentoring and onboarding, UI performance.
+- **University of educational medicine** — Frontend Developer (Jan 2024 – Oct 2024, part-time): landing pages for events and React components for a teachers' dashboard.
+- **Liketelecom** — Frontend Developer (Jun 2016 – Oct 2024, his main full-time job): landing pages, scripts that automated technical support, and NumbersValidator, combined with technical support and operations.
+- **Own websites** — Webmaster (Sep 2019 – Mar 2022, alongside his main job): two WordPress information websites with a small team of copywriters.
+- **Digital Web** — Web Developer (Jan 2019 – Jun 2019, part-time): business websites on MODX.
+- **PE «Computer»** — Technical Specialist (Oct 2015 – Jun 2016): his first job, maintaining accounting software; not a development role.
 
 ## Skills
 
@@ -198,6 +209,15 @@ Ivan's first job after university: installing, configuring and maintaining accou
 
 ## Projects
 
+### Projects at a glance
+
+Ivan's projects, most important first:
+
+1. **This website** — his main current project and his first AI project: the RAG assistant Elio and a text CV.
+2. **NumbersValidator** — a production tool he built at Liketelecom in 2023 and published on his GitHub (a public project, not under NDA); clients used it for about six months; it is no longer in use.
+3. **Test tasks for job applications** — two React apps.
+4. **Course capstones and study projects** — React, Next.js, TypeScript and more, built while learning.
+
 ### NumbersValidator — production tool
 - **Link:** https://github.com/IvanVasiunin/NumbersValidator
 - **Built:** March–April 2023.
@@ -249,4 +269,6 @@ Earlier small exercises (a simple calculator, registration forms and Git labs) a
 
 ## This website
 
-Ivan's first AI project and part of his transition from frontend development to AI Engineering. It combines a RAG-based AI assistant that answers questions about him with a text CV. The site's own documentation (spec, architecture and decision records) describes how it is built and why.
+Ivan's first AI project and part of his growth in AI Engineering. It combines a RAG-based AI assistant that answers questions about him with a text CV. The site's own documentation (spec, architecture and decision records) describes how it is built and why.
+
+**How the site is tested:** unit and component tests (Vitest, pytest); end-to-end tests with Playwright in desktop Chrome and on emulated iPhone (Safari's WebKit engine) and Android phones; automated accessibility checks (axe) in light and dark themes; visual regression screenshots; Lighthouse performance budgets; and evaluations of Elio's answers with an LLM judge (DeepEval).
