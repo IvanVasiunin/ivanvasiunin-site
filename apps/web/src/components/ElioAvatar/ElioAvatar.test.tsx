@@ -72,6 +72,12 @@ describe('ElioAvatar', () => {
     expect(svgOf(container).hasAttribute('data-look')).toBe(false);
   });
 
+  it('the xl size marks the root, for the privacy page speaker', () => {
+    const { container } = render(<ElioAvatar size="xl" live named={false} />);
+
+    expect(container.firstElementChild?.getAttribute('data-size')).toBe('xl');
+  });
+
   it('in the greeting: unnamed (the heading says it), live, and thinking while busy', () => {
     const { container } = render(<ElioAvatar size="lg" live active named={false} />);
 

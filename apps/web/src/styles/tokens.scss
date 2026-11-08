@@ -158,6 +158,7 @@
   // Height of a floating bar (the header bar, the mode switch below `md`): a touch-size control inside
   // the bar's padding and border. The page reserves this space (BaseLayout.scss, scroll-padding).
   --size-chat: 46rem; // the chat column: a prose measure plus the question's rule and padding
+  --size-avatar-xl: 7rem; // Elio speaking on the privacy page (PrivacyPromises)
   --size-avatar-lg: 3.5rem; // Elio's avatar in the greeting
   --size-avatar-sm: 2rem; // Elio's avatar next to an answer
   --size-composer-max: 10rem; // the chat input grows with its text up to about six lines
@@ -203,6 +204,11 @@
   // Accent washes for icon-control highlights (hover: soft, pressed: strong); follow the theme's accent.
   --color-highlight-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
   --color-highlight-strong: color-mix(in srgb, var(--color-accent) 26%, transparent);
+
+  // Elio's speech bubble on the privacy page (PrivacyPromises): a faint accent tint on the surface and
+  // a soft accent hairline; both follow the theme's accent.
+  --color-bubble: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  --color-bubble-border: color-mix(in srgb, var(--color-accent) 35%, transparent);
 
   // Elio's robot avatar (components/ElioAvatar): polished metal with a lavender tint, a dark glass
   // visor and teal lights. An object with its own material, the same in both themes.

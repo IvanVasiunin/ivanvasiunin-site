@@ -1,5 +1,5 @@
 {
-  "_comment": "Shared masking cases: services/masking.py (tests/api/test_masking.py) and the privacy page's in-browser demo (apps/web/src/lib/privacy/mask.test.ts) must give the same result for each. Phone-shaped texts are templates: every N becomes 0 at runtime (gitleaks blocks phone-shaped literals).",
+  "_comment": "Masking cases for services/masking.py (tests/api/test_masking.py). The privacy page's in-browser demo that also used them was removed on 2026-11-08 (Ivan chose another side card). Phone-shaped texts are templates: every N becomes 0 at runtime (gitleaks blocks phone-shaped literals).",
   "cases": [
     ["Write to jane.doe+cv@example.co.uk please", "Write to [email] please"],
     ["See https://example.com/path?q=1 for more", "See [url] for more"],

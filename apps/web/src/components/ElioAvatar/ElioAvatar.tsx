@@ -10,8 +10,8 @@ import { followPointer } from './lookAt';
 import './ElioAvatar.scss';
 
 export interface ElioAvatarProps {
-  /** `lg`: the greeting; `sm`: next to an answer. */
-  readonly size?: 'lg' | 'sm';
+  /** `xl`: the privacy page's speaker; `lg`: the greeting; `sm`: next to an answer. */
+  readonly size?: 'xl' | 'lg' | 'sm';
   /** Follows the mouse and moves (the greeting); otherwise a still picture. */
   readonly live?: boolean;
   /** Elio is preparing an answer: on a live avatar the thinking light sweeps the visor. */

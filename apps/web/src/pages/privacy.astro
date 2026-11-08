@@ -5,10 +5,11 @@
 // services/limits.py (IP addresses in memory only), src/lib/chat (session storage). Wording
 // approved by Ivan on 2026-11-05 (ROADMAP 4.7: "C → I review"); a change to any of those files
 // that changes a fact here changes this page too. Tests: e2e/privacy.spec.ts.
-// The side card (PrivacyDemo, Ivan, 2026-11-07) shows the masking live and the key facts at a glance.
+// The side card (PrivacyPromises, Ivan, 2026-11-08) puts the key promises in Elio's voice, with four
+// facts at a glance.
 import PageProse from '../components/PageProse/PageProse.astro';
 import PageWithAside from '../components/PageWithAside/PageWithAside.astro';
-import PrivacyDemo from '../components/PrivacyDemo/PrivacyDemo.astro';
+import PrivacyPromises from '../components/PrivacyPromises/PrivacyPromises.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const CONTACT_EMAIL = 'ivanvasyunin@gmail.com';
@@ -20,7 +21,7 @@ const UPDATED = '2026-11-05';
   title="Privacy — Ivan Vasiunin"
   description="What happens to your questions to Elio, what is stored, for how long, and what is not."
 >
-  <PageWithAside label="Masking demo and key facts">
+  <PageWithAside label="Elio’s promises and key facts">
     <PageProse>
       <h1>Privacy</h1>
       <p>
@@ -94,6 +95,6 @@ const UPDATED = '2026-11-05';
         Last updated: <time datetime={UPDATED}>{UPDATED}</time>.
       </p>
     </PageProse>
-    <PrivacyDemo slot="aside" retentionDays={RETENTION_DAYS} />
+    <PrivacyPromises slot="aside" retentionDays={RETENTION_DAYS} />
   </PageWithAside>
 </BaseLayout>

@@ -4,6 +4,10 @@
 @layer components {
   .page-with-aside {
     display: grid;
+
+    // One column that never grows past the page: a long word (an email address) or large text
+    // settings must wrap, not push the page sideways.
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-2xl);
 
     // The page's main area is a flex column that does not stretch its children (BaseLayout).
@@ -21,9 +25,12 @@
 
     // Below the sticky header, with the same gap the page keeps for anchored headings (base.scss).
     // Only in a window tall enough for the whole aside: in a short one (a laptop at 150 %) a sticky
-    // aside would hide its bottom, and scrolling it inside would clip the card's glow.
+    // aside would hide its bottom, and scrolling it inside would clip the card's glow. The privacy
+    // card is about 37rem tall plus the header offset (about 45rem in all), so a browser window of
+    // 46rem (736 px) is enough: most laptop windows qualify. A very long question in the demo makes the
+    // card taller; its bottom then shows once the text column ends, nothing is cut off for good.
     @include mq(wide) {
-      @media (height >= 56rem) {
+      @media (height >= 46rem) {
         position: sticky;
         inset-block-start: calc(var(--size-bar) + var(--space-xl));
       }

@@ -46,38 +46,91 @@ test('the chat disclosure leads to the notice', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Privacy' })).toBeVisible();
 });
 
-// The side card (PrivacyDemo, Ivan, 2026-11-07): masking runs in the browser on what the visitor
-// types, with the server's patterns (lib/privacy/mask.ts), and nothing leaves the page.
-test('the masking demo shows what the server keeps and sends nothing', async ({ page }) => {
-  const requests: string[] = [];
-  page.on('request', (request) => requests.push(request.url()));
+// The side card (PrivacyPromises, Ivan, 2026-11-08): Elio says the key promises one at a time.
+// The turning itself is unit-tested (components/PrivacyPromises/promises.test.ts).
+const CARD = 'Elio’s promises and key facts';
+
+test('Elio’s card shows one promise at a time; the dots and Pause control it', async ({ page }) => {
   await page.goto('/privacy');
-  await page.waitForLoadState('networkidle');
-  // Only what typing sends counts: the page's own loading is done.
-  requests.length = 0;
+  const card = page.getByRole('complementary', { name: CARD });
+  const promises = card.getByRole('list', { name: 'Elio’s promises' }).getByRole('listitem');
+  await expect(promises).toHaveCount(5);
 
-  const demo = page.getByRole('complementary', { name: 'Masking demo and key facts' });
-  await expect(demo.getByRole('heading', { name: 'See what the server keeps' })).toBeVisible();
-  const input = demo.getByRole('textbox', { name: 'A question to Elio' });
-  await expect(input).toBeEditable();
+  await card.getByRole('button', { name: 'Promise 3 of 5' }).click();
+  await expect(promises.nth(2)).toHaveCSS('opacity', '1');
+  await expect(promises.nth(0)).toHaveCSS('opacity', '0');
 
-  await input.fill('Write to me@site.dev or t.me/someone, I am Bob');
-
-  await expect(demo.getByText('Write to [email] or [url] I am Bob')).toBeVisible();
-  // Screen readers hear the result once typing pauses, not on every key.
-  await expect(demo.getByRole('status')).toHaveText('Kept: Write to [email] or [url] I am Bob');
-  expect(requests).toEqual([]);
+  const pause = card.getByRole('button', { name: 'Pause the promises' });
+  await pause.click();
+  await expect(card.getByRole('button', { name: 'Play the promises' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(card.getByText('Memory only', { exact: true })).toBeVisible();
 });
 
-test('without JavaScript the demo is a worked example', async ({ browser }) => {
+test('with reduced motion the promises start paused', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/privacy');
+
+  await expect(
+    page
+      .getByRole('complementary', { name: CARD })
+      .getByRole('button', { name: 'Play the promises' }),
+  ).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('without JavaScript the card shows the first promise and no controls', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto('/privacy');
 
-  const input = page.getByRole('textbox', { name: 'A question to Elio' });
-  await expect(input).not.toBeEditable();
-  await expect(
-    page.getByText("Hi! I'm Anna ([email], [url]). Which stack does Ivan use?"),
-  ).toBeVisible();
+  const card = page.getByRole('complementary', { name: CARD });
+  await expect(card.getByText('Your IP address stays in the server’s memory only')).toBeVisible();
+  await expect(card.getByRole('button')).toHaveCount(0);
   await context.close();
+});
+
+test.describe('layout', () => {
+  // Impeccable audit, 2026-11-08: on a laptop screen the demo card sat at the top while the text ran
+  // on below it, leaving an empty column. The card now fits and stays in view as the text scrolls.
+  test('the demo card stays in view on a laptop-height window', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'two columns are a desktop layout');
+    await page.setViewportSize({ width: 1440, height: 760 });
+    await page.goto('/privacy');
+    const aside = page.getByRole('complementary', { name: CARD });
+    await expect(aside).toHaveCSS('position', 'sticky');
+
+    await page.mouse.wheel(0, 400);
+    await expect
+      .poll(async () => (await aside.boundingBox())?.y ?? 0, { timeout: 5_000 })
+      .toBeGreaterThan(0);
+    const after = await aside.boundingBox();
+    // Still fully inside the window after scrolling: sticky, not scrolled away.
+    expect((after?.y ?? 0) + (after?.height ?? 0)).toBeLessThanOrEqual(760);
+  });
+
+  test('a window too short for the card scrolls it with the page', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'two columns are a desktop layout');
+    await page.setViewportSize({ width: 1440, height: 700 });
+    await page.goto('/privacy');
+
+    await expect(page.getByRole('complementary', { name: CARD })).toHaveCSS('position', 'static');
+  });
+
+  test('large text settings never push the page sideways on a phone', async ({ browser }) => {
+    // The test's style tag is inline CSS, which the page's CSP blocks on purpose.
+    const context = await browser.newContext({ bypassCSP: true });
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto('/privacy');
+    // Twice the text size (the header's own fit at this size is a separate audit item).
+    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+
+    const overflow = await page
+      .getByRole('main')
+      .evaluate((element) => element.scrollWidth - element.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await context.close();
+  });
 });

@@ -19,6 +19,11 @@
       inline-size: var(--size-avatar-lg);
       block-size: var(--size-avatar-lg);
     }
+
+    &[data-size='xl'] {
+      inline-size: var(--size-avatar-xl);
+      block-size: var(--size-avatar-xl);
+    }
   }
 
   .elio-avatar__svg {
