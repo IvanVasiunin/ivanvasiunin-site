@@ -1,0 +1,59 @@
+{
+  "prompt": "system.v2.md",
+  "router_prompt": "router.v3.md",
+  "cases": 3,
+  "router_accuracy": 1.0,
+  "router_accuracy_by_class": {
+    "about_ivan": 1.0
+  },
+  "rule_pass_rate": 1.0,
+  "rule_pass_rate_by_type": {
+    "in_scope": 1.0,
+    "unknown_fact": 1.0
+  },
+  "rule_pass_rate_by_language": {
+    "en": 1.0
+  },
+  "faithfulness": 1.0,
+  "answer_relevancy": 1.0,
+  "cost_usd": 0.0105,
+  "thresholds": [
+    {
+      "metric": "router_accuracy",
+      "value": 1.0,
+      "minimum": 0.9,
+      "passed": true
+    },
+    {
+      "metric": "rule_pass_rate",
+      "value": 1.0,
+      "minimum": 0.85,
+      "passed": true
+    },
+    {
+      "metric": "faithfulness",
+      "value": 1.0,
+      "minimum": 0.8,
+      "passed": true
+    },
+    {
+      "metric": "answer_relevancy",
+      "value": 1.0,
+      "minimum": 0.7,
+      "passed": true
+    },
+    {
+      "metric": "judge_coverage",
+      "value": 1.0,
+      "minimum": 1.0,
+      "passed": true
+    }
+  ],
+  "failures": {},
+  "answers": {
+    "in-scope-numbersvalidator-en": "NumbersValidator is a production web tool Ivan built at Liketelecom to clean, validate and convert phone numbers. It can detect number types and regions and process XLS/XLSX files in batches.\n\nHe built it with JavaScript, google-libphonenumber and PHP. The tool was used by clients for about six months and is no longer in use.",
+    "unknown-google-en": "I don’t have information that Ivan worked at Google. You can ask him directly through the contacts on his CV page.",
+    "in-scope-projects-en": "Ivan’s projects include:\n\n- **This website** — his current project, with a text CV and me, Elio, a RAG assistant.\n- **NumbersValidator** — a production tool for validating phone numbers, built at Liketelecom and published on [GitHub](https://github.com/IvanVasiunin/NumbersValidator).\n- **Two job-application test tasks** — a user-management table and a dashboard with an interactive chart.\n- **Study projects** — including a food-order app, a project-management app and React testing exercises.\n\nYou can explore his repositories on [GitHub](https://github.com/IvanVasiunin)."
+  },
+  "passed": true
+}

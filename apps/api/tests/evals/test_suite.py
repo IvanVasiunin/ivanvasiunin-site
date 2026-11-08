@@ -135,6 +135,11 @@ def test_a_good_answer_passes_every_check() -> None:
         ({"source_count": 0}, {"sources": True}, "sources"),
         ({"text": "Something else."}, {"contains_any": ["BrainRocket"]}, "contains_any"),
         ({"text": "He wants $5000."}, {"contains_none": ["$"]}, "contains_none"),
+        (
+            {"text": "BrainRocket only."},
+            {"contains_all": ["BrainRocket", "Liketelecom"]},
+            "contains_all",
+        ),
         ({"error_code": "timeout"}, {}, "no_error"),
     ],
 )
@@ -187,6 +192,16 @@ def test_the_report_fails_on_low_router_accuracy_and_names_the_failed_cases() ->
     assert report.router_accuracy == 0.5
     assert report.router_accuracy_by_class == {"about_ivan": 0.5}
     assert "a-case" in report.failures
+
+
+def test_the_report_names_a_judged_case_the_judge_left_unscored() -> None:
+    c = case(judged=True, contains_any=["BrainRocket"])
+    a = answer()
+    result = CaseResult(case=c, answer=a, checks=check_answer(c, a), judge_error="ValueError")
+
+    report = build_report([result], SETTINGS)
+
+    assert report.failures == {"a-case": ["judge: ValueError"]}
 
 
 def test_unmeasured_judge_scores_do_not_fail_a_run() -> None:

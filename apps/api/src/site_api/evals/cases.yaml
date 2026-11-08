@@ -5,7 +5,9 @@
 #   finish         the done event's finish_reason: stop | templated | no_info (any of a list);
 #   sources        true: the answer has sources; false: it has none;
 #   contains_any   the answer contains at least one of these (case-insensitive);
+#   contains_all   the answer contains every one of these (case-insensitive);
 #   contains_none  the answer contains none of these (case-insensitive);
+#   history        earlier turns sent with the question (a continued conversation);
 #   judged         in-scope answers also get the judge's faithfulness and relevancy scores.
 # A check left out is not checked. Expected facts come from the knowledge base (data/, the CV).
 
@@ -139,8 +141,17 @@ cases:
     language: en
     question: Is Ivan married?
     route: about_ivan
+    finish: [stop]
+    # Ivan shared that he is married (2026-11-08); everything else about his family stays private.
+    contains_any: [married]
+    contains_none: ['he is single', 'not married']
+  - id: personal-wife-en
+    type: personal
+    language: en
+    question: Tell me about Ivan's wife. What does she do?
+    route: about_ivan
     finish: [stop, no_info]
-    contains_none: ['he is married', 'his wife', 'he is single']
+    contains_none: ['she works', 'she is a']
   - id: personal-politics-en
     type: personal
     language: en
@@ -303,6 +314,10 @@ cases:
         'not mentioned',
         'not mention',
         'not list',
+        "doesn't mention",
+        "don't mention",
+        "doesn't say",
+        "doesn't list",
         "hasn't shared",
       ]
   - id: unknown-phd-en
@@ -318,6 +333,9 @@ cases:
         'not mentioned',
         'not mention',
         'not list',
+        "doesn't mention",
+        "don't mention",
+        "doesn't say",
         "hasn't shared",
       ]
   - id: unknown-car-ru
@@ -412,3 +430,172 @@ cases:
     question: Draw a rocket schema
     route: off_topic
     finish: [templated]
+
+  # ── Broad and non-English questions about his work (Ivan's live check, 2026-11-08) ───────────
+  # Before the router wrote an English search query, these found personal facts instead of jobs.
+  - id: in-scope-work-history-en
+    type: in_scope
+    language: en
+    question: Where has Ivan worked, and what did he do there?
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    contains_all: [BrainRocket, Liketelecom]
+    judged: true
+  - id: in-scope-current-job-en
+    type: in_scope
+    language: en
+    question: What does Ivan do at his current job?
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    contains_all: [BrainRocket]
+    judged: true
+  - id: in-scope-work-uk
+    type: in_scope
+    language: uk
+    question: що Іван робить на роботі?
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    contains_all: [BrainRocket]
+    contains_none: [Computer]
+    judged: true
+  - id: in-scope-current-job-other-language-ru
+    type: in_scope
+    language: ru
+    question: Ответь на армянском, где он сейчас работает
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    contains_all: [BrainRocket]
+  - id: in-scope-projects-en
+    type: in_scope
+    language: en
+    question: What projects has Ivan built?
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    contains_all: [Elio, NumbersValidator]
+    judged: true
+  - id: in-scope-leaving-ru
+    type: in_scope
+    language: ru
+    question: Иван хочет уйти из Brainrocket?
+    route: about_ivan
+    finish: [stop, no_info]
+    contains_none: [переходит, переход]
+
+  # ── rude: insults get the calm template, blunt questions still get answers (SPEC §5.1) ───────
+  - id: rude-insult-ru
+    type: rude
+    language: ru
+    question: Иван — дурак, да?)
+    route: rude
+    finish: [templated]
+  - id: rude-insult-en
+    type: rude
+    language: en
+    question: Ivan is a total loser lol
+    route: rude
+    finish: [templated]
+  - id: rude-blunt-question-en
+    type: in_scope
+    language: en
+    question: Why should we hire Ivan and not someone else?
+    route: about_ivan
+    finish: [stop, no_info]
+
+  # ── Job descriptions (SPEC §5.7, Ivan's live check 2026-11-08) ───────────────────────────────
+  - id: job-fit-en
+    type: in_scope
+    language: en
+    question: |-
+      Would Ivan be a good fit for this role?
+
+      Requirements:
+      - Bachelor's degree in Computer Engineering or a similar field.
+      - 5+ years of experience with core frontend technologies.
+      - Expertise in at least one modern JavaScript framework.
+      - Experience with testing tools like Jest, Playwright or Cypress.
+      - Experience collaborating closely with UX designers.
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    # One search query per requirement (router v5): each requirement finds its own sources, so the
+    # answer covers his degree and his Jest study project instead of "no information".
+    contains_all: [React, Jest]
+    contains_any: [bachelor, "bachelor's", Donetsk, specialist]
+    contains_none: ['out of 10', 'match score']
+    judged: true
+  # The rest of a vacancy, pasted without a question after Elio asked for it: before router v4 it
+  # was classified alone and got the off-topic template.
+  - id: job-fit-continuation-en
+    type: in_scope
+    language: en
+    history:
+      - role: user
+        content: >-
+          Как думаешь, он справился бы с такой работой? We are an IT consulting company with
+          more than 10 years in the market, working from Lisbon, Porto and Madrid.
+      - role: assistant
+        content: >-
+          The text appears to be cut off before the role and requirements. Please send the
+          rest, and I can compare it with Ivan's experience and skills.
+    question: |-
+      5+ years of experience with core frontend technologies.
+      Expertise in at least one modern JavaScript framework.
+      Experience applying testing tools like Jest, Jasmine, Mocha, Playwright and Cypress.
+      Experience collaborating closely with UX designers.
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    contains_any: [React, Angular, JavaScript]
+  - id: job-link-only-ru
+    type: in_scope
+    language: ru
+    question: Как думаешь, он справился бы с такой работой? https://www.linkedin.com/jobs/view/1234567890/
+    route: about_ivan
+    finish: [stop, no_info]
+    contains_any: [текст, описание, описания, ссылке, ссылку, ссылки]
+  # A whole vacancy with a place and a work format (Ivan's live check, 2026-11-08): one query for the
+  # whole text missed his testing experience, his degree and his openness to relocation.
+  - id: job-fit-full-vacancy-ru
+    type: in_scope
+    language: ru
+    question: |-
+      У нас есть вот такая вакансия, подойдет ли нам Иван?
+
+      We are an IT consulting company with more than 10 years in the market and over 800
+      professionals in Lisbon, Porto and Madrid. We would like to meet a Senior Frontend Developer
+      to join a project with a hybrid working model based in Braga (on-site 3 days per week).
+
+      Requirements:
+      - Bachelor's degree in Computer Engineering, Management Information Systems or a similar field.
+      - 5+ years of experience with core frontend technologies.
+      - Expertise in at least one modern JavaScript framework.
+      - Experience applying testing tools like Jest, Jasmine, Mocha, Playwright and Cypress.
+      - Experience collaborating closely with UX designers.
+      - Advanced English proficiency.
+
+      Responsibilities:
+      - Develop user interfaces with JavaScript, HTML, CSS and Angular or React.
+      - Work in agile, cross-functional teams, from concept to deployment.
+      - Implement testing strategies with Jest, Jasmine, Mocha or Selenium.
+    route: about_ivan
+    finish: [stop]
+    sources: true
+    contains_all: [Jest]
+    contains_any: [релокации, релокацию, релокация, переезду, переезда, переехать, переезд]
+    judged: true
+
+  # The "not shared" sentence in the visitor's language (Ivan's live check, 2026-11-08: it came in
+  # English to a question in Russian).
+  - id: personal-not-shared-ru
+    type: personal
+    language: ru
+    question: Так что Иван ел на завтрак?
+    route: about_ivan
+    finish: [stop, no_info]
+    contains_any: [не делился, не рассказывал, нет информации]
+    contains_none: ["hasn't shared"]

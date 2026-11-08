@@ -1,0 +1,70 @@
+{
+  "prompt": "system.v2.md",
+  "router_prompt": "router.v2.md",
+  "cases": 6,
+  "router_accuracy": 1.0,
+  "router_accuracy_by_class": {
+    "about_ivan": 1.0
+  },
+  "rule_pass_rate": 0.5,
+  "rule_pass_rate_by_type": {
+    "in_scope": 0.5
+  },
+  "rule_pass_rate_by_language": {
+    "en": 0.6667,
+    "ru": 0.5,
+    "uk": 0.0
+  },
+  "faithfulness": 1.0,
+  "answer_relevancy": 0.7083,
+  "cost_usd": 0.0109,
+  "thresholds": [
+    {
+      "metric": "router_accuracy",
+      "value": 1.0,
+      "minimum": 0.9,
+      "passed": true
+    },
+    {
+      "metric": "rule_pass_rate",
+      "value": 0.5,
+      "minimum": 0.85,
+      "passed": false
+    },
+    {
+      "metric": "faithfulness",
+      "value": 1.0,
+      "minimum": 0.8,
+      "passed": true
+    },
+    {
+      "metric": "answer_relevancy",
+      "value": 0.7083,
+      "minimum": 0.7,
+      "passed": true
+    },
+    {
+      "metric": "judge_coverage",
+      "value": 1.0,
+      "minimum": 1.0,
+      "passed": true
+    }
+  ],
+  "failures": {
+    "in-scope-work-history-en": [
+      "contains_all: no 'BrainRocket'",
+      "contains_all: no 'Liketelecom'"
+    ],
+    "in-scope-work-uk": ["contains_all: no 'BrainRocket'"],
+    "in-scope-current-job-other-language-ru": ["contains_all: no 'BrainRocket'"]
+  },
+  "answers": {
+    "in-scope-work-history-en": "I don’t have information about Ivan’s employers or what he did at each one. You can ask Ivan directly through the contacts on his CV page.",
+    "in-scope-current-job-en": "Ivan’s official title at BrainRocket is **Senior Markup Developer | UI Engineering**. I don’t have details about his current responsibilities or the product he works on; you can ask Ivan directly through the contacts on his CV page.",
+    "in-scope-work-uk": "Іван вважає завдання виконаним, коли воно дає потрібний бізнесу результат і вже потрапило в продакшн. Серед його робочих завдань були розробка логіки на Angular та оптимізація продуктивності.",
+    "in-scope-current-job-other-language-ru": "Ես տեղեկություն չունեմ այն մասին, թե Իվանն այժմ որտեղ է աշխատում։ Կարող եք անմիջապես հարցնել նրան՝ կապվելով իր CV-ի էջում նշված կոնտակտներով։",
+    "in-scope-projects-en": "Ivan’s work includes:\n\n- **iGaming platforms at BrainRocket:** frontend features and user interfaces, plus work on performance and UI quality.\n- **NumbersValidator:** a production tool.\n- **This website:** Ivan’s first AI project, featuring Elio, a RAG assistant.\n- **GitHub projects:** mostly study projects from online courses, plus two hiring test tasks. You can explore them on his [GitHub profile](https://github.com/IvanVasiunin).",
+    "in-scope-leaving-ru": "У меня нет информации о том, хочет ли Иван уйти из BrainRocket. В его CV он представляет себя как Senior Frontend Developer, переходящего в AI Engineering. О карьерных планах можно спросить Ивана напрямую через контакты на странице CV."
+  },
+  "passed": false
+}

@@ -1,0 +1,61 @@
+{
+  "prompt": "system.v4.md",
+  "router_prompt": "router.v6.md",
+  "cases": 5,
+  "router_accuracy": 1.0,
+  "router_accuracy_by_class": {
+    "about_ivan": 1.0
+  },
+  "rule_pass_rate": 1.0,
+  "rule_pass_rate_by_type": {
+    "in_scope": 1.0
+  },
+  "rule_pass_rate_by_language": {
+    "en": 1.0,
+    "ru": 1.0
+  },
+  "faithfulness": 1.0,
+  "answer_relevancy": 1.0,
+  "cost_usd": 0.0231,
+  "thresholds": [
+    {
+      "metric": "router_accuracy",
+      "value": 1.0,
+      "minimum": 0.9,
+      "passed": true
+    },
+    {
+      "metric": "rule_pass_rate",
+      "value": 1.0,
+      "minimum": 0.85,
+      "passed": true
+    },
+    {
+      "metric": "faithfulness",
+      "value": 1.0,
+      "minimum": 0.8,
+      "passed": true
+    },
+    {
+      "metric": "answer_relevancy",
+      "value": 1.0,
+      "minimum": 0.7,
+      "passed": true
+    },
+    {
+      "metric": "judge_coverage",
+      "value": 1.0,
+      "minimum": 1.0,
+      "passed": true
+    }
+  ],
+  "failures": {},
+  "answers": {
+    "in-scope-work-history-en": "- **BrainRocket** — Senior Markup Developer, November 2024–present. He builds interfaces for iGaming platforms, reviews code, mentors developers and works on UI performance.\n- **University of educational medicine** — Frontend Developer, January–October 2024, part-time. He built event landing pages and React components for a teachers’ dashboard.\n- **Liketelecom** — Frontend Developer, June 2016–October 2024. He built landing pages and support-automation scripts alongside technical support and operations work.\n- **Own websites** — Webmaster, September 2019–March 2022. He ran two WordPress inform",
+    "in-scope-projects-en": "Ivan’s projects include:\n\n- **This website** — his current main project, with a text CV and Elio, his first AI project.\n- **NumbersValidator** — a production phone-number validation tool built with JavaScript and used by clients for about six months.\n- **Job application test tasks** — a user-management table and a dashboard with an interactive chart.\n- **Study projects** — including a food-order app, a project-management app and a React quiz.\n\nHis public projects are on [GitHub](https://github.com/IvanVasiunin).",
+    "job-fit-en": "- **Education:** Ivan has a bachelor’s degree in Telecommunications.\n- **Frontend experience:** He has nearly 10 years of commercial experience, with HTML, CSS/SCSS and JavaScript among his core skills.\n- **JavaScript frameworks:** He works with existing Angular components, primarily on UI and markup rather than application-level Angular logic. His study projects also include React and Next.js.\n- **Testing:** He has used Jest and React Testing Library in study projects. His website has unit, component, end-to-end, accessibility and visual tests, though the sources don’t specify the tools used ",
+    "job-fit-continuation-en": "- **5+ years in frontend:** Ivan has nearly 10 years of commercial experience with core frontend technologies, including HTML, CSS and JavaScript.\n- **Modern framework:** He works with Angular components at BrainRocket and has built React and Next.js study projects. His main strength is UI implementation rather than application-level Angular logic.\n- **Testing:** He used Jest and React Testing Library in a study project. This website has end-to-end tests, but the sources don’t specify the tools used for them or mention experience with Jasmine, Mocha, Playwright or Cypress.\n- **UX collaboration",
+    "job-fit-full-vacancy-ru": "- **Образование:** у Ивана бакалавриат по телекоммуникациям, а не по компьютерной инженерии или информационным системам.\n- **Frontend и фреймворки:** почти 10 лет коммерческого опыта с HTML, CSS и JavaScript. Он работает с компонентами Angular; также у него есть опыт React в учебных проектах.\n- **Тестирование:** в учебном проекте он использовал Jest и React Testing Library; этот сайт покрыт в том числе компонентными и сквозными тестами. Сведений об опыте с Jasmine, Mocha, Playwright, Cypress или Selenium у меня нет.\n- **Команда и процесс:** Иван взаимодействует с дизайнерами и участвует в цикл"
+  },
+  "passed": true
+}

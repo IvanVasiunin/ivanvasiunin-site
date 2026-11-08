@@ -87,6 +87,7 @@ def test_run_prints_the_report_and_saves_it(
     report = json.loads(saved.read_text(encoding="utf-8"))
     assert report["passed"] is True
     assert report["prompt"].startswith("system.v")
+    assert report["router_prompt"].startswith("router.v")
 
 
 def test_a_run_uses_the_selector_event_loop(
