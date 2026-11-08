@@ -11,7 +11,7 @@ brief:
   - I build and review UI for large-scale iGaming platforms across several brands and am the team's go-to person for markup, SCSS and UI architecture.
   - Fixed a homepage performance problem caused by CSS masks and ran performance reviews of supported projects, including layout-shift fixes.
   - Acting team lead for several weeks; the team shipped several important releases on time.
-  - Mentored a trainee to Junior, onboarded three developers; promoted to Senior through a skill-matrix assessment.
+  - Mentored a trainee to Junior, onboarded three developers; promoted to Senior through an internal grade review.
 order: 1
 ---
 
@@ -32,4 +32,4 @@ iGaming platforms: large-scale consumer web products for international markets, 
 - **Performance reviews.** Removed unused code, introduced SCSS mixins for reusable styles, optimized images, minimized masks and filters, and fixed layout shift (CLS) during page load.
 - **Acting team lead.** Led the team for several weeks during the team lead's absence; the team shipped several important releases to production on time.
 - **Mentoring.** Mentored a trainee to Junior level and, over about three months, onboarded three developers who later became a separate team.
-- **Promotion.** Joined as a strong Middle and was promoted to Senior through the company's skill-matrix assessment: a technical interview, a review of a real page and a design-mockup review.
+- **Promotion.** Joined as a strong Middle and was promoted to Senior through an internal grade review: practical tasks and technical questions from two more experienced colleagues.

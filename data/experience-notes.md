@@ -35,12 +35,7 @@ Ivan is currently transitioning into AI Engineering. He has completed a full AI 
 iGaming platforms: large-scale consumer web products for international markets, across several projects and brands.
 
 ### Growth in the role
-Ivan joined BrainRocket as a strong Middle Markup Developer and was promoted to Senior through the company's skill-matrix assessment:
-- a two-hour technical interview with two team leads covering the most difficult HTML, CSS and BEM topics, plus JavaScript and Angular questions;
-- a review of a real page;
-- a design-mockup review, where he had to highlight tricky details and prepare clarifying questions for a potential client.
-
-After the assessment was discussed with the lead responsible for the skill matrix, his grade was raised to Senior.
+Ivan joined BrainRocket as a strong Middle Markup Developer and was promoted to Senior through the company's internal grade review: he completed practical tasks and answered technical questions from two more experienced colleagues, after which his grade was raised to Senior.
 
 His role grew from "receive a task, implement it, fix it" to also analyzing architecture, reviewing code, catching problems before they reach production, proposing improvements, owning performance, onboarding and mentoring others, and influencing the quality of the whole team's work.
 
@@ -94,7 +89,7 @@ Ivan's main strength is UI, markup, CSS and component implementation rather than
 ### Proud of
 - **Mentoring a trainee to Junior.** Mentored a trainee throughout their development journey until they reached Junior Developer level.
 - **Onboarding three developers.** Over about three months he onboarded three developers who first worked in his team and later became a separate team. He helped them understand the architecture, the existing frontend, development approaches and internal processes so they could work independently faster.
-- **Promotion to Senior** through the skill-matrix assessment.
+- **Promotion to Senior** through the internal grade review.
 - **Low-bug code.** Writes code with very few bugs, which noticeably speeds up the development process.
 - **Proactive communication.** Talks with product owners, designers and QA before a problem becomes a ticket, so issues are prevented or fixed quickly.
 
