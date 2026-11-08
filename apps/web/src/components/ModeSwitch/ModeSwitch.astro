@@ -17,9 +17,11 @@ const SHAPES = {
 } as const;
 const PAGE_FOLD = 'M13.75 2.9v3.6c0 .7.55 1.25 1.25 1.25h3.6';
 
+// `short`: what a very narrow screen with large text shows instead (ModeSwitch.scss); the full label
+// stays the link's name for screen readers.
 const MODES = [
-  { href: '/', label: 'AI mode', icon: 'ai' },
-  { href: '/cv', label: 'Text mode', icon: 'text' },
+  { href: '/', label: 'AI mode', short: 'AI', icon: 'ai' },
+  { href: '/cv', label: 'Text mode', short: 'CV', icon: 'text' },
 ] as const;
 
 // Static build: the page's own path decides the current mode (`/cv` and `/cv/` both count).
@@ -29,7 +31,7 @@ const isCurrent = (href: string): boolean => path === href;
 
 <nav class="mode-switch" aria-label="Mode">
   <ul class="mode-switch__list">
-    {MODES.map(({ href, label, icon }) => {
+    {MODES.map(({ href, label, short, icon }) => {
       const current = isCurrent(href);
       return (
         <li class="mode-switch__item">
@@ -92,6 +94,9 @@ const isCurrent = (href: string): boolean => path === href;
                 )}
               </svg>
               <span class="mode-switch__label">{label}</span>
+              <span class="mode-switch__short" aria-hidden="true">
+                {short}
+              </span>
             </span>
           </a>
         </li>

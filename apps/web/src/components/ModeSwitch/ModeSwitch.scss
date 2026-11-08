@@ -162,12 +162,26 @@
     view-transition-name: mode-switch-text;
   }
 
-  // Enlarged text on a narrow screen: the icons go first, then the labels truncate. The `em` in a media
-  // query is the browser's default font size, so this follows the reader's text-size setting.
+  // Enlarged text on a narrow screen: the icons go first, then the short labels replace the full ones
+  // (Impeccable audit, 2026-11-08: "AI mo…" was cut off at 360 px with twice the text size). The `em`
+  // in a media query is the browser's default font size, so this follows the reader's text-size
+  // setting. The full label stays for screen readers; the short one is hidden from them.
   .mode-switch__label {
     overflow: hidden;
     min-inline-size: 0;
     text-overflow: ellipsis;
+
+    @media (width < 16em) {
+      @include visually-hidden;
+    }
+  }
+
+  .mode-switch__short {
+    display: none;
+
+    @media (width < 16em) {
+      display: inline;
+    }
   }
 
   .mode-switch__icon {

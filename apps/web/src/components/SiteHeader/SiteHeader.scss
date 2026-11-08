@@ -161,6 +161,15 @@
     flex-shrink: 0;
   }
 
+  // A very narrow screen with large text (`em` in a media query follows the reader's text-size
+  // setting): the name no longer fits beside the theme toggle, so only the mark shows. The name stays
+  // the link's text for screen readers (Impeccable audit, 2026-11-08).
+  .site-header__name {
+    @media (width < 16em) {
+      @include visually-hidden;
+    }
+  }
+
   // The planet orbits the reticle's centre at an even pace (linear, one lap per --duration-orbit)
   // while the brand link is hovered or focused, and stops where it is when the pointer leaves (the
   // animation pauses rather than resets). Transform only.

@@ -251,3 +251,26 @@ test('the pill and each tab label are their own view-transition groups', async (
 
   expect(names).toEqual(['mode-switch-indicator', 'mode-switch-ai', 'mode-switch-text']);
 });
+
+// Impeccable audit, 2026-11-08: at 360 px with twice the text size the header ran off the screen and
+// the labels were cut to "AI mo…". Below 16em (here 250 px at the default text size, the same as
+// 360 px at 2× text) the header shows the mark only and the switch shows short labels; screen readers
+// still hear the full names.
+test('a very narrow screen with large text keeps the header on screen, names intact', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 250, height: 700 });
+  await page.goto('/cv');
+
+  await expect(aiMode(page)).toHaveText(/^\s*AI mode\s*AI\s*$/);
+  await expect(aiMode(page)).toHaveAccessibleName('AI mode');
+  await expect(textMode(page)).toHaveAccessibleName('Text mode');
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Ivan Vasiunin' })).toBeVisible();
+  await expect(page.getByText('AI', { exact: true })).toBeVisible();
+  await expect(page.getByText('CV', { exact: true })).toBeVisible();
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+});
