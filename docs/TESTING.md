@@ -7,11 +7,11 @@
 
 | Level | Tooling | Scope |
 |---|---|---|
-| Unit (frontend) | Vitest | SSE parsing, chat state, Brief / Full, "Ask about this", visualization logic (scaling, highlight selection, intensity) |
+| Unit (frontend) | Vitest | SSE parsing, chat state, Brief / Full, the `?q=` prefill, visualization logic (scaling, highlight selection, intensity) |
 | Unit (backend) | pytest, pytest-asyncio | Services, graph nodes, chunking, projection, limits. **LLM calls are always mocked.** |
 | Component | Vitest + Testing Library + user-event (jsdom) | Every state: default, focus, disabled, loading, error, empty; keyboard interaction |
 | API and contract | pytest + httpx `AsyncClient` | Response schemas, error format, rate limits, every SSE event type; generated TS types match OpenAPI (CI staleness check) |
-| E2E | Playwright: desktop Chromium + mobile profiles (iPhone on WebKit, Android on Chromium) | Mode switching, keyboard; Brief / Full + URL; "Ask about this" never sends; streaming chat on a mocked LLM, Stop, network errors; Under the hood contents; point highlight |
+| E2E | Playwright: desktop Chromium + mobile profiles (iPhone on WebKit, Android on Chromium) | Mode switching, keyboard; Brief / Full + URL; the `?q=` prefill never sends; streaming chat on a mocked LLM, Stop, network errors; Under the hood contents; point highlight |
 | Visual regression | Playwright screenshots | Key screens at 360 / 768 / 1440, light and dark, plus the CV print version |
 | Accessibility | @axe-core/playwright inside e2e | Every screen: **zero serious or critical** violations |
 | Performance | Lighthouse 13 (mobile + desktop budgets, `scripts/lighthouse.mjs`); Playwright + CDP long-frame measurement at 4× / 6× CPU | Budgets in §5 |

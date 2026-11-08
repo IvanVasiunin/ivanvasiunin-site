@@ -1,5 +1,5 @@
-// The `?q=` prefill (SPEC §2, US-T3 "Ask about this"): the question from the URL goes into the input,
-// and is never sent automatically. The URL is untrusted input (typescript.md): control characters are
+// The `?q=` prefill (SPEC §2; the example questions' no-JS links): the question from the URL goes into
+// the input, and is never sent automatically. The URL is untrusted input (typescript.md): control characters are
 // dropped and the text is cut to the input's limit.
 import { MAX_QUESTION_CHARS } from './state';
 

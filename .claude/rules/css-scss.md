@@ -79,7 +79,7 @@ Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` revie
 ## Print
 - Print styles (`@media print`) for `/cv`:
   - always the Full version;
-  - no navigation, theme toggle, mode switcher, "Ask about this" links or backgrounds;
+  - no navigation, theme toggle, mode switcher or backgrounds;
   - black text on white;
   - links show their URL where useful.
 

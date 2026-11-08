@@ -42,7 +42,7 @@ Related: [ARCHITECTURE](docs/ARCHITECTURE.md), [ROADMAP](docs/ROADMAP.md), [TEST
 | URL | Mode | Rendering | Notes |
 |---|---|---|---|
 | `/` | **AI mode** (default) | Server-rendered HTML + React islands (chat, visualization) | Without JS: 1–2 sentences about Ivan, example questions, link to the CV. |
-| `/?q=<text>` | AI mode with a prefilled question | Same | The question is placed in the input and focused, **never sent automatically** (see US-T3). |
+| `/?q=<text>` | AI mode with a prefilled question | Same | The question is placed in the input and focused, **never sent automatically**: this protects the budget from accidental clicks and crawlers. Used by the example questions' no-JS links. |
 | `/cv` | **Text mode** (CV), Full view | Static HTML, no framework JS | Without JS, the Full version is shown. |
 | `/cv?view=brief` | Text mode, Brief view | Static HTML + small enhancement script | `?view=full` is the default and may be omitted. |
 | `/cv/ivan-vasiunin-cv.pdf` | CV as PDF | Generated at build time from `/cv` print styles | Always the Full version. |
@@ -165,13 +165,12 @@ Notation: **US-A** = AI mode, **US-T** = Text mode, **US-X** = cross-cutting.
 - **No phone number anywhere.**
 - JSON-LD `Person` is embedded, plus meta and OG tags.
 
-**US-T3. "Ask about this".**
-- Each job and each skills group has an **Ask about this** link to `/?q=<prepared question>`.
-- On arrival, AI mode fills the input with the question and focuses it. **Nothing is sent** until the user presses Enter or Send. This protects the budget from accidental clicks and crawlers.
-- `rel="nofollow"` is set on these links.
+**US-T3. "Ask about this" — dropped (Ivan, 2026-11-07).**
+- Links from CV entries to AI mode with a prepared question were built and rolled back: sending the reader from the CV to the chat felt redundant. The CV stays self-contained; AI mode is one click away in the mode switcher.
+- The `/?q=` prefill itself stays (§2): the example questions use it as their no-JS fallback.
 
 **US-T4. Print and PDF.**
-- Printing `/cv` always prints the Full version, without navigation, the mode switcher, backgrounds or "Ask about this" links.
+- Printing `/cv` always prints the Full version, without navigation, the mode switcher or backgrounds.
 - A **Download PDF** link serves the build-time PDF generated from the same HTML and print styles.
 
 **US-T5. Layout details (progressive enhancement).**

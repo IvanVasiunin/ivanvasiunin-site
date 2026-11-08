@@ -29,7 +29,7 @@ You get a list of changed files, or you run `git status --porcelain` and `git di
 - `position: absolute` used only for overlays.
 - Token usage, BEM consistency, logical properties.
 - Mobile: touch targets ≥ 44 px, no hover-only features, the keyboard in the chat.
-- React: effect cleanups, abort handling, no auto-send for "Ask about this", error boundaries.
+- React: effect cleanups, abort handling, no auto-send for the `?q=` prefill, error boundaries.
 - Bundle impact against the budgets.
 
 You may run read-only checks: `pnpm --dir apps/web exec eslint <files>`, `stylelint`, `tsc --noEmit`, `vitest run <files>`.

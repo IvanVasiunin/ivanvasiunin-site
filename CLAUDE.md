@@ -47,7 +47,7 @@ The full list is in `docs/TESTING.md` §2. Names are finalized when the skeleton
 
 | Zone | Who writes | Ivan verifies by |
 |---|---|---|
-| Markup, SCSS, TS/React, Brief / Full, "Ask about this" | Claude | line-by-line review |
+| Markup, SCSS, TS/React, Brief / Full | Claude | line-by-line review |
 | SVG visualization | Claude | visual review + screenshot / perf tests |
 | Docker, CI, deploy, config, API glue (`core`, `routers`, `schemas`, `services`, `db`, `migrations`) | Claude | automated checks + `security-reviewer` + an explanation of each file |
 | **AI core:** `apps/api/src/site_api/{ingestion,rag,graph,prompts,evals}/` | **Ivan** (Claude mentors) | Claude reviews Ivan's code |
@@ -90,7 +90,7 @@ The full list is in `docs/TESTING.md` §2. Names are finalized when the skeleton
 11. **Progressive enhancement:**
     - `/cv` works without JS;
     - scroll-driven animations and View Transitions are behind `@supports` / feature checks;
-    - "Ask about this" never auto-sends.
+    - a `/?q=` link never auto-sends.
 12. **Mobile and weak devices are first-class:** 360 px and up, 44 px touch targets, `visualViewport` keyboard handling (iOS has no `interactive-widget`), light visualization mode (the knowledge map itself is desktop-only).
 13. **Evals and other paid API calls run only with Ivan's consent**, after a cost estimate.
 14. **Ask before side effects outside the repo:** global installs, user-level Claude Code settings, accounts, purchases, `git push`.

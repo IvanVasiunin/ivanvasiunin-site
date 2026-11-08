@@ -92,15 +92,15 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 | 6.4 | Light mode for weak devices + long-frame detection; create the `perf-check` skill (Lighthouse mobile / desktop, long frames, budgets) | C | Test that light mode switches on; long-frame measurement at 4× / 6× CPU |
 | 6.5 | **Decision gate** (ADR-0005) | I | Ivan's decision recorded; a new ADR if SVG fails |
 
-## Phase 7 — "Ask about this", polish, audits
+## Phase 7 — Polish, audits
 
 | # | Task | Zone | DoD |
 |---|---|---|---|
-| 7.1 | "Ask about this" links on jobs and skill groups → `/?q=`, prefill + focus, never auto-send | C | Vitest + e2e asserting no request is sent |
+| 7.1 | ~~"Ask about this" links on jobs and skill groups~~ — **dropped** (Ivan, 2026-11-07; SPEC US-T3) | — | — |
 | 7.2 | Impeccable install (pinned, `overdrive` banned) + audit / polish pass; `mobile-qa` subagent | C | Audit findings triaged; fixes merged in small steps |
 | 7.3 | Full a11y audit (axe + keyboard + screen-reader spot checks) | C | Zero serious / critical findings |
 | 7.4 | Performance audit against every budget; Chrome DevTools traces of the visualization | C | All budgets green in the Lighthouse job |
-| 7.5 | Real-device check on iPhone 17 Pro Max (Safari, keyboard, safe area, dark theme) + emulated weak Android at 6× CPU | I + C | Results logged in TESTING.md |
+| 7.5 | Real-device check on iPhone 17 Pro Max (Safari, keyboard, safe area, dark theme) + emulated weak Android at 6× CPU — **moved after launch** (Ivan, 2026-11-08): the emulated devices in e2e are enough before release; real devices are checked on production | I + C | Results logged in TESTING.md |
 
 ## Phase 8 — Launch
 
