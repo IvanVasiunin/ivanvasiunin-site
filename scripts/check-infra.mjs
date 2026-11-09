@@ -91,7 +91,9 @@ export function dockerfileProblems(name, text) {
 }
 
 /**
- * Problems in .dockerignore: it must be an allow-list that never lets data/raw or .env in.
+ * Problems in .dockerignore: it must be an allow-list that never lets data/raw or .env in. The only
+ * data/ entry allowed is the top-level `!data/*.md` (the API's ingestion sources): a `*` never
+ * crosses a `/`, so it cannot match data/raw/ files.
  * @param {string} text
  * @returns {string[]}
  */
@@ -106,8 +108,8 @@ export function dockerignoreProblems(text) {
   for (const required of ['data/raw', '**/.env']) {
     if (!lines.includes(required)) problems.push(`.dockerignore: must exclude ${required}`);
   }
-  if (lines.some((line) => line.startsWith('!data')))
-    problems.push('.dockerignore: must not include data/');
+  if (lines.some((line) => line.startsWith('!data') && line !== '!data/*.md'))
+    problems.push('.dockerignore: must not include data/ beyond !data/*.md');
   return problems;
 }
 
@@ -151,6 +153,7 @@ function resolvedCompose(file) {
         ...process.env,
         POSTGRES_PASSWORD: 'check-infra-placeholder',
         POSTGRES_MCP_PASSWORD: 'check-infra-placeholder',
+        OPENAI_API_KEY: 'check-infra-placeholder',
       },
     },
   );

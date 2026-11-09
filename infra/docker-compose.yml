@@ -39,6 +39,8 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+      # The knowledge map's data, written by ingestion in the api container (ARCHITECTURE §5).
+      - points:/srv/data:ro
     networks:
       - edge
     depends_on:
@@ -59,6 +61,19 @@ services:
       # Trust X-Forwarded-For only from Caddy's network (the real client IP for rate limiting).
       FORWARDED_ALLOW_IPS: 172.30.10.0/24
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # The model provider key comes from the server's .env; Compose refuses to start without it.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in infra/.env}
+      # Ingestion output (`python -m site_api.ingestion --root /app/sources --apply`): volumes, not
+      # the read-only image. numba (UMAP) caches compiled code: /tmp is the writable tmpfs.
+      PROJECTION_MODEL_PATH: /var/lib/site/artifacts/projection.joblib
+      POINTS_JSON_PATH: /var/lib/site/points/points.json
+      NUMBA_CACHE_DIR: /tmp/numba
+      # The image user has no home directory; libraries that cache under HOME use the tmpfs.
+      HOME: /tmp
+      TIKTOKEN_CACHE_DIR: /tmp/tiktoken
+    volumes:
+      - artifacts:/var/lib/site/artifacts
+      - points:/var/lib/site/points
     networks:
       - edge # outbound access for the LLM provider (Phase 3)
       - backend
@@ -114,3 +129,5 @@ volumes:
   pgdata:
   caddy_data:
   caddy_config:
+  artifacts:
+  points:

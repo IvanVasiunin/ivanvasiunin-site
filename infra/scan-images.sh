@@ -11,11 +11,14 @@ out="$(mktemp -d)"
 trap 'rm -rf "$out"' EXIT
 mkdir -p "$out/web" "$out/api"
 
-# What we ship: the static site, and the API package (dependencies are third-party code).
+# What we ship: the static site, the API package (dependencies are third-party code) and the
+# API's ingestion sources (the knowledge base).
+mkdir -p "$out/sources"
 web="$(docker create "$web_image")"
 api="$(docker create "$api_image")"
 docker cp "$web:/srv/." "$out/web/"
 docker cp "$api:/app/.venv/lib/python3.13/site-packages/site_api/." "$out/api/"
+docker cp "$api:/app/sources/." "$out/sources/"
 docker rm "$web" "$api" >/dev/null
 
 gitleaks dir --config .gitleaks.toml --redact --no-banner --verbose "$out"

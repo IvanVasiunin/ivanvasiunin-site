@@ -24,7 +24,7 @@
 - **Migrations:** `infra/deploy.sh` runs `docker compose run --rm api python -m site_api.db.migrate` after the pull and before starting the new release (a failure stops the deploy with nothing changed). By hand: the same command. Migrations must stay backward-compatible with the previous release (add first, remove in a later release): an automatic rollback switches images, not the schema.
 - **Local database (development):** `docker compose -f infra/docker-compose.dev.yml up -d --wait` starts Postgres + pgvector on `127.0.0.1:5432` with the databases `site` (the dev API: `DATABASE_URL` in `.env`) and `site_test` (migration tests), and a read-only role `mcp_reader` for Postgres MCP. Then `uv run --directory apps/api alembic upgrade head`. Never used on the VPS. Use development-only passwords in the local `infra/.env` (`POSTGRES_PASSWORD`, `POSTGRES_MCP_PASSWORD`), never the production one.
 - **Postgres MCP (development):** set `POSTGRES_MCP_DATABASE_URI=postgresql://mcp_reader:<POSTGRES_MCP_PASSWORD>@127.0.0.1:5432/site` in your user environment (not in a file in the repository) and restart Claude Code. Never point it at production.
-- **Ingestion:** `docker compose run --rm api python -m site_api.ingestion --estimate` prints the plan and the embedding cost; `--apply` embeds and writes. Add `--refit` only for a deliberate full UMAP refit ([ADR-0006](adr/0006-2d-projection.md)).
+- **Ingestion:** `docker compose run --rm api python -m site_api.ingestion --root /app/sources --estimate` prints the plan and the embedding cost; `--apply` embeds and writes. Add `--refit` only for a deliberate full UMAP refit ([ADR-0006](adr/0006-2d-projection.md)). The sources are baked into the `api` image (`/app/sources`), so run it after a deploy that changed them. The fitted model goes to the `artifacts` volume and `points.json` to the `points` volume, which Caddy serves read-only at `/data/points.json`.
 - **`APP_ENV`:** Compose sets `APP_ENV=production` itself. Never copy the development `.env` to the server.
 
 ### 1.1 Automatic deploys (ROADMAP 1.7)
@@ -36,14 +36,22 @@
 
 It uses no third-party actions.
 
-**One-time server setup** (after the Phase 8 hardening checklist, §3):
-1. **Deploy user.** Create a user `deploy` with a real login shell (a forced command runs through it; `nologin` would break it) in the `docker` group. Then create `/opt/site` (owner `deploy`, mode `750`).
+**Server:** netcup VPS 500 G12.5 (2 vCPU x86, 4 GB, 64 GB), Debian 13. DNS at Cloudflare: `A` / `AAAA` for `ivanvasiunin.com`, **DNS only** (grey cloud), so Caddy obtains the certificate itself and SSE is not proxied.
+
+**One-time server setup:**
+0. **Base system and hardening (§3), scripted.**
+   - Put your admin public key into `/root/.ssh/authorized_keys` (the provider's root password is used once, for this).
+   - `scp infra/server-setup.sh root@<host>:/root/ && ssh root@<host> sh /root/server-setup.sh`: the admin user `ivan` (sudo, keys only), Docker from Docker's apt repository with log rotation, ufw (22, 80, 443), fail2ban, automatic security updates, time sync, 2 GB swap, the `deploy` user (in the `docker` group, real login shell) and `/opt/site` (owner `deploy`, mode `750`).
+   - Check `ssh -o IdentitiesOnly=yes -i <key> ivan@<host> 'sudo -n true'`, keep that session open, then copy `infra/server-ssh-hardening.sh` the same way and run `sudo sh server-ssh-hardening.sh` as `ivan` (no root login, no passwords, only `ivan` and `deploy`). If anything goes wrong, the netcup SCP has a VNC console.
+   - Note: `deploy` is in the `docker` group, which is root-equivalent. What protects the server from a leaked CI key is the key's `restrict,command=` entry, not file permissions in `/opt/site`.
+1. **Deploy user.** Done by `infra/server-setup.sh`: `deploy` has a real login shell (a forced command runs through it; `nologin` would break it) and is in the `docker` group.
 2. **Files.**
    - Copy `infra/docker-compose.yml` to `/opt/site/`.
    - Copy `infra/deploy.sh` there as **root-owned, mode `755`**: the `deploy` user (and the CI key) must not be able to change what the key may run.
 3. **`.env`.** Create `/opt/site/.env` from `infra/.env.example`, owned by `deploy`, then `chmod 600 .env`. Set:
    - `SITE_ADDRESS`;
    - `POSTGRES_PASSWORD` (`openssl rand -hex 32`);
+   - `OPENAI_API_KEY` (the api service does not start without it);
    - `WEB_IMAGE=ghcr.io/<owner>/ivanvasiunin-site-web`;
    - `API_IMAGE=ghcr.io/<owner>/ivanvasiunin-site-api`.
 4. **GHCR access.** Simplest: after the first push, set both packages to **public**; then no login is needed.
@@ -94,16 +102,16 @@ It uses no third-party actions.
 
 ## 3. VPS hardening checklist
 
-> Execute in Phase 8 (task 8.2), not now.
+> Scripted in `infra/server-setup.sh` and `infra/server-ssh-hardening.sh` (§1.1, step 0). Tick each item after checking it on the server.
 
-- [ ] Non-root deploy user with sudo; SSH login by **key only** (`PasswordAuthentication no`, `PermitRootLogin no`)
-- [ ] Firewall (ufw / nftables): allow 22 (or a custom SSH port), 80, 443 only
+- [ ] Non-root admin user with sudo; SSH login by **key only** (`PasswordAuthentication no`, `PermitRootLogin no`)
+- [ ] Firewall (ufw): allow 22, 80, 443 (and 443/udp for HTTP/3) only
 - [ ] Automatic security updates (`unattended-upgrades`)
-- [ ] fail2ban for SSH
+- [ ] fail2ban for SSH (systemd backend)
 - [ ] Docker daemon not exposed on TCP; the DB has no published ports
 - [ ] `.env` permissions `600`; no secrets in images or the compose file
-- [ ] Time sync (chrony / systemd-timesyncd)
-- [ ] Disk usage and log rotation for Docker logs
+- [ ] Time sync (systemd-timesyncd)
+- [ ] Disk usage and log rotation for Docker logs (`/etc/docker/daemon.json`: 3 × 10 MB per container)
 
 ## 4. Key rotation
 

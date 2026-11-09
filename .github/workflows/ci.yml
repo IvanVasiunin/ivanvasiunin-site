@@ -231,6 +231,8 @@ jobs:
           SITE_ADDRESS: localhost
         run: |
           export POSTGRES_PASSWORD="$(openssl rand -hex 24)"
+          # Not a key: the smoke test never calls the model provider.
+          export OPENAI_API_KEY=ci-placeholder
           docker compose -f infra/docker-compose.yml up --build --detach --wait --wait-timeout 180
       - name: Images run as non-root users
         run: |
@@ -258,6 +260,7 @@ jobs:
         run: docker compose -f infra/docker-compose.yml logs --no-color --tail 200
         env:
           POSTGRES_PASSWORD: unused-for-logs
+          OPENAI_API_KEY: unused-for-logs
 
   security:
     name: Security — gitleaks (full history), repo scripts, dependency audits

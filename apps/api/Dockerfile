@@ -36,6 +36,20 @@ RUN groupadd --system --gid 10001 site \
 
 COPY --from=build --chown=root:root /app/.venv /app/.venv
 
+# Ingestion sources (ARCHITECTURE §5), laid out as in the repository so the loaders find them:
+# `python -m site_api.ingestion --root /app/sources`. Never data/raw/ (.dockerignore allows only
+# the top-level data/*.md; scan-images.sh checks the image).
+COPY --chown=root:root SPEC.md /app/sources/SPEC.md
+COPY --chown=root:root docs/ARCHITECTURE.md /app/sources/docs/ARCHITECTURE.md
+COPY --chown=root:root docs/adr /app/sources/docs/adr
+COPY --chown=root:root data/*.md /app/sources/data/
+COPY --chown=root:root apps/web/src/content/cv /app/sources/apps/web/src/content/cv
+
+# Where ingestion writes on the server (named volumes in Compose; a new volume copies this
+# ownership): the fitted map model and points.json, which Caddy serves read-only at /data.
+RUN mkdir -p /var/lib/site/artifacts /var/lib/site/points \
+    && chown -R 10001:10001 /var/lib/site
+
 ENV PATH=/app/.venv/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

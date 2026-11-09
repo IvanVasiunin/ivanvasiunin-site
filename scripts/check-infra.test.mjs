@@ -95,6 +95,14 @@ test('a deny-list .dockerignore fails', () => {
   assert.match(problems, /must not include data/);
 });
 
+test('only the top-level data/*.md may be allowed into the build context', () => {
+  const base = '**\n!data/*.md\n**/.env\ndata/raw\n';
+  assert.deepEqual(dockerignoreProblems(base), []);
+  for (const wider of ['!data/**', '!data/raw/*.md', '!data']) {
+    assert.match(dockerignoreProblems(`${base}${wider}\n`).join('\n'), /must not include data/);
+  }
+});
+
 /** A development compose config that passes: the db on loopback, the production image. */
 function goodDevCompose() {
   return {

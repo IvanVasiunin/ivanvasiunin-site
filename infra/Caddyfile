@@ -56,6 +56,14 @@ http://127.0.0.1:2020 {
 		@pages path / /cv /cv/ *.html
 		header @pages Cache-Control "no-cache"
 
+		# The knowledge map's data (the `points` volume): changes only after an ingestion run.
+		# Only when the file exists: a 404 before the first run must not be cached.
+		@points {
+			path /data/points.json
+			file
+		}
+		header @points Cache-Control "public, max-age=300"
+
 		# /cv serves /cv/index.html directly (no redirect hop for the mode switch).
 		try_files {path} {path}/index.html
 		file_server

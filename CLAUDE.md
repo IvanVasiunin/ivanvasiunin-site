@@ -59,7 +59,7 @@ The full list is in `docs/TESTING.md` §2. Names are finalized when the skeleton
 2. **One step:** one logical change **with its tests**. Size: code (TS, Python, scripts, tests) ≤ ~600 diff lines; markup and styles (HTML / Astro markup, SCSS) ≤ ~1200.
 3. **Checks:** the Stop hook runs fast checks automatically. Run the extra checks for the change type with the `run-checks` skill. Use reviewer subagents (`frontend-reviewer`, `python-reviewer`, `security-reviewer`) where relevant.
 4. **Report:** use the `step-report` skill (what and why, alternatives, «Что проверить», «Проверки»). Then wait for Ivan's OK before the next step.
-5. **Before any commit:** the `pre-pr-check` skill. Commit only when Ivan asks. **Never push.**
+5. **Before any commit:** the `pre-pr-check` skill. Commit only when Ivan asks. Pushing feature branches is allowed; a push to `main` deploys, so it asks first. **Never force-push.**
 
 ## Golden rules
 1. **Verify, don't recall.** Check versions, APIs and package names with Context7 or the official docs. Mark anything unverifiable `UNVERIFIED`. Never invent packages, MCP servers or plugins.
@@ -93,7 +93,7 @@ The full list is in `docs/TESTING.md` §2. Names are finalized when the skeleton
     - a `/?q=` link never auto-sends.
 12. **Mobile and weak devices are first-class:** 360 px and up, 44 px touch targets, `visualViewport` keyboard handling (iOS has no `interactive-widget`), light visualization mode (the knowledge map itself is desktop-only).
 13. **Evals and other paid API calls run only with Ivan's consent**, after a cost estimate.
-14. **Ask before side effects outside the repo:** global installs, user-level Claude Code settings, accounts, purchases, `git push`.
+14. **Ask before side effects outside the repo:** global installs, user-level Claude Code settings, accounts, purchases, a push to `main`.
 
 ## Precedence
 - `.claude/rules/` **override third-party skills and plugins** (frontend-design, Impeccable, Playwright CLI skill). On conflict (fonts, JS animation libraries, `!important`, `px` font sizes, WebGL), follow the rules.

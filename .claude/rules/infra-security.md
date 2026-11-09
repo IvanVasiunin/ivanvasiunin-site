@@ -69,7 +69,7 @@ Verification tags: `[lint]`, `[hook]`, `[test]`, `[settings]`, `[review]`.
 - Images are pushed to GHCR only from `main`. `[review]`
 
 ## VPS
-- The hardening checklist in `docs/RUNBOOK.md` (SSH keys only, firewall, unattended upgrades, fail2ban) is executed in Phase 8. It is not automated now. `[review]`
+- The hardening checklist in `docs/RUNBOOK.md` §3 (SSH keys only, firewall, unattended upgrades, fail2ban) is scripted in `infra/server-setup.sh` and `infra/server-ssh-hardening.sh`; a server change goes into these scripts first, never only by hand. `[review]`
 
 ## Privacy and AI disclosure
 - If question texts are stored or traced, the privacy notice (`/privacy`) describes it. The AI-assistant disclosure is visible next to the chat. `[review]`

@@ -28,6 +28,17 @@ apps/web/.env*
 !apps/api/src/**
 apps/api/src/**/__pycache__
 
+# API ingestion sources (ARCHITECTURE §5): the top-level data/*.md only (never data/raw/), the
+# site docs and the CV collection (already allowed with apps/web above).
+!SPEC.md
+!docs/ARCHITECTURE.md
+!docs/adr/**
+!data/*.md
+
+# A local points.json (dev ingestion output) never reaches the web image: the server's comes from
+# the `points` volume.
+apps/web/public/data
+
 # Never, even if a rule above would match.
 **/.env
 **/.env.*
