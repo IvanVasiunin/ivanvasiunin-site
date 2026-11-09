@@ -32,7 +32,12 @@ FROM caddy:2.11.7-alpine AS runtime
 
 # Run as a dedicated user; Caddy's state (certificates) lives in /data and /config, owned by it.
 # Ports 80 / 443 are bound without any capability: Compose lowers the container's unprivileged port
-# start to 0 (a file capability on the binary would be stripped by no-new-privileges).
+# start to 0. The official image gives /usr/bin/caddy a file capability (cap_net_bind_service), and
+# with no-new-privileges and cap_drop ALL the kernel refuses to exec such a binary ("operation not
+# permitted", the first CI run): a plain copy drops the capability.
+RUN cp /usr/bin/caddy /usr/bin/caddy.plain \
+    && mv /usr/bin/caddy.plain /usr/bin/caddy \
+    && chmod 755 /usr/bin/caddy
 RUN addgroup -S -g 10002 caddy \
     && adduser -S -D -H -u 10002 -G caddy caddy \
     && mkdir -p /data /config \

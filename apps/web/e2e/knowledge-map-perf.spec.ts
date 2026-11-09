@@ -138,6 +138,13 @@ test.describe('knowledge map under CPU throttling', () => {
     ({ browserName, isMobile }) => browserName !== 'chromium' || isMobile,
     'Desktop Chromium only: the map is desktop-only, CPU throttling is CDP.',
   );
+  // Frame budgets need a quiet, known machine: on shared CI runners a 4× throttled page drew 2
+  // frames where a desktop draws 10+ (first CI run, 2026-11-09). Run locally (perf-check skill)
+  // before a release; Ivan agreed to keep them off CI.
+  test.skip(
+    Boolean(process.env.CI),
+    'Frame budgets are measured locally, not on shared CI runners.',
+  );
   test.setTimeout(90_000);
   // One at a time: two throttled pages on one machine skew each other's frames.
   test.describe.configure({ mode: 'serial' });

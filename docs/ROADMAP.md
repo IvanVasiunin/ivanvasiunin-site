@@ -113,6 +113,15 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 | 8.5 | README for the public repo; this repo added to the GitHub allow-list and re-ingested | C + I | Repo public; the assistant can answer "how is this site built?" |
 | 8.6 | Open Graph image (1200×630, `og:image` + `twitter:image`, `twitter:card` → `summary_large_image`) for `/` and `/cv` | C, Ivan reviews | Link previews show the image in the Telegram / LinkedIn debuggers |
 
+## CI follow-ups (after launch)
+
+Found by the first CI run (2026-11-09); both pass locally and are skipped on CI only until fixed (Ivan's OK):
+
+- `e2e/chat.spec.ts` "closing Under the hood never makes the conversation jump": WebKit on CI measured a 16 px jump.
+- `e2e/fonts.spec.ts` "/cv keeps layout shift under 0.1 when the fonts arrive late": throttled Android on CI measured 0.13.
+
+Kept off CI for good: the knowledge map frame budgets (`e2e/knowledge-map-perf.spec.ts`) need a quiet machine; they run locally through the `perf-check` skill.
+
 ## Backlog
 
 - Self-hosted Umami analytics.

@@ -228,9 +228,12 @@ def test_refit_needs_apply(capsys: pytest.CaptureFixture[str]) -> None:
     assert build_parser().parse_args(["--apply", "--refit"]).refit
 
 
-def test_the_api_never_loads_the_projection_libraries() -> None:
+def test_the_api_never_loads_the_projection_libraries(monkeypatch: pytest.MonkeyPatch) -> None:
     # ADR-0006: numba / UMAP are for ingestion only; importing the app must not pull them in.
     code = "import sys, site_api.main; print('umap' in sys.modules, 'numba' in sys.modules)"
+    # `site_api.main` refuses to import without DATABASE_URL (CI has no .env); importing it never
+    # connects, so a placeholder URL is enough. The child process inherits the patched environment.
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:placeholder@127.0.0.1:1/none")
     result = subprocess.run(  # noqa: S603 -- a fixed command, this interpreter
         [sys.executable, "-c", code], capture_output=True, text=True, check=True, timeout=120
     )

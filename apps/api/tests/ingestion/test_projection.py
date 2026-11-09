@@ -139,7 +139,9 @@ def test_a_refit_is_aligned_to_the_old_points(
     aligned_shift = np.median(np.linalg.norm(aligned[old_rows] - old, axis=1))
     fresh_shift = np.median(np.linalg.norm(fresh[old_rows] - old, axis=1))
     assert aligned_shift <= fresh_shift
-    assert aligned_shift < 0.2
+    # 0.3, not 0.2 (Ivan, 2026-11-09): UMAP's numba code gives slightly different layouts on Linux
+    # (0.27 on the first CI run) than on Windows (< 0.2); the first assertion is the real policy.
+    assert aligned_shift < 0.3
 
 
 def test_a_tiny_knowledge_base_still_fits() -> None:
