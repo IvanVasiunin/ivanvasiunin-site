@@ -11,6 +11,7 @@
 # Every skill, company and project of the CV must have a concept here (a test checks it).
 
 # Companies and projects (CV)
+- { id: brave-brains, label: Brave Brains, aliases: [brave brains] }
 - { id: brainrocket, label: BrainRocket, aliases: [brainrocket] }
 - { id: digital-web, label: Digital Web, aliases: [digital web] }
 - { id: liketelecom, label: Liketelecom, aliases: [liketelecom] }

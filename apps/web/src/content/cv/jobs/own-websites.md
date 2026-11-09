@@ -9,7 +9,7 @@ location: Ukraine
 stack: [WordPress, SEO, Google AdSense]
 brief:
   - Ran two information websites on WordPress with a small team of copywriters; monetized them with contextual advertising and grew traffic through SEO.
-order: 4
+order: 5
 ---
 
 - Ran two information websites on WordPress with a team of 2–3 copywriters and, at times, a content maker.

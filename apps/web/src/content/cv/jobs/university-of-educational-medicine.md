@@ -10,7 +10,7 @@ stack: [HTML, CSS, JavaScript, React, Figma]
 brief:
   - Built responsive landing pages and multi-page websites for online and offline events, often delivering a complete landing page in one day.
   - Added and improved React components in an internal dashboard for teachers.
-order: 3
+order: 4
 ---
 
 An organization offering online and offline courses on wellbeing and self-care, nutrition, psychology and healthy eating.

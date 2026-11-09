@@ -9,7 +9,7 @@ location: Mariupol, Ukraine
 stack: [HTML, CSS, JavaScript, MODX]
 brief:
   - Designed and developed business websites on MODX CMS, including multi-page sites and sites with a personal account area.
-order: 5
+order: 6
 ---
 
 Designed and developed websites for businesses: multi-page sites, business-card sites and sites with a personal account area, on MODX CMS.

@@ -36,7 +36,7 @@ from site_api.graph.generate import TokenUsage, token_usage
 from site_api.schemas.chat import ChatTurn, Route
 
 # The prompt in use. New wording goes into a new file (router.v2.md), so evals can compare them.
-ROUTER_PROMPT_FILE = "router.v6.md"
+ROUTER_PROMPT_FILE = "router.v7.md"
 # For an empty or unusable language code (ISO 639-1, sometimes 639-2).
 DEFAULT_LANGUAGE = "en"
 _LANGUAGE_CODE = re.compile(r"[a-z]{2,3}")

@@ -7,9 +7,10 @@ import type { Page } from '@playwright/test';
 const switchGroup = (page: Page) => page.getByRole('group', { name: 'CV view' });
 const option = (page: Page, name: 'Brief' | 'Full') =>
   switchGroup(page).getByRole('button', { name, exact: true });
-// A Full-only sentence (job body) and a Brief-only bullet (job frontmatter) from the BrainRocket entry.
+// A Full-only sentence (job body) and a Brief-only bullet (job frontmatter) from the current job
+// (Brave Brains).
 const fullText = (page: Page) =>
-  page.getByText('Implement interfaces from designs', { exact: false });
+  page.getByText('Implement complex interfaces from designs', { exact: false });
 const briefText = (page: Page) =>
   page.getByText('I build and review UI for large-scale iGaming platforms', { exact: false });
 

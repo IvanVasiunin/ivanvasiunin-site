@@ -11,7 +11,7 @@ brief:
   - Built NumbersValidator, a phone-number validation web app for the company's clients; company revenue grew by 5% while it was in use.
   - Wrote JavaScript scripts that automated technical support, and built and maintained landing pages.
   - Mixed role with technical support and operations for corporate telecom clients.
-order: 2
+order: 3
 ---
 
 A small telecom startup serving corporate clients, including brokerage companies: call routing, auto dialers and customer support.

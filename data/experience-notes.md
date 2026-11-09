@@ -10,7 +10,7 @@ source: experience-notes.md
 
 Ivan Vasiunin is a Senior Markup Developer with nearly 10 years of commercial experience building web applications and user interfaces for international products — from marketing websites and landing pages to large-scale product platforms. His core expertise is HTML, CSS/SCSS and JavaScript, responsive layouts, reusable UI components and frontend performance.
 
-In his current role at BrainRocket he works on iGaming platforms and does more than feature development: he reviews code, mentors and onboards developers, investigates complex UI and performance issues, and helps improve UI quality and development workflows. He enjoys solving complex UI challenges and sharing knowledge with teammates.
+In his current role at Brave Brains he works on iGaming platforms and does more than feature development: he reviews code, mentors and onboards developers, investigates complex UI and performance issues, and helps improve UI quality and development workflows. He enjoys solving complex UI challenges and sharing knowledge with teammates.
 
 Ivan is growing in AI Engineering alongside his frontend work. He has completed a full AI Engineer training course, and this website is his first AI project.
 
@@ -18,13 +18,14 @@ Ivan is growing in AI Engineering alongside his frontend work. He has completed 
 
 **Top skills:** HTML, CSS, JavaScript, performance tuning, mentoring.
 
-**Job title.** His official title at BrainRocket is Senior Markup Developer | UI Engineering. In his CV he presents himself as a Senior Frontend Developer who is growing in AI Engineering, because "frontend developer" describes his overall profile more clearly to recruiters.
+**Job title.** His official title at Brave Brains is Senior Markup Developer | UI Engineering. In his CV he presents himself as a Senior Frontend Developer who is growing in AI Engineering, because "frontend developer" describes his overall profile more clearly to recruiters.
 
 ## Career at a glance
 
 Ivan's jobs, most recent first:
 
-- **BrainRocket** — Senior Markup Developer | UI Engineering (Nov 2024 – present, full-time): user interfaces for iGaming platforms; code review, mentoring and onboarding, UI performance.
+- **Brave Brains** — Senior Markup Developer | UI Engineering (Oct 2025 – present, full-time, Valencia, Spain): user interfaces for iGaming platforms; frontend performance, the most complex UI tasks, code review, mentoring and onboarding.
+- **BrainRocket** — Markup Developer, promoted from Middle to Senior (Nov 2024 – Oct 2025, full-time, Limassol, Cyprus): user interfaces for iGaming platforms; code review, performance reviews, mentoring.
 - **University of educational medicine** — Frontend Developer (Jan 2024 – Oct 2024, part-time): landing pages for events and React components for a teachers' dashboard.
 - **Liketelecom** — Frontend Developer (Jun 2016 – Oct 2024, his main full-time job): landing pages, scripts that automated technical support, and NumbersValidator, combined with technical support and operations.
 - **Own websites** — Webmaster (Sep 2019 – Mar 2022, alongside his main job): two WordPress information websites with a small team of copywriters.
@@ -40,18 +41,16 @@ Ivan's jobs, most recent first:
 
 ---
 
-## Senior Markup Developer | UI Engineering — BrainRocket (Nov 2024 – present)
+## Senior Markup Developer | UI Engineering — Brave Brains (Oct 2025 – present, Valencia, Spain)
 
 ### Product
 iGaming platforms: large-scale consumer web products for international markets, across several projects and brands.
 
-### Growth in the role
-Ivan joined BrainRocket as a strong Middle Markup Developer and was promoted to Senior through the company's internal grade review: he completed practical tasks and answered technical questions from two more experienced colleagues, after which his grade was raised to Senior.
-
-His role grew from "receive a task, implement it, fix it" to also analyzing architecture, reviewing code, catching problems before they reach production, proposing improvements, owning performance, onboarding and mentoring others, and influencing the quality of the whole team's work.
+### Focus of the role
+At Brave Brains Ivan works as a Senior from day one. Compared with his previous job, the focus is more on frontend performance, mentoring and the most complex UI tasks: analyzing architecture, reviewing code, catching problems before they reach production, proposing improvements and influencing the quality of the whole team's work.
 
 ### Team and role
-- Team of about 10 people: developers, QA engineers, a product owner and a team lead. The team works closely with the project manager, product delivery manager, designers and delivery manager.
+- A cross-functional team of developers, QA engineers, a product owner and a team lead. The team works closely with the project manager, product delivery manager, designers and delivery manager.
 - Reports to his team lead and also communicates with the engineering manager.
 - **Acting team lead.** For several weeks he stood in for his team lead and managed the team during the lead's absence. During that time the team shipped several important releases.
 - The go-to person on the team for markup, CSS/SCSS, UI, components and UI-architecture questions.
@@ -76,6 +75,38 @@ Ivan's main strength is UI, markup, CSS and component implementation rather than
 
 ### Key stories
 
+**Shipping urgent compliance releases as acting team lead**
+- *Situation:* while the team lead was on vacation and Ivan was acting as lead, several urgent releases were requested to meet regulatory requirements.
+- *Action:* he coordinated the team and the work.
+- *Result:* all features were delivered to production on time.
+
+### Proud of
+- **Onboarding three developers.** Over about three months he onboarded three developers who first worked in his team and later became a separate team. He helped them understand the architecture, the existing frontend, development approaches and internal processes so they could work independently faster.
+- **Low-bug code.** Writes code with very few bugs, which noticeably speeds up the development process.
+- **Proactive communication.** Talks with product owners, designers and QA before a problem becomes a ticket, so issues are prevented or fixed quickly.
+
+### Working with the team
+- Code review as a way to raise code quality across the team, not only to catch bugs.
+- Onboarding and mentoring through technical guidance, code reviews and knowledge sharing.
+- Contributes to better engineering standards, fewer production issues and higher development efficiency.
+
+---
+
+## Markup Developer, Middle → Senior — BrainRocket (Nov 2024 – Oct 2025, Limassol, Cyprus)
+
+### Product
+iGaming platforms: large-scale consumer web products for international markets, across several projects and brands.
+
+### Growth in the role
+Ivan joined BrainRocket as a strong Middle Markup Developer and was promoted to Senior through the company's internal grade review: he completed practical tasks and answered technical questions from two more experienced colleagues, after which his grade was raised to Senior. His role grew from "receive a task, implement it, fix it" to also reviewing code, proposing improvements and owning performance in his area.
+
+### Team and stack
+- Team of about 10 people: developers, QA engineers, a product owner and a team lead.
+- HTML, CSS, SCSS, BEM, JavaScript, TypeScript, Angular, Git / GitLab, Figma.
+- Implemented interfaces from designs, built and adapted reusable components, reviewed code and investigated complex UI issues down to the root cause.
+
+### Key stories
+
 **1. Fixing a homepage performance problem caused by CSS masks**
 - *Situation:* a Lighthouse audit showed poor performance on the homepage of one of the sites.
 - *Action:* Ivan traced the cause to CSS `mask`, used in buttons that appeared many times on the page, and rewrote the components without masks. He also optimized other heavy components that combined gradient backgrounds, gradient borders and `background-blend-mode`.
@@ -84,12 +115,7 @@ Ivan's main strength is UI, markup, CSS and component implementation rather than
 **2. Urgent rework of a first-screen component**
 - At the request of senior leadership, Ivan quickly reworked the logic of a key component on a site's first screen under a tight deadline.
 
-**3. Shipping urgent compliance releases as acting team lead**
-- *Situation:* while the team lead was on vacation and Ivan was acting as lead, several urgent releases were requested to meet regulatory requirements.
-- *Action:* he coordinated the team and the work.
-- *Result:* all features were delivered to production on time.
-
-**4. Performance reviews of supported projects**
+**3. Performance reviews of supported projects**
 - Ivan ran performance reviews of the projects the team supports:
   - removed unused code;
   - introduced SCSS mixins for reusable styles;
@@ -99,21 +125,13 @@ Ivan's main strength is UI, markup, CSS and component implementation rather than
 
 ### Proud of
 - **Mentoring a trainee to Junior.** Mentored a trainee throughout their development journey until they reached Junior Developer level.
-- **Onboarding three developers.** Over about three months he onboarded three developers who first worked in his team and later became a separate team. He helped them understand the architecture, the existing frontend, development approaches and internal processes so they could work independently faster.
 - **Promotion to Senior** through the internal grade review.
-- **Low-bug code.** Writes code with very few bugs, which noticeably speeds up the development process.
-- **Proactive communication.** Talks with product owners, designers and QA before a problem becomes a ticket, so issues are prevented or fixed quickly.
-
-### Working with the team
-- Code review as a way to raise code quality across the team, not only to catch bugs.
-- Onboarding and mentoring through technical guidance, code reviews and knowledge sharing.
-- Contributes to better engineering standards, fewer production issues and higher development efficiency.
 
 ### What he learned
 - Deep knowledge of page markup and rendering: how a page is rendered, which CSS properties are cheap or expensive, what to replace and how all of it affects performance.
 - Pure-CSS animations.
 - Using AI tools in everyday development.
-- Mentoring and team leadership.
+- Mentoring.
 - Practical Angular basics.
 
 ---

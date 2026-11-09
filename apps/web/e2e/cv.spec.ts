@@ -31,9 +31,9 @@ test.describe('/cv', () => {
     const experience = page.getByRole('region', { name: 'Experience' });
     const jobs = experience.getByRole('listitem').filter({ has: page.getByRole('article') });
 
-    await expect(jobs.first().getByRole('heading', { level: 3 })).toHaveText('BrainRocket');
+    await expect(jobs.first().getByRole('heading', { level: 3 })).toHaveText('Brave Brains');
     await expect(jobs.first()).toContainText('Present');
-    await expect(jobs.first().locator('time').first()).toHaveAttribute('datetime', '2024-11');
+    await expect(jobs.first().locator('time').first()).toHaveAttribute('datetime', '2025-10');
     expect(await experience.locator('ol').count()).toBeGreaterThan(0);
   });
 

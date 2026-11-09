@@ -17,6 +17,6 @@ contacts:
 
 I'm a frontend developer with nearly 10 years of commercial experience building web applications and user interfaces for international products, from marketing websites and landing pages to large-scale product platforms. My core expertise is HTML, CSS / SCSS, JavaScript / TypeScript, responsive layouts, reusable UI components and frontend performance.
 
-At BrainRocket I work on iGaming platforms and do more than feature development: I review code, mentor and onboard developers, investigate complex UI and performance issues, and help improve UI quality and development workflows.
+At Brave Brains I work on iGaming platforms and do more than feature development: I review code, mentor and onboard developers, investigate complex UI and performance issues, and help improve UI quality and development workflows.
 
 I'm also learning AI Engineering: I've completed an AI Engineer course, and this website, with its RAG assistant Elio, is my first AI project.

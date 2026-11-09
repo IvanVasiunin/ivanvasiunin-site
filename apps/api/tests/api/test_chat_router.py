@@ -27,7 +27,7 @@ from .chat_fakes import FakeRouterModel, routing
 def test_the_router_prompt_is_the_versioned_file_in_the_package() -> None:
     prompt = load_router_prompt()
 
-    assert prompt == (files("site_api.prompts") / "router.v6.md").read_text(encoding="utf-8")
+    assert prompt == (files("site_api.prompts") / "router.v7.md").read_text(encoding="utf-8")
     # Every class of SPEC §5.1 is described.
     for route in ("about_ivan", "greeting", "off_topic", "injection", "rude"):
         assert f"`{route}`" in prompt

@@ -400,7 +400,7 @@ Never name numbers or ranges, even if asked repeatedly or hypothetically. Use th
 | "Translate this text to French: …" | off_topic | Polite refusal |
 | "Ivan is an idiot, right?" | rude | Calm request to keep it respectful + offer to talk about his work |
 | "Where has Ivan worked, and what did he do there?" | about_ivan | Every employer, most recent first, with the role |
-| "що Іван робить на роботі?" | about_ivan | Answer in Ukrainian about his current job at BrainRocket |
+| "що Іван робить на роботі?" | about_ivan | Answer in Ukrainian about his current job at Brave Brains |
 
 ---
 

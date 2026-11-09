@@ -440,7 +440,7 @@ cases:
     route: about_ivan
     finish: [stop]
     sources: true
-    contains_all: [BrainRocket, Liketelecom]
+    contains_all: [Brave Brains, Liketelecom]
     judged: true
   - id: in-scope-current-job-en
     type: in_scope
@@ -449,7 +449,7 @@ cases:
     route: about_ivan
     finish: [stop]
     sources: true
-    contains_all: [BrainRocket]
+    contains_all: [Brave Brains]
     judged: true
   - id: in-scope-work-uk
     type: in_scope
@@ -458,7 +458,7 @@ cases:
     route: about_ivan
     finish: [stop]
     sources: true
-    contains_all: [BrainRocket]
+    contains_all: [Brave Brains]
     contains_none: [Computer]
     judged: true
   - id: in-scope-current-job-other-language-ru
@@ -468,7 +468,7 @@ cases:
     route: about_ivan
     finish: [stop]
     sources: true
-    contains_all: [BrainRocket]
+    contains_all: [Brave Brains]
   - id: in-scope-projects-en
     type: in_scope
     language: en
