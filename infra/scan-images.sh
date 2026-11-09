@@ -24,8 +24,10 @@ docker rm "$web" "$api" >/dev/null
 gitleaks dir --config .gitleaks.toml --redact --no-banner --verbose "$out"
 
 for image in "$web_image" "$api_image"; do
+	# The image runs as a non-root user, so `find` meets unreadable folders and exits 1 (first CI run):
+	# its exit code means nothing here, only what it prints. A failing `docker run` still stops us.
 	found="$(docker run --rm --entrypoint sh "$image" -c \
-		'find / -xdev \( -path /proc -o -path /sys \) -prune -o -path "*data/raw*" -print 2>/dev/null')"
+		'find / -xdev \( -path /proc -o -path /sys \) -prune -o -path "*data/raw*" -print 2>/dev/null || true')"
 	if [ -n "$found" ]; then
 		echo "scan-images: $image contains data/raw files:" >&2
 		echo "$found" >&2
