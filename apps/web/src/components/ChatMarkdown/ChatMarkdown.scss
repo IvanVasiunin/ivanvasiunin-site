@@ -1,0 +1,97 @@
+// Elio's answer text: the serif prose of the CV (Newsreader), at a reading measure (layout A "Logbook").
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .chat-markdown {
+    max-inline-size: var(--measure);
+    font-family: var(--font-serif);
+    font-size: var(--font-size-lg); // 18 px, the question's size (Ivan, 2026-11-09)
+    line-height: var(--line-height-chat);
+    overflow-wrap: anywhere;
+
+    // Element selectors inside the block: the Markdown renderer emits plain tags without classes.
+    :where(p, ul, ol, pre, blockquote) {
+      margin-block: 0 var(--space-sm);
+    }
+
+    :where(ul, ol) {
+      padding-inline-start: 1.25em;
+    }
+
+    :where(li + li) {
+      margin-block-start: var(--space-2xs);
+    }
+
+    :where(strong) {
+      font-weight: var(--font-weight-medium);
+    }
+
+    :where(code) {
+      padding-inline: var(--space-2xs);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: var(--font-size-md);
+      background-color: var(--color-highlight-soft);
+    }
+
+    :where(pre) {
+      overflow-x: auto;
+      padding: var(--space-sm);
+      border-radius: var(--radius-md);
+      background-color: var(--color-highlight-soft);
+    }
+
+    :where(a) {
+      color: var(--color-accent);
+      text-decoration-line: underline; // inline prose links keep an underline (WCAG 1.4.1)
+      text-underline-offset: 0.15em;
+    }
+
+    :where(blockquote) {
+      padding-inline-start: var(--space-sm);
+      border-inline-start: var(--border-width) solid var(--color-border);
+      color: var(--color-text-muted);
+    }
+
+    > :last-child,
+    > :last-child > :last-child {
+      margin-block-end: 0;
+    }
+  }
+
+  // The streaming caret after the last word: a gradient block that blinks (opacity only). Inside a
+  // list it follows the last item, not the list box.
+  .chat-markdown--streaming {
+    > :last-child:not(ul, ol)::after,
+    > :is(ul, ol):last-child > li:last-child::after {
+      display: inline-block;
+      inline-size: 0.5em;
+      block-size: 1em;
+      margin-inline-start: var(--space-3xs);
+      border-radius: var(--radius-sm);
+      vertical-align: -0.12em;
+      background-image: var(--gradient-accent);
+      content: '';
+      animation: chat-markdown-caret 1s steps(2, start) infinite;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+      }
+    }
+  }
+
+  @keyframes chat-markdown-caret {
+    to {
+      opacity: 0;
+    }
+  }
+
+  .chat-markdown__heading {
+    font-family: var(--font-sans);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .chat-markdown__note {
+    @include visually-hidden;
+  }
+}

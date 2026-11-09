@@ -1,6 +1,6 @@
 import { gzipSync } from 'node:zlib';
 import { describe, expect, test } from 'vitest';
-import { collectGraph, findEntries, findImports } from './check-budgets.mjs';
+import { collectGraph, findEntries, findImports, inlineScriptsSize } from './check-budgets.mjs';
 
 describe('findEntries', () => {
   test('splits eager scripts from lazy (idle / visible) islands', () => {
@@ -26,6 +26,27 @@ describe('findEntries', () => {
 
   test('returns no entries for a page without JS', () => {
     expect(findEntries('<html><body><h1>CV</h1></body></html>')).toEqual({ eager: [], lazy: [] });
+  });
+});
+
+describe('inlineScriptsSize', () => {
+  test('sums the gzip size of inline JS and skips external scripts and JSON blocks', () => {
+    const head = 'document.documentElement.setAttribute("data-theme","dark");';
+    const module = 'const button=document.querySelector("button");button?.focus();';
+    const html = `
+      <script>${head}</script>
+      <script type="module">${module}</script>
+      <script type="module" src="/_astro/page.js"></script>
+      <script type="application/ld+json">{"@type":"Person","name":"Ivan"}</script>
+      <script type="importmap">{"imports":{}}</script>
+      <script type="speculationrules">{"prerender":[]}</script>
+      <script>  </script>`;
+
+    expect(inlineScriptsSize(html)).toBe(gzipSync(head).length + gzipSync(module).length);
+  });
+
+  test('is zero for a page without inline JS', () => {
+    expect(inlineScriptsSize('<html><body><h1>CV</h1></body></html>')).toBe(0);
   });
 });
 

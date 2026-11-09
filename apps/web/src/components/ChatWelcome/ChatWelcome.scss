@@ -1,0 +1,121 @@
+// The empty chat panel before the first question: a heading and four topic cards (SPEC US-A5).
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .chat-welcome {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+
+    // From md the panel is tall: the cards sit in the middle of its free space above the input.
+    @include mq(md) {
+      margin-block: auto;
+    }
+  }
+
+  // Hidden while a conversation kept for this tab waits for its restore (lib/chat/restoring.ts): no
+  // flash of the cards on the way back to AI mode, and no tall block replaced after the transition.
+  :root[data-chat-restoring] .chat-welcome {
+    display: none;
+  }
+
+  .chat-welcome__heading {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-snug);
+    text-wrap: balance;
+  }
+
+  .chat-welcome__cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @media (width >= 30em) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  // A card is the whole link: icon, title and hint, at least 44 px tall.
+  .chat-welcome__card {
+    @include gradient-border;
+
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-3xs) var(--space-sm);
+    align-items: center;
+    block-size: 100%;
+    min-block-size: var(--size-touch);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-bubble);
+    color: var(--color-text);
+    text-decoration-line: none;
+
+    // The hover / press highlight: a layer that fades in (only opacity animates).
+    &::after {
+      position: absolute;
+      z-index: var(--z-below);
+      inset: 0;
+      border-radius: inherit;
+      background-image: var(--gradient-surface-hover);
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+      content: '';
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    @media (hover: hover) {
+      &:hover::after {
+        opacity: 1;
+      }
+    }
+
+    &:active::after {
+      background-image: var(--gradient-surface-active);
+      opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &::after {
+        transition: none;
+      }
+    }
+  }
+
+  .chat-welcome__icon {
+    grid-row: span 2;
+    inline-size: var(--space-lg);
+    block-size: var(--space-lg);
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    // Forced colours: the icon follows the link colour like the text.
+    @media (forced-colors: active) {
+      stroke: currentcolor;
+    }
+  }
+
+  .chat-welcome__card-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    line-height: var(--line-height-snug);
+  }
+
+  .chat-welcome__card-hint {
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-snug);
+    color: var(--color-text-muted);
+  }
+}

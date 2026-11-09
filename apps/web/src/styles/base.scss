@@ -1,0 +1,178 @@
+// Element defaults built on the tokens. Loaded into the `base` layer by global.scss.
+// Never redefine custom properties here: `tokens` is a later layer and would win anyway.
+
+@use 'mixins' as *;
+
+// Scrolling to a target (focus, anchors, the skip link) keeps it clear of the sticky header and, below
+// `md`, of the floating mode switch at the bottom (WCAG 2.4.11 Focus Not Obscured).
+:where(html) {
+  scroll-padding-block: calc(var(--size-bar) + var(--space-xl))
+    calc(var(--size-bar) + var(--offset-bar-bottom) + var(--space-md));
+
+  @include mq(md) {
+    // Desktop only (phones have overlay scrollbars, where this is always 0; Ivan, 2026-11-09).
+    // Classic scrollbars take space only on long pages, which would shift the centred content
+    // sideways when switching between a short page (/) and a long one (/cv). The start margin
+    // equals the scrollbar width (0 without one), so the content stays centred in the whole window.
+    // Not `scrollbar-gutter: stable`: its empty gutter shows as a stripe without the backdrop.
+    // Cost: with a classic scrollbar the column is two scrollbar widths narrower (one on each side),
+    // and a Brief / Full switch that adds or removes the scrollbar re-wraps the text once.
+    margin-inline-start: calc(100vw - 100%);
+    scroll-padding-block-end: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(html) {
+    scroll-behavior: smooth;
+  }
+}
+
+// Print and the build-time PDF (css-scss.md → Print, scripts/build-pdf.mjs): A4 with fixed margins; the
+// type is set smaller than on screen (every rem font size follows the root; spacing is in px).
+@page {
+  size: a4;
+  margin: 12mm 14mm;
+}
+
+@media print {
+  :where(html) {
+    font-size: var(--font-size-root-print);
+  }
+}
+
+// Cross-document view transitions (SPEC §2, ADR-0009): only the mode switch pill slides from one tab
+// to the other; the page itself swaps at once. The content used to lift out and rise into place
+// (ROADMAP 2.6), which Ivan found jerky rather than smooth (2026-11-05): the new page now replaces the
+// old one in the first frame, with no fade or movement. Only without a reduced-motion preference;
+// browsers without support simply navigate.
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-in-out);
+}
+
+// The page: no cross-fade. The new image is opaque (the page background), so it simply covers the old
+// one from the first frame while the pill moves above both.
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+// Groups otherwise stack in the old page's paint order, where the pill can come after a tab label and
+// cover it. The tab labels (src/components/ModeSwitch/) always stay above the sliding pill.
+::view-transition-group(mode-switch-indicator) {
+  z-index: var(--z-base);
+}
+
+::view-transition-group(mode-switch-ai),
+::view-transition-group(mode-switch-text) {
+  z-index: var(--z-raised);
+}
+
+:where(body) {
+  min-block-size: 100svh;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-body);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+:where(h1, h2, h3) {
+  font-weight: var(--font-weight-bold);
+  text-wrap: balance;
+}
+
+:where(h1) {
+  font-size: var(--font-size-3xl);
+  line-height: var(--line-height-tight);
+}
+
+:where(h2) {
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-snug);
+}
+
+:where(h3) {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-snug);
+}
+
+:where(p, li) {
+  text-wrap: pretty;
+}
+
+// Standalone links: no underline at rest, one underline on hover and keyboard focus.
+// Links inside running text (CV prose, Elio's answers) must keep a resting underline in their component:
+// the accent is < 3:1 against body text, so colour alone does not mark them (WCAG 1.4.1).
+:where(a) {
+  color: var(--color-accent);
+  text-decoration-line: none;
+  text-decoration-thickness: var(--border-width);
+  text-underline-offset: 0.2em;
+}
+
+:where(a:focus-visible) {
+  text-decoration-line: underline;
+}
+
+@media (hover: hover) {
+  :where(a):hover {
+    text-decoration-line: underline;
+  }
+}
+
+// Custom cursors (CSS only, no JS), only for a fine pointer that can hover. They keep the familiar
+// shapes (arrow, hand, I-beam) in the site's style, so expectations still hold; each value falls back to
+// the native keyword.
+@media (hover: hover) and (pointer: fine) {
+  :where(html) {
+    cursor:
+      url('/cursors/arrow.svg') 3 2,
+      auto;
+  }
+
+  // Readable text keeps the native I-beam too, so selecting text still feels native.
+  :where(p, li, dt, dd, blockquote, pre, code, h1, h2, h3, h4, h5, h6, input, textarea) {
+    cursor:
+      url('/cursors/text.svg') 12 12,
+      text;
+  }
+
+  // Listed after the text rule: a link inside a paragraph gets the pointer.
+  :where(
+    a[href],
+    button:not(:disabled),
+    summary,
+    label[for],
+    select,
+    input:is([type='button'], [type='submit'], [type='reset'], [type='checkbox'], [type='radio'])
+  ) {
+    cursor:
+      url('/cursors/pointer.svg') 9 2,
+      pointer;
+  }
+}
+
+:where(:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-width);
+}
+
+// The page scrollbar (mixins.scss → gradient-scrollbar): only the root's here; an inner scroller
+// that wants it (the chat panel) includes the same mixin.
+:root {
+  @include gradient-scrollbar;
+}
+
+// Pseudo-elements are not allowed inside `:where()`; the layer already keeps this below components.
+::selection {
+  color: var(--color-bg);
+  background-color: var(--color-accent);
+}

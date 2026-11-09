@@ -1,0 +1,136 @@
+// Build-time helpers only (.claude/rules/css-scss.md): breakpoints and media-query mixins.
+@use 'sass:map';
+
+// Mobile-first: base styles target 360 px; these are `min-width` enhancements.
+$breakpoints: (
+  sm: 480px,
+  md: 768px,
+  lg: 1024px,
+  wide: 80rem,
+  // 80rem: the knowledge map joins the chat (ADR-0012)
+  xl: 1440px,
+);
+
+// Gradient border without `mask` (.claude/rules/css-scss.md → Performance): a transparent border shows
+// the gradient painted under the border box, and a fill layer covers the padding box. The fill is a
+// colour (`$fill`) or an image such as a gradient (`$fill-image`, which wins when given).
+@mixin gradient-border(
+  $fill: var(--color-surface),
+  $border: var(--gradient-border),
+  $width: var(--border-width),
+  $fill-image: null
+) {
+  $fill-layer: linear-gradient($fill, $fill);
+
+  @if $fill-image {
+    $fill-layer: $fill-image;
+  }
+
+  border: $width solid transparent;
+  background-image: $fill-layer, $border;
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+
+  // Forced colours drop background images: give the box a real system-coloured border instead.
+  @media (forced-colors: active) {
+    border-color: CanvasText;
+  }
+}
+
+// Scroll-driven motion (css-scss.md → Motion, ROADMAP 2.6): only where scroll-driven animations exist,
+// only on screen (print and the PDF never see it) and only without a reduced-motion preference. Elsewhere
+// the block's base styles are the final, fully drawn state, so the page reads the same without it.
+@mixin scroll-motion {
+  @supports (animation-timeline: view()) {
+    @media screen and (prefers-reduced-motion: no-preference) {
+      @content;
+    }
+  }
+}
+
+// A block that fades in and rises a little as it enters the viewport. Blocks already on screen at load
+// are past their entry, so they start in the final state (no flash on the first screen).
+// The range ends a fixed distance after the block's top crosses the bottom edge, whatever its height:
+// with a percentage of the block (the old `entry 40%`), a tall block resting at the bottom of the first
+// screen stayed almost transparent until the page was scrolled (found by axe: contrast 1.3 on /cv).
+@mixin reveal-on-scroll {
+  @include scroll-motion {
+    animation-name: reveal-on-scroll;
+    animation-timing-function: var(--ease-out);
+    animation-fill-mode: both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry var(--distance-reveal-range);
+  }
+}
+
+// Hidden on screen, still read by screen readers (extra link context, labels).
+@mixin visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  inline-size: 1px;
+  block-size: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// `$print: true` also applies the block in print. An A4 page is about 680 px wide, so without it the
+// printed CV would get the narrow-screen layout; layouts that suit paper opt in (the CV date rail).
+@mixin mq($name, $print: false) {
+  @if not map.has-key($breakpoints, $name) {
+    @error 'Unknown breakpoint "#{$name}". Use one of: #{map.keys($breakpoints)}.';
+  }
+
+  @if $print {
+    @media print, (width >= map.get($breakpoints, $name)) {
+      @content;
+    }
+  } @else {
+    @media (width >= map.get($breakpoints, $name)) {
+      @content;
+    }
+  }
+}
+
+// The site's scrollbar: a gradient pill on a transparent track, so the sky shows through. For a
+// mouse or trackpad only (touch devices keep their overlay scrollbars); forced colours keep the
+// system scrollbar. The thumb is the accent gradient, ≥ 3:1 against both backgrounds (WCAG 1.4.11).
+// Chromium and Safari need the `::-webkit-scrollbar` pseudo-elements, which they ignore once
+// `scrollbar-color` is set, so the standard property only goes to browsers without them (Firefox:
+// the accent thumb, no gradient). Used by the page (styles/base.scss) and the chat panel.
+@mixin gradient-scrollbar {
+  @media (hover: hover) and (pointer: fine) and (forced-colors: none) {
+    @supports selector(::-webkit-scrollbar) {
+      &::-webkit-scrollbar {
+        inline-size: var(--size-scrollbar);
+        block-size: var(--size-scrollbar);
+        background-color: transparent;
+      }
+
+      &::-webkit-scrollbar-track,
+      &::-webkit-scrollbar-corner {
+        background-color: transparent;
+      }
+
+      // The transparent border insets the pill from the edges (the background stops at the padding
+      // box).
+      &::-webkit-scrollbar-thumb {
+        border: var(--space-3xs) solid transparent;
+        border-radius: var(--radius-pill);
+        background-image: var(--gradient-accent);
+        background-clip: padding-box;
+      }
+
+      &::-webkit-scrollbar-thumb:hover {
+        background-image: var(--gradient-accent-hover);
+      }
+
+      &::-webkit-scrollbar-thumb:active {
+        background-image: var(--gradient-accent-active);
+      }
+    }
+
+    @supports not selector(::-webkit-scrollbar) {
+      scrollbar-color: var(--color-accent) transparent;
+    }
+  }
+}

@@ -19,7 +19,7 @@ description: Determines the type of change from the changed files and runs the m
 | any in `apps/web/` or `apps/api/` | — | fast checks: `node scripts/check-fast.mjs <apps>` |
 | `apps/web/src/**/*.{astro,tsx,scss}` (UI) | markup / styles / components | e2e of the affected flows (desktop + one mobile profile), visual snapshots, axe |
 | `apps/web/src/islands/Chat/**`, `src/lib/sse/**` | streaming | chat e2e on mocked LLM (desktop + mobile) + API contract tests |
-| `apps/web/src/islands/VectorSpace/**`, `src/lib/viz/**` | visualization | perf (long frames 4× / 6×), screenshots both themes, bundle / JSON budget |
+| `apps/web/src/islands/KnowledgeMap/**`, `src/lib/viz/**` | visualization | skill `perf-check` (long frames 4× / 6×), screenshots both themes, bundle / JSON budget |
 | `apps/api/src/site_api/{core,routers,schemas,services,db}/**`, `migrations/**` | API | contract tests; regenerate TS types and check staleness |
 | `apps/api/src/site_api/{prompts,rag,graph}/**` | prompts / retrieval / graph | **evals: estimate the cost and ask Ivan first — never run without consent** |
 | `apps/api/src/site_api/ingestion/**` | ingestion | re-ingest fixtures, `points.json` contract + size |

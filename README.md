@@ -1,6 +1,6 @@
 # ivanvasiunin.com
 
-Personal site of Ivan Vasiunin, a Senior Markup Developer moving into AI Engineering.
+Personal site of Ivan Vasiunin, a Senior Markup Developer growing in AI Engineering.
 
 - **AI mode** (`/`): **Elio**, a RAG assistant that answers questions about Ivan from his notes, with streaming answers, a live 2D map of the vector space and an "Under the hood" panel.
 - **Text mode** (`/cv`): a fast CV with Brief and Full views and a PDF version.
@@ -9,7 +9,7 @@ Personal site of Ivan Vasiunin, a Senior Markup Developer moving into AI Enginee
 
 ## Stack
 
-Astro + React islands, TypeScript, SCSS · FastAPI, LangChain / LangGraph, PostgreSQL + pgvector · Playwright, Vitest, pytest, Lighthouse CI. Every choice has a recorded reason in [docs/adr/](docs/adr/).
+Astro + React islands, TypeScript, SCSS · FastAPI, LangChain / LangGraph, PostgreSQL + pgvector · Playwright, Vitest, pytest, Lighthouse. Every choice has a recorded reason in [docs/adr/](docs/adr/).
 
 ## Repository
 

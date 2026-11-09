@@ -1,0 +1,148 @@
+---
+// "Back to top" (ROADMAP 2.6): the rocket itself is the control, standing in the bottom corner once the
+// page has scrolled away from the top. A plain link to `#top` (the HTML spec scrolls to the top of the
+// document for that fragment), so it works without JS. With JS, a click launches it like a real rocket
+// (ignition, then a slow lift-off that accelerates and pulls the page up with it; src/lib/scroll-top/
+// launch.ts); with reduced motion it just jumps to the top. Its visibility is a scroll-driven animation
+// (ScrollTop.scss), so a short page never shows it.
+import './ScrollTop.scss';
+---
+
+<a class="scroll-top" href="#top" data-scroll-top>
+  <span class="scroll-top__label">Back to top</span>
+  {/* Exhaust smoke at the pad: five puffs that billow out during ignition (decoration). */}
+  <span class="scroll-top__smoke scroll-top__smoke--far-left" aria-hidden="true"></span>
+  <span class="scroll-top__smoke scroll-top__smoke--left" aria-hidden="true"></span>
+  <span class="scroll-top__smoke scroll-top__smoke--centre" aria-hidden="true"></span>
+  <span class="scroll-top__smoke scroll-top__smoke--right" aria-hidden="true"></span>
+  <span class="scroll-top__smoke scroll-top__smoke--far-right" aria-hidden="true"></span>
+  <svg
+    class="scroll-top__rocket"
+    data-scroll-top-rocket
+    width="48"
+    height="104"
+    viewBox="0 0 48 104"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <defs>
+      {/* Brushed metal, lit from the front left: shade, specular band, body, falling shade. */}
+      <linearGradient id="scroll-top-hull" x1="0" y1="0" x2="1" y2="0">
+        <stop class="scroll-top__stop-hull-shade" offset="0"></stop>
+        <stop class="scroll-top__stop-hull-light" offset="0.2"></stop>
+        <stop class="scroll-top__stop-hull-mid" offset="0.38"></stop>
+        <stop class="scroll-top__stop-hull-low" offset="0.72"></stop>
+        <stop class="scroll-top__stop-hull-shade" offset="1"></stop>
+      </linearGradient>
+      {/* Livery (nose cone, stripe, fins) in the accent, shaded the same way. */}
+      <linearGradient id="scroll-top-paint" x1="0" y1="0" x2="1" y2="0">
+        <stop class="scroll-top__stop-paint-shade" offset="0"></stop>
+        <stop class="scroll-top__stop-paint-light" offset="0.22"></stop>
+        <stop class="scroll-top__stop-paint-mid" offset="0.5"></stop>
+        <stop class="scroll-top__stop-paint-deep" offset="1"></stop>
+      </linearGradient>
+      {/* Dark machined metal: interstage ring and engine bell. */}
+      <linearGradient id="scroll-top-metal" x1="0" y1="0" x2="1" y2="0">
+        <stop class="scroll-top__stop-metal-deep" offset="0"></stop>
+        <stop class="scroll-top__stop-metal-light" offset="0.28"></stop>
+        <stop class="scroll-top__stop-metal-mid" offset="0.55"></stop>
+        <stop class="scroll-top__stop-metal-deep" offset="1"></stop>
+      </linearGradient>
+      <radialGradient id="scroll-top-glass" cx="0.35" cy="0.3" r="0.8">
+        <stop class="scroll-top__stop-glass-light" offset="0"></stop>
+        <stop class="scroll-top__stop-glass-dark" offset="1"></stop>
+      </radialGradient>
+      <linearGradient id="scroll-top-flame" x1="0" y1="0" x2="0" y2="1">
+        <stop class="scroll-top__stop-flame-white" offset="0"></stop>
+        <stop class="scroll-top__stop-flame-hot" offset="0.25"></stop>
+        <stop class="scroll-top__stop-flame-edge" offset="0.6"></stop>
+        <stop class="scroll-top__stop-flame-fade" offset="1"></stop>
+      </linearGradient>
+      <linearGradient id="scroll-top-flame-core" x1="0" y1="0" x2="0" y2="1">
+        <stop class="scroll-top__stop-flame-white" offset="0"></stop>
+        <stop class="scroll-top__stop-flame-blue" offset="0.5"></stop>
+        <stop class="scroll-top__stop-flame-blue-fade" offset="1"></stop>
+      </linearGradient>
+      <radialGradient id="scroll-top-flame-glow" cx="0.5" cy="0.3" r="0.6">
+        <stop class="scroll-top__stop-flame-edge" offset="0"></stop>
+        <stop class="scroll-top__stop-flame-fade" offset="1"></stop>
+      </radialGradient>
+      <clipPath id="scroll-top-hull-clip">
+        <path d="M15 92V32C15 20 18.5 10 24 2C29.5 10 33 20 33 32V92Z"></path>
+      </clipPath>
+    </defs>
+
+    {/* Engine plume below the bell (drawn outside the view box; the SVG does not clip it). */}
+    <g class="scroll-top__flame">
+      <ellipse cx="24" cy="114" rx="11" ry="16" fill="url(#scroll-top-flame-glow)"></ellipse>
+      <path
+        d="M16.6 99C15.8 108 18.6 119 24 131C29.4 119 32.2 108 31.4 99Z"
+        fill="url(#scroll-top-flame)"
+      ></path>
+      <path
+        d="M19.6 99C19.4 105.5 21 112 24 118C27 112 28.6 105.5 28.4 99Z"
+        fill="url(#scroll-top-flame-core)"
+      ></path>
+    </g>
+
+    {/* Fins: two swept side fins. */}
+    <path
+      fill="url(#scroll-top-paint)"
+      d="M15.2 70C10.6 74.5 7.6 81.5 6.8 89.5L6.6 97L15.2 92.5Z"
+    ></path>
+    <path
+      fill="url(#scroll-top-paint)"
+      d="M32.8 70C37.4 74.5 40.4 81.5 41.2 89.5L41.4 97L32.8 92.5Z"
+    ></path>
+    <path
+      class="scroll-top__edge"
+      d="M15.2 70C10.6 74.5 7.6 81.5 6.8 89.5L6.6 97L15.2 92.5Z"
+    ></path>
+    <path
+      class="scroll-top__edge"
+      d="M32.8 70C37.4 74.5 40.4 81.5 41.2 89.5L41.4 97L32.8 92.5Z"
+    ></path>
+
+    {/* Engine bell. */}
+    <path fill="url(#scroll-top-metal)" d="M18.4 91.5H29.6L31.6 99.5H16.4Z"></path>
+    <path class="scroll-top__edge" d="M18.4 91.5H29.6L31.6 99.5H16.4Z"></path>
+
+    {/* Hull, then everything painted on it is clipped to its outline. */}
+    <path
+      fill="url(#scroll-top-hull)"
+      d="M15 92V32C15 20 18.5 10 24 2C29.5 10 33 20 33 32V92Z"
+    ></path>
+    <g clip-path="url(#scroll-top-hull-clip)">
+      {/* Nose cone and a livery stripe. */}
+      <rect x="10" y="0" width="28" height="31" fill="url(#scroll-top-paint)"></rect>
+      <rect class="scroll-top__seam" x="10" y="31" width="28" height="0.7"></rect>
+      <rect x="10" y="35" width="28" height="2.4" fill="url(#scroll-top-paint)"></rect>
+      {/* Interstage ring between the stages, with its seams. */}
+      <rect x="10" y="61" width="28" height="4.6" fill="url(#scroll-top-metal)"></rect>
+      <rect class="scroll-top__seam" x="10" y="60.6" width="28" height="0.5"></rect>
+      <rect class="scroll-top__seam" x="10" y="65.6" width="28" height="0.5"></rect>
+      {/* Panel lines. */}
+      <rect class="scroll-top__seam" x="10" y="50" width="28" height="0.4"></rect>
+      <rect class="scroll-top__seam" x="10" y="78" width="28" height="0.4"></rect>
+      <rect class="scroll-top__seam" x="23.8" y="66" width="0.4" height="26"></rect>
+      {/* A specular streak down the lit side. */}
+      <path
+        class="scroll-top__sheen"
+        d="M19.6 10C17.9 16 17.2 23 17.2 31V91H18.4V31C18.4 23 18.8 16 19.6 10Z"
+      ></path>
+    </g>
+    <path class="scroll-top__edge" d="M15 92V32C15 20 18.5 10 24 2C29.5 10 33 20 33 32V92Z"></path>
+
+    {/* Crew window: a rim, tinted glass and a glint. */}
+    <circle class="scroll-top__rim" cx="24" cy="44" r="2.9"></circle>
+    <circle cx="24" cy="44" r="2.1" fill="url(#scroll-top-glass)"></circle>
+    <circle class="scroll-top__glint" cx="23.3" cy="43.3" r="0.6"></circle>
+  </svg>
+</a>
+
+<script>
+  import { initScrollTop } from '../../lib/scroll-top/launch';
+
+  const link = document.querySelector<HTMLAnchorElement>('[data-scroll-top]');
+  if (link) initScrollTop(link, window);
+</script>

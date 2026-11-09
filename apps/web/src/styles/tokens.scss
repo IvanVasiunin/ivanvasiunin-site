@@ -1,0 +1,420 @@
+// Design tokens (.claude/rules/css-scss.md → Tokens). Loaded into the `tokens` layer by global.scss.
+// Visual direction "Celestial atlas": the vector space is a star chart of Ivan's experience.
+// Documented in README.md.
+@use 'mixins' as *;
+
+// Dark colour values. Included twice: for the explicit `data-theme="dark"` choice and for the
+// system preference when no explicit light choice is stored (SPEC US-X1).
+@mixin dark-colors {
+  color-scheme: dark;
+
+  // Deep space.
+  --color-bg: #0e1430;
+  --color-surface: #161e40;
+  --color-text: #dde4f5;
+  --color-text-muted: #a3aecb;
+  --color-grid: #232c52;
+  --color-border: #7c88b0;
+  --color-accent: #8db2ff;
+  --color-accent-2: #bba6ff;
+  --color-accent-3: #6ed3c8;
+  --color-on-accent: #0e1430;
+  --color-focus: #8db2ff;
+  --color-highlight: #f2c14e;
+  --color-danger: #ff8f86;
+
+  // Deep, saturated nebulae: strong colour, little added luminance.
+  --color-glow-1: rgb(59 31 168 / 45%);
+  --color-glow-2: rgb(14 79 160 / 40%);
+  --color-glow-3: rgb(122 30 140 / 30%);
+  --color-star: #e6ecff;
+  --color-chart-line: #5a6cb0;
+  --color-source-cv: #8db2ff;
+  --color-source-experience: #6ed3c8;
+  --color-source-personal: #f29ac0;
+  --color-source-site-docs: #bba6ff;
+  --color-source-github: #a9b3cc;
+  --shadow-raised: 0 1px 2px rgb(4 6 20 / 50%), 0 4px 16px rgb(4 6 20 / 40%);
+  --color-smoke: rgb(214 222 245 / 55%);
+
+  // "Frosted glass" icons: pale glass on the night sky; deep glass on the light accent pill.
+  --color-icon-glass-1: #b9d4ff;
+  --color-icon-glass-2: #d9c8ff;
+  --color-icon-glass-on-accent-1: #24337a;
+  --color-icon-glass-on-accent-2: #3a2c86;
+  --color-icon-rim: rgb(255 255 255 / 75%);
+  --color-icon-detail: #2b3f8f;
+  --color-icon-detail-on-accent: #fff;
+  --color-icon-star: #ffe28a;
+  --color-sun-1: #fff1b8;
+  --color-sun-2: #ffc94d;
+  --color-sun-3: #ff9a3c;
+  --color-sun-edge: #ffc94d;
+  --color-moon-1: #fff;
+  --color-moon-2: #d7ccff;
+  --color-moon-3: #9d8cff;
+}
+
+:root {
+  color-scheme: light dark;
+
+  // Colour. Light: warm star-chart paper, navy ink, cobalt, star gold.
+  --color-bg: #f4efe5;
+  --color-surface: #fcf9f3;
+  --color-text: #182036;
+  --color-text-muted: #454a62;
+  --color-grid: #d8cfbf; // decoration only, no contrast requirement
+  --color-border: #5f6274; // UI boundaries, ≥ 3:1 against bg
+  --color-accent: #2b54b0; // links, primary actions; < 3:1 against text, so inline links keep an underline
+  --color-accent-2: #6a4fb0; // violet, second gradient stop
+  --color-accent-3: #1f7373; // teal, third gradient stop
+  --color-on-accent: #fff; // text on accent gradients
+  --color-focus: #2b54b0;
+  --color-highlight: #8f5d00; // relevance highlight on the map (graphic, not text)
+  --color-danger: #922720; // error text and icons (chat errors); ≥ 4.5:1 on bg and surface (tested)
+  // Backdrop nebulae: cool violet, blue and teal washes that read clearly on the warm paper. Alphas are
+  // capped so text keeps its contrast where all three overlap (tested).
+  --color-glow-1: rgb(165 140 255 / 22%);
+  --color-glow-2: rgb(125 170 255 / 15%);
+  --color-glow-3: rgb(95 205 190 / 14%);
+  --color-star: #4a5a8a; // printed stars on a paper chart
+  --color-chart-line: #7d8ab0; // celestial chart rings and meridians (decoration)
+  // Map key: one colour per RAG source type (.claude/rules/visualization.md).
+  --color-source-cv: #2b54b0;
+  --color-source-experience: #1f7373;
+  --color-source-personal: #a6466e;
+  --color-source-site-docs: #6a4fb0;
+  --color-source-github: #5b6478;
+
+  // Knowledge map (ADR-0012): a "night window" - its sky is dark in both themes, so these are set
+  // once here and never redefined by the dark theme. Stars use the dark theme's source colours.
+  --color-map-sky-1: #0a0f26;
+  --color-map-sky-2: #141c40;
+  --color-map-edge: #2a3460;
+  --color-map-text: #dde4f5;
+  --color-map-muted: #a3aecb;
+  --color-map-topics: #ffd35c;
+  --color-map-cv: #8db2ff;
+  --color-map-experience: #6ed3c8;
+  --color-map-personal: #f29ac0;
+  --color-map-site-docs: #bba6ff;
+  --color-map-github: #a9b3cc;
+
+  // Typography. Self-hosted OFL fonts (astro.config.mjs → `fonts`); the <Font> components in BaseLayout
+  // define the family variables, including Astro's metric-matched fallback faces. The stacks after the
+  // comma apply only where <Font> is absent (isolated component tests).
+  --font-sans: var(--font-schibsted-grotesk, system-ui, sans-serif);
+  --font-serif: var(--font-newsreader, georgia, serif);
+
+  // Type scale after the traditional scale in The Elements of Typographic Style
+  // (12 14 16 18 21 24 36 48 px). Larger steps are fluid between two rem values.
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: clamp(1.3125rem, 1.2rem + 0.5vw, 1.5rem);
+  --font-size-2xl: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+  --font-size-3xl: clamp(2rem, 1.6rem + 1.5vw, 3rem);
+  --line-height-tight: 1.1;
+  --line-height-snug: 1.3;
+  --line-height-body: 1.5;
+
+  // Serif reading text: answers and the CV (Ivan, 2026-11-05: was 1.6, felt too airy). Below the
+  // 1.5 of WCAG 1.4.8 (AAA, not required at AA); text-spacing overrides (1.4.12, AA) still work.
+  --line-height-prose: 1.4;
+
+  // Chat turns (questions and answers): 18 px text, tighter lines (Ivan, 2026-11-09: answers read
+  // too small). Below WCAG 1.4.8 (AAA, not required); text-spacing overrides (1.4.12, AA) still work.
+  --line-height-chat: 1.25;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --measure: 65ch;
+  --letter-spacing-caps: 0.08em; // small uppercase labels
+
+  // Spacing (px, per the rules) on a 4 px grid.
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+  --gutter: var(--space-md); // page side padding; widened from md up (below)
+
+  // Sizes.
+  --size-touch: 44px; // minimum touch target (SPEC US-X2)
+  --size-icon: 24px;
+  --size-icon-sm: 18px; // icons next to small text (mode switch)
+  --size-container: 75rem; // max width of the page frame
+  --size-cv: 56rem; // max width of the CV: the date rail plus a prose measure
+  --size-cv-comet: 18px; // the comet's head with its coma, at the tip of the drawn CV timeline
+  --size-cv-comet-tail: 80px;
+  --size-cv-comet-tail-width: 3px; // the tail's width where it meets the head
+  --size-cv-rail: 7.5rem; // the CV's date rail from `md` ("Nov 2024 – Present" on two lines)
+  --size-cv-star: 8px; // a job's star on the CV timeline
+  --size-meter: 3rem; // a relevance bar in Under the hood (track length)
+  --size-meter-thickness: 4px;
+
+  // Height of a floating bar (the header bar, the mode switch below `md`): a touch-size control inside
+  // the bar's padding and border. The page reserves this space (BaseLayout.scss, scroll-padding).
+  --size-chat: 46rem; // the chat column: a prose measure plus the question's rule and padding
+  --size-avatar-xl: 7rem; // Elio speaking on the privacy page (PrivacyPromises)
+  --size-avatar-lg: 3.5rem; // Elio's avatar in the greeting
+  --size-avatar-sm: 2rem; // Elio's avatar next to an answer
+  --size-composer-max: 10rem; // the chat input grows with its text up to about six lines
+  --size-page-fit-min: 36rem; // a fitted page (AI mode from md) scrolls below this height
+  --size-bar: calc(var(--size-touch) + 2 * var(--space-2xs) + 2 * var(--border-width));
+
+  // Distance of the bottom bar from the screen edge, clear of the home indicator.
+  --offset-bar-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+
+  // The space the floating mode switch takes at the screen's bottom below md (bar + its offset).
+  --space-bottom-bar: calc(var(--size-bar) + var(--offset-bar-bottom));
+
+  // Shape.
+  --radius-sm: 4px; // chips, inputs
+  --radius-md: 8px; // panels
+  --radius-pill: 999px; // toggles
+  --radius-input-pill: 24px; // the chat input: a pill on one line that stays rounded when it grows
+  --radius-chip-pill: 16px; // a source chip: a pill on one line, a rounded box when its title wraps
+  --radius-bubble: 20px; // chat bubbles (layout B "Orbits")
+  --radius-panel: 24px; // the chat panel from md (layout L2)
+  --radius-bubble-tail: 6px; // the corner a bubble points from: the asker's or Elio's side
+  --border-width: 1px;
+  --focus-ring-width: 2px;
+  --shadow-raised: 0 1px 2px rgb(24 32 54 / 12%), 0 4px 16px rgb(24 32 54 / 8%);
+
+  // Accent glow for primary controls and focused panels; follows the theme's accent.
+  --shadow-glow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 24%, transparent),
+    0 2px 8px color-mix(in srgb, var(--color-accent) 22%, transparent);
+
+  // A raised panel that also glows: the focused chat input.
+  --shadow-raised-glow: var(--shadow-raised), var(--shadow-glow);
+
+  // A tight glow for controls inside a bar (the mode switch pill): stays within the bar.
+  --shadow-glow-sm:
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent),
+    0 1px 4px color-mix(in srgb, var(--color-accent) 22%, transparent);
+
+  // A segmented control's track (the mode switch): a faint accent tint with a hairline inner edge,
+  // so the group reads as one control without a border on every segment.
+  --color-track: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  --shadow-track: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 18%, transparent);
+
+  // Accent washes for icon-control highlights (hover: soft, pressed: strong); follow the theme's accent.
+  --color-highlight-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  --color-highlight-strong: color-mix(in srgb, var(--color-accent) 26%, transparent);
+
+  // Elio's speech bubble on the privacy page (PrivacyPromises): a faint accent tint on the surface and
+  // a soft accent hairline; both follow the theme's accent.
+  --color-bubble: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  --color-bubble-border: color-mix(in srgb, var(--color-accent) 35%, transparent);
+
+  // Elio's robot avatar (components/ElioAvatar): polished metal with a lavender tint, a dark glass
+  // visor and teal lights. An object with its own material, the same in both themes.
+  --color-avatar-metal-1: #f4f6ff;
+  --color-avatar-metal-2: #c9d1f0;
+  --color-avatar-metal-3: #7c87b8;
+  --color-avatar-metal-4: #363f6c;
+  --color-avatar-visor-1: #25336e;
+  --color-avatar-visor-2: #0f1638;
+  --color-avatar-visor-3: #05081c;
+  --color-avatar-light: #7fe0cf;
+  --color-avatar-eye-1: #e9fffb;
+  --color-avatar-eye-2: #9ff5e6;
+  --color-avatar-eye-3: #3cc7b2;
+  --color-avatar-bulb: #d6c9ff;
+  --color-avatar-shine: #fff;
+
+  // The header logo's golden planet (SiteHeader): a small glossy sphere, the same in both themes.
+  --color-mark-gold-1: #fff7d6;
+  --color-mark-gold-2: #f6cf6a;
+  --color-mark-gold-3: #c98a1c;
+
+  // An error panel's fill (chat errors): the surface with a faint danger tint; follows the theme.
+  --color-danger-soft: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+
+  // "Frosted glass" icons (mode switch, theme toggle; styles/README.md → Icons). Light theme: a
+  // deeper glass, so the icons read on the paper; on the current mode's accent pill, pale glass.
+  --color-icon-glass-1: #6a92ec;
+  --color-icon-glass-2: #9479ea;
+  --color-icon-glass-on-accent-1: #eef3ff;
+  --color-icon-glass-on-accent-2: #e4d9ff;
+  --color-icon-sheen: rgb(255 255 255 / 85%);
+  --color-icon-rim: rgb(255 255 255 / 70%);
+  --color-icon-detail: #fff;
+  --color-icon-detail-on-accent: #2b54b0;
+  --color-icon-star: #e0a100;
+  --color-sun-1: #ffd56a;
+  --color-sun-2: #f39a2a;
+  --color-sun-3: #e07012;
+  --color-sun-edge: #a85a06; // the sun's outline: ≥ 3:1 on the light surface (an icon-only button)
+  --color-moon-1: #c4b6ff;
+  --color-moon-2: #8a70ee;
+  --color-moon-3: #5a3fc4;
+
+  // The "Back to top" rocket (ScrollTop): its own materials, the same in both themes (a rocket is the
+  // same rocket by day or night); only its livery follows the accent. Decoration.
+  --color-rocket-hull-light: #fff;
+  --color-rocket-hull-mid: #e4e8f3;
+  --color-rocket-hull-low: #a9b2cc;
+  --color-rocket-hull-shade: #59627f;
+  --color-rocket-metal-light: #a3abc6;
+  --color-rocket-metal-mid: #4a5168;
+  --color-rocket-metal-deep: #1b1f2e;
+  --color-rocket-seam: rgb(30 38 70 / 40%);
+  --color-rocket-edge: rgb(
+    20 26 50 / 55%
+  ); // outline, so the silver hull reads on the paper background
+
+  --color-rocket-glass-light: #9fe8ff;
+  --color-rocket-glass-dark: #10224f;
+  --color-flame-white: #fffdf5;
+  --color-flame-hot: #ffd76a;
+  --color-flame-edge: #ff7a2f;
+  --color-flame-blue: #bfe3ff;
+  --color-sheen: rgb(255 255 255 / 70%);
+  --color-smoke: rgb(120 128 160 / 45%);
+  --color-comet-core: #fffdf0; // the comet's white-hot head (CV timeline)
+
+  // The scrim above the sticky header: the page colour, translucent, over a blur (SiteHeader).
+  --color-scrim: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  --color-scrim-solid: color-mix(in srgb, var(--color-bg) 92%, transparent); // without the blur
+  --blur-scrim: 8px;
+
+  // Backdrop details (dot grid, stars, celestial chart) are dimmed to 75% behind content.
+  --backdrop-detail-opacity: 0.75;
+
+  // Gradients. Built from the colour tokens, so they follow the theme without redefinition.
+  --gradient-accent: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+
+  // Button state layers (hover on ::before, active on ::after; only their opacity animates).
+  --color-accent-active: color-mix(in srgb, var(--color-accent) 82%, #000);
+  --color-accent-2-active: color-mix(in srgb, var(--color-accent-2) 82%, #000);
+  --gradient-accent-hover: linear-gradient(135deg, var(--color-accent-2), var(--color-accent));
+  --gradient-accent-active: linear-gradient(
+    135deg,
+    var(--color-accent-active),
+    var(--color-accent-2-active)
+  );
+  --gradient-surface: linear-gradient(
+    135deg,
+    var(--color-surface),
+    color-mix(in srgb, var(--color-accent-2) 8%, var(--color-surface))
+  );
+  --gradient-surface-hover: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-accent) 14%, var(--color-surface)),
+    color-mix(in srgb, var(--color-accent-2) 14%, var(--color-surface))
+  );
+  --gradient-surface-active: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-accent) 22%, var(--color-surface)),
+    color-mix(in srgb, var(--color-accent-2) 22%, var(--color-surface))
+  );
+  --gradient-border: linear-gradient(
+    135deg,
+    var(--color-accent),
+    var(--color-accent-2) 50%,
+    var(--color-accent-3)
+  );
+
+  // Motion.
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --duration-orbit: 2400ms; // one lap of the brand mark's planet (a looping hover animation)
+  // Elio's avatar: slow, small idle motion; faster only while an answer is prepared.
+  --duration-breath: 5s;
+  --duration-blink: 6s;
+  --duration-sheen: 7s;
+  --duration-pulse: 3.2s;
+  --duration-pulse-fast: 1s;
+  --duration-scan: 1.4s;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Scroll motion (ROADMAP 2.6, styles/README.md).
+  --distance-reveal: 12px; // how far a block rises while it fades in on scroll
+  --distance-reveal-range: 6rem; // a block is fully revealed once its top is this far above the bottom edge
+  --distance-scrim-fade: 160px; // the header scrim fades in over this much scrolling
+  --timeline-draw-line: 65%; // the CV timeline is drawn down to this line of the viewport
+  // "Back to top" appears between these scroll offsets (from 40% of a screen to 60%).
+  --distance-scroll-top-start: 40svh;
+  --distance-scroll-top-end: 60svh;
+
+  // The rocket's width (its height follows the drawing, about 2.2×); larger from `md`.
+  --size-rocket: 27px;
+  --size-rocket-md: 37px;
+  --size-smoke: 22px; // one exhaust puff at the pad
+  --duration-ignition: 500ms; // engine start before lift-off; IGNITION_MS in scroll-top/launch.ts (tested)
+  --duration-smoke: 1400ms; // a puff billows and clears
+  --size-scrollbar: 12px; // the page scrollbar (fine pointers); the thumb is a pill inside it
+
+  // Z-index: a fixed scale. The backdrop and the map sit under the page content.
+  --z-backdrop: -2;
+  --z-map: -1;
+  --z-below: -1; // under siblings inside an isolated component (e.g. a hover highlight)
+  --z-base: 0;
+  --z-raised: 10;
+  --z-header: 100;
+  --z-launch: 150; // the "Back to top" rocket: above the header it flies past
+  --z-overlay: 200;
+  --z-toast: 300;
+  --z-skip-link: 400;
+}
+
+:root {
+  @include mq(md) {
+    --gutter: var(--space-xl);
+  }
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+// Dark only on screen: print and the build-time PDF are always the light, ink-on-paper version.
+@media screen {
+  :root[data-theme='dark'] {
+    @include dark-colors;
+  }
+}
+
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark-colors;
+  }
+}
+
+// Print (css-scss.md → Print): black text on white paper; the accent stays a dark ink blue for links
+// and the timeline. Backgrounds and shadows are dropped by the print rules in utilities.scss.
+@media print {
+  :root {
+    color-scheme: light;
+
+    --color-bg: #fff;
+    --color-surface: #fff;
+    --color-text: #000;
+    --color-text-muted: #3d3d3d;
+    --color-border: #8a8a8a;
+    --color-accent: #1d3f8f;
+    --color-highlight: #1d3f8f;
+
+    // The root font size on paper: 13 px, close to the 10 pt of a printed CV (styles/base.scss).
+    --font-size-root-print: 81.25%;
+  }
+}
+
+// Reduced motion: every duration collapses to the shortest one. Components also drop transforms.
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-base: var(--duration-fast);
+    --duration-slow: var(--duration-fast);
+  }
+}

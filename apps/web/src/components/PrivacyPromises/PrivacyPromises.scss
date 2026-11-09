@@ -1,0 +1,243 @@
+@use '../../styles/mixins' as *;
+
+// The privacy page's side card: Elio with a speech bubble, the bubble's controls and four facts.
+// A gradient-bordered panel like the chat and the knowledge map. Motion: a promise fades and rises in
+// (transform and opacity); with reduced motion only a short fade.
+@layer components {
+  .privacy-promises {
+    @include gradient-border($fill-image: var(--gradient-surface));
+
+    display: grid;
+    gap: var(--space-lg);
+    min-inline-size: 0;
+    padding: var(--space-md);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-raised-glow);
+
+    @include mq(sm) {
+      padding: var(--space-lg);
+    }
+  }
+
+  .privacy-promises__speaker {
+    display: grid;
+    gap: var(--space-md);
+    justify-items: center;
+  }
+
+  // The bubble points up at Elio. Its height is the longest promise's (they share one grid cell).
+  .privacy-promises__bubble {
+    position: relative;
+    inline-size: 100%;
+    padding: var(--space-md) var(--space-lg);
+    border: var(--border-width) solid var(--color-bubble-border);
+    border-radius: var(--radius-bubble);
+    background-color: var(--color-bubble);
+
+    // The tail (decoration): a square turned 45° under the top edge, with the bubble's border on
+    // the two sides that show.
+    &::before {
+      position: absolute;
+      inset-block-start: calc(var(--space-sm) / -2 - var(--border-width));
+      inset-inline-start: 50%;
+      inline-size: var(--space-sm);
+      block-size: var(--space-sm);
+      border-block-start: var(--border-width) solid var(--color-bubble-border);
+      border-inline-start: var(--border-width) solid var(--color-bubble-border);
+      background-color: var(--color-bubble);
+      transform: translateX(-50%) rotate(45deg);
+      content: '';
+    }
+  }
+
+  .privacy-promises__says {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // Elio's words are content: the serif reading voice (DESIGN.md → The Two Voices Rule).
+  .privacy-promises__say {
+    grid-area: 1 / 1;
+    align-self: center;
+    font-family: var(--font-serif);
+    line-height: var(--line-height-prose);
+    text-align: center;
+    opacity: 0;
+
+    &[data-current] {
+      opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      transform: translateY(var(--space-2xs));
+      transition:
+        opacity var(--duration-slow) var(--ease-out),
+        transform var(--duration-slow) var(--ease-out);
+
+      &[data-current] {
+        transform: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: opacity var(--duration-fast) linear;
+    }
+  }
+
+  // Five 44 px dots and the pause button are wider than the card at 360 px (Ivan, 2026-11-09: they
+  // pushed the whole card past its border): there the pause button wraps under the dots.
+  .privacy-promises__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    align-items: center;
+    justify-content: center;
+    max-inline-size: 100%;
+
+    // `display: flex` would otherwise override the attribute (no JS: no controls).
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  .privacy-promises__dots {
+    display: flex;
+  }
+
+  // A touch-size button around a small dot; the current promise's dot is the accent, a bit larger.
+  .privacy-promises__dot {
+    display: grid;
+    place-items: center;
+    inline-size: var(--size-touch);
+    block-size: var(--size-touch);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background-color: transparent;
+    cursor: pointer;
+
+    &::before {
+      inline-size: var(--space-xs);
+      block-size: var(--space-xs);
+      border-radius: var(--radius-pill);
+      background-color: var(--color-border);
+      content: '';
+
+      @media (prefers-reduced-motion: no-preference) {
+        transition: transform var(--duration-base) var(--ease-out);
+      }
+    }
+
+    &[aria-pressed='true']::before {
+      background-color: var(--color-accent);
+      transform: scale(1.3);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: calc(-1 * var(--space-xs));
+    }
+
+    @media (hover: hover) {
+      &:hover::before {
+        background-color: var(--color-accent);
+      }
+    }
+  }
+
+  .privacy-promises__pause {
+    display: grid;
+    place-items: center;
+    inline-size: var(--size-touch);
+    block-size: var(--size-touch);
+    padding: 0;
+    border: var(--border-width) solid var(--color-bubble-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-accent);
+    background-color: transparent;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    &:active {
+      background-color: var(--color-highlight-strong);
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--color-highlight-soft);
+      }
+    }
+  }
+
+  .privacy-promises__icon {
+    inline-size: var(--size-icon-sm);
+    block-size: var(--size-icon-sm);
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  // Pause shows two bars; once paused, the button shows Play.
+  .privacy-promises__icon-play {
+    display: none;
+    fill: currentcolor;
+  }
+
+  .privacy-promises__pause[aria-pressed='true'] {
+    .privacy-promises__icon-pause {
+      display: none;
+    }
+
+    .privacy-promises__icon-play {
+      display: inline;
+    }
+  }
+
+  .privacy-promises__tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .privacy-promises__tile {
+    display: grid;
+    gap: var(--space-3xs);
+    align-content: start;
+    padding: var(--space-sm);
+    border: var(--border-width) solid var(--color-bubble-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-track);
+  }
+
+  // The figure in the accent gradient (both stops reach 4.5:1 on the surface in both themes).
+  .privacy-promises__value {
+    font-size: var(--font-size-xl);
+    line-height: var(--line-height-tight);
+    color: transparent;
+    background-image: var(--gradient-accent);
+    background-clip: text;
+
+    // High contrast modes drop background images: plain system text instead.
+    @media (forced-colors: active) {
+      color: CanvasText;
+      background-image: none;
+    }
+  }
+
+  .privacy-promises__caption {
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-snug);
+    color: var(--color-text-muted);
+  }
+}

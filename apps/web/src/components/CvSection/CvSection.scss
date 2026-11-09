@@ -1,0 +1,48 @@
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .cv-section {
+    display: grid;
+    gap: var(--space-lg);
+    inline-size: 100%;
+    max-inline-size: var(--size-cv);
+  }
+
+  // The heading reads like a chart key: a label followed by a fine gradient meridian.
+  .cv-section__title {
+    @include reveal-on-scroll;
+
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    font-size: var(--font-size-xl);
+    break-after: avoid;
+
+    &::after {
+      content: '';
+      flex: 1;
+      block-size: var(--border-width);
+      print-color-adjust: exact; // the hairline is part of the heading, also on paper
+
+      // `to right` is physical: CSS has no logical gradient direction yet; the site is LTR only.
+      background-image: linear-gradient(to right, var(--color-chart-line), transparent);
+    }
+  }
+
+  .cv-section__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // `minmax(0, …)`: a card never grows past the column to fit its longest word (enlarged text).
+  .cv-section__list--cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-md);
+
+    @include mq(md, $print: true) {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    }
+  }
+}

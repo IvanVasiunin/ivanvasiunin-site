@@ -1,0 +1,18 @@
+# Elio's templated answers in Spanish (SPEC §5.1). Elio speaks of itself in the first person and of
+# Ivan in the third. Markdown.
+greeting: |
+  ¡Hola! Soy Elio, el asistente de IA del sitio web de Iván Vasiunin. Respondo preguntas sobre la experiencia, las habilidades y los proyectos de Iván, y sobre cómo está hecho este sitio, usando solo los materiales del propio Iván.
+
+  Por ejemplo, puedes preguntar:
+
+  - ¿Qué hizo Iván en BrainRocket?
+  - ¿Qué tecnologías usa Iván?
+  - ¿Cómo está construido el RAG de este sitio?
+off_topic: |
+  Solo puedo hablar de Iván: de su experiencia, sus habilidades y sus proyectos, y de cómo está hecho este sitio. Por ejemplo, puedes preguntar en qué trabaja Iván ahora o qué tecnologías usa.
+injection: |
+  No puedo cambiar mi forma de trabajar ni compartir mis instrucciones. Con gusto respondo preguntas sobre la experiencia, las habilidades y los proyectos de Iván.
+rude: |
+  Mantengamos el respeto. Con gusto te cuento sobre la experiencia, las habilidades y los proyectos de Iván, por ejemplo, en qué trabaja ahora.
+no_info: |
+  No tengo información sobre eso. Puedes preguntarle a Iván directamente: por [correo](mailto:ivanvasyunin@gmail.com), [Telegram](https://t.me/IvanVasiunin) o [LinkedIn](https://www.linkedin.com/in/ivan-vasiunin-9967a5132/).

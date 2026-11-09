@@ -1,0 +1,45 @@
+// Three pills in a row: done steps are muted, the current one has the gradient border and breathes
+// (opacity only), the next ones wait with a hairline border.
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .thinking-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .thinking-steps__step {
+    padding: var(--space-3xs) var(--space-sm);
+    border: var(--border-width) solid color-mix(in srgb, var(--color-border) 40%, transparent);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-body);
+    color: var(--color-text-muted);
+
+    &[data-state='current'] {
+      @include gradient-border;
+
+      color: var(--color-text);
+      animation: thinking-steps-breathe var(--duration-orbit) var(--ease-in-out) infinite;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+      }
+    }
+
+    // A tick before a finished step: the state is not told by colour alone.
+    &[data-state='done']::before {
+      content: '✓ ' / '';
+    }
+  }
+
+  @keyframes thinking-steps-breathe {
+    50% {
+      opacity: 0.55;
+    }
+  }
+}

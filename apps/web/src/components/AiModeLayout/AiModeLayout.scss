@@ -1,0 +1,26 @@
+// The free height of the fitted page goes to the columns; each column fills it (the chat panel and
+// the map card scroll or draw inside themselves).
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .ai-mode-layout {
+    display: flex;
+    flex-direction: column;
+    inline-size: 100%;
+
+    @include mq(md) {
+      flex: 1;
+      min-block-size: 0;
+    }
+
+    // Two rows: the chat's greeting, then the chat panel and the map card side by side, level at
+    // the top and the bottom (Ivan, 2026-11-07). The chat lays its greeting and panel into these
+    // cells itself (Chat.scss: `display: contents` from `wide`).
+    @include mq(wide) {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      grid-template-columns: minmax(0, var(--size-chat)) minmax(0, 1fr);
+      gap: var(--space-md) var(--space-lg);
+    }
+  }
+}

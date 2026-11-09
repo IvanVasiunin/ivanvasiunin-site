@@ -1,0 +1,77 @@
+// Page frame: header, a main area that takes the free height, footer. Mobile-first from 360 px.
+@use '../styles/mixins' as *;
+
+@layer components {
+  // A flex column: main takes the free height, the sticky header and the footer keep their size.
+  .page {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 100svh;
+
+    // Below `md` the mode switch floats at the bottom of the screen: keep the footer clear of it.
+    // Scrolled to the end, the footer text sits as far above the bar as the bar sits above the
+    // screen's edge (Ivan, 2026-11-09); the footer has no bottom padding there (SiteFooter.scss).
+    padding-block-end: calc(var(--size-bar) + 2 * var(--offset-bar-bottom));
+
+    @include mq(md) {
+      padding-block-end: 0;
+    }
+
+    // Exactly one window from `md`, unless the window is very short: then the page scrolls rather
+    // than squeezing the content.
+    &--fit {
+      @include mq(md) {
+        block-size: 100dvh;
+        min-block-size: var(--size-page-fit-min);
+      }
+    }
+
+    // Paper: the page margins come from `@page` (styles/base.scss).
+    @media print {
+      min-block-size: 0;
+      padding-block-end: 0;
+    }
+  }
+
+  // The main area is a left-aligned reading column inside a centred frame (src/styles/README.md).
+  .page__main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-lg);
+    align-items: flex-start;
+    inline-size: 100%;
+    max-inline-size: var(--size-container);
+    margin-inline: auto;
+
+    // Phones: 24 px above and below (Ivan, 2026-11-09: 48 / 64 px left too much empty space);
+    // more air from `md`.
+    padding-block: var(--space-lg);
+    padding-inline: max(var(--gutter), env(safe-area-inset-left))
+      max(var(--gutter), env(safe-area-inset-right));
+
+    @include mq(md) {
+      padding-block: var(--space-2xl) var(--space-3xl);
+    }
+
+    > :where(p, ul, ol) {
+      max-inline-size: var(--measure);
+    }
+
+    // A fitted page (AI mode) ends with the chat, not with a long reading column: a small bottom
+    // padding at every width. From `md` main may also shrink to the free height, and its child takes
+    // it (flex: 1 there).
+    .page--fit & {
+      padding-block-end: var(--space-lg);
+
+      @include mq(md) {
+        min-block-size: 0;
+      }
+    }
+
+    @media print {
+      gap: var(--space-md);
+      padding: 0;
+    }
+  }
+}

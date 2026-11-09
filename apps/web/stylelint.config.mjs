@@ -21,6 +21,22 @@ const BLOCK = '[a-z][a-z0-9]*(?:-[a-z0-9]+)*';
 // `.block`, `.block__element`, `.block--modifier`, `.block__element--modifier`, `.is-state`, `.has-state`.
 const BEM_CLASS = `^(?:(?:is|has)-${WORD}|${BLOCK}(?:__${WORD})?(?:--${WORD})?)$`;
 
+// postcss-bem-linter takes the block name from the file name verbatim, but component files are
+// PascalCase (`ChatInput.scss`) and classes are kebab-case (`.chat-input`). Map one to the other.
+const toKebabCase = (/** @type {string} */ name) =>
+  name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+const bemBlockSelector = (/** @type {string} */ fileName) =>
+  `\\.${toKebabCase(fileName)}(?:__${WORD})?(?:--${WORD})?(?:\\[.+\\])?`;
+// A component may also start a selector with the theme state on the root (`:root[data-theme='dark']
+// .theme-toggle__icon`), set before first paint by the theme script in BaseLayout. Only the block's own
+// classes may follow a combinator.
+const THEME_ROOT = `:root(?:\\[data-theme='(?:light|dark)'\\]|:not\\(\\[data-theme\\]\\))`;
+const bemComponentSelectors = {
+  initial: (/** @type {string} */ fileName) =>
+    new RegExp(`^(?:${bemBlockSelector(fileName)}|${THEME_ROOT})$`),
+  combined: (/** @type {string} */ fileName) => new RegExp(`^${bemBlockSelector(fileName)}$`),
+};
+
 // `transition` / `transition-property` may only animate transform and opacity.
 const ONLY_TRANSFORM_OPACITY =
   '/^(?:none|(?:transform|opacity)\\b[^,]*(?:,\\s*(?:transform|opacity)\\b[^,]*)*)$/';
@@ -46,7 +62,8 @@ export default {
           `Expected BEM class name (block__element--modifier): "${selector}"`,
       },
     ],
-    'selector-no-qualifying-type': true,
+    // The rule bans tag-qualified classes (`div.card`); attribute-qualified elements (`a[href]`) are fine.
+    'selector-no-qualifying-type': [true, { ignore: ['attribute'] }],
 
     // Specificity.
     'selector-max-id': 0,
@@ -77,6 +94,16 @@ export default {
           '0',
           'none',
           'auto',
+          // CSS system colours: the only correct values inside `@media (forced-colors: active)`.
+          'Canvas',
+          'CanvasText',
+          'LinkText',
+          'ButtonFace',
+          'ButtonText',
+          'ButtonBorder',
+          'Highlight',
+          'HighlightText',
+          'GrayText',
         ],
       },
     ],
@@ -106,6 +133,7 @@ export default {
       rules: {
         'plugin/selector-bem-pattern': {
           preset: 'bem',
+          componentSelectors: bemComponentSelectors,
           implicitComponents: ['src/components/**/*.scss', 'src/islands/**/*.scss'],
         },
         'selector-max-universal': 0,

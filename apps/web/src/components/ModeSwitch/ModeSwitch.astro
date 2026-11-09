@@ -1,0 +1,106 @@
+---
+// Mode switch (SPEC §2, Q1): the two modes are separate pages, so this is navigation, not ARIA tabs:
+// a `<nav aria-label="Mode">` with two links, the current one marked `aria-current="page"`. Tab moves
+// between the links; no arrow-key handling. Zero JS. Below `md` it floats at the bottom of the screen
+// (reachable with one hand, mobile-performance.md); from `md` it sits in the header bar.
+//
+// It stays in the header in the DOM at every width, so on phones the Tab order (brand, modes, theme)
+// differs from the visual position at the bottom. Accepted: site navigation early in the order is the
+// common pattern, and from `md` the orders match. The list keeps its semantics in Safari despite
+// `list-style: none` because it is inside <nav>, so no `role="list"` (also flagged as redundant).
+import './ModeSwitch.scss';
+
+// Icon outlines on the 24 px grid shared by the site's icons.
+const SHAPES = {
+  ai: 'M7 4h10a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4h-4.4l-4.4 3.5c-.6.5-1.5.1-1.5-.7V16H7a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z',
+  text: 'M7.25 2.75h6.2c.6 0 1.2.24 1.6.66l3.54 3.54c.42.42.66 1 .66 1.6V19a2.25 2.25 0 0 1-2.25 2.25h-9.75A2.25 2.25 0 0 1 5 19V5a2.25 2.25 0 0 1 2.25-2.25Z',
+} as const;
+const PAGE_FOLD = 'M13.75 2.9v3.6c0 .7.55 1.25 1.25 1.25h3.6';
+
+// `short`: what a very narrow screen with large text shows instead (ModeSwitch.scss); the full label
+// stays the link's name for screen readers.
+const MODES = [
+  { href: '/', label: 'AI mode', short: 'AI', icon: 'ai' },
+  { href: '/cv', label: 'Text mode', short: 'CV', icon: 'text' },
+] as const;
+
+// Static build: the page's own path decides the current mode (`/cv` and `/cv/` both count).
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isCurrent = (href: string): boolean => path === href;
+---
+
+<nav class="mode-switch" aria-label="Mode">
+  <ul class="mode-switch__list">
+    {MODES.map(({ href, label, short, icon }) => {
+      const current = isCurrent(href);
+      return (
+        <li class="mode-switch__item">
+          <a class="mode-switch__link" href={href} aria-current={current ? 'page' : undefined}>
+            {current && <span class="mode-switch__indicator" aria-hidden="true" />}
+            {/* Icon and label are one view-transition group per mode, painted above the moving pill. */}
+            <span class={`mode-switch__content mode-switch__content--${icon}`}>
+              {/* "Frosted glass" icon (styles/README.md → Icons): a glass shape with a sheen on its upper
+              half, a white rim and the detail cut into it. Ids are per mode: both icons are on the page. */}
+              <svg
+                class="mode-switch__icon"
+                // Same as --size-icon-sm; a fallback if the CSS fails to load.
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <defs>
+                  <linearGradient id={`mode-switch-glass-${icon}`} x1="0" y1="0" x2="1" y2="1">
+                    <stop class="mode-switch__stop-glass-start" offset="0" />
+                    <stop class="mode-switch__stop-glass-end" offset="1" />
+                  </linearGradient>
+                  <linearGradient id={`mode-switch-sheen-${icon}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop class="mode-switch__stop-sheen" offset="0" />
+                    <stop class="mode-switch__stop-sheen-fade" offset="0.55" />
+                  </linearGradient>
+                  <clipPath id={`mode-switch-clip-${icon}`}>
+                    <path d={SHAPES[icon]} />
+                  </clipPath>
+                </defs>
+                <path
+                  class="mode-switch__glass"
+                  d={SHAPES[icon]}
+                  fill={`url(#mode-switch-glass-${icon})`}
+                />
+                <rect
+                  class="mode-switch__sheen"
+                  x="2"
+                  y="2"
+                  width="20"
+                  height="8"
+                  fill={`url(#mode-switch-sheen-${icon})`}
+                  clip-path={`url(#mode-switch-clip-${icon})`}
+                />
+                <path class="mode-switch__rim" d={SHAPES[icon]} />
+                {icon === 'ai' ? (
+                  // A chat bubble: ask the assistant.
+                  <g class="mode-switch__glyph">
+                    <circle cx="8.5" cy="10" r="1.2" />
+                    <circle cx="12" cy="10" r="1.2" />
+                    <circle cx="15.5" cy="10" r="1.2" />
+                  </g>
+                ) : (
+                  // A page of text: the CV.
+                  <>
+                    <path class="mode-switch__rim" d={PAGE_FOLD} />
+                    <path class="mode-switch__lines" d="M8.25 12h7.5M8.25 15h7.5M8.25 18h4.5" />
+                  </>
+                )}
+              </svg>
+              <span class="mode-switch__label">{label}</span>
+              <span class="mode-switch__short" aria-hidden="true">
+                {short}
+              </span>
+            </span>
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+</nav>

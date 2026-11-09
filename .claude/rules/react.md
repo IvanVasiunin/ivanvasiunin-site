@@ -36,7 +36,7 @@ Verification tags: `[lint]` ESLint, `[test]` automated test, `[review]` review o
 
 ## Safety and behaviour
 - Model output is rendered with `react-markdown` + `rehype-sanitize`. No `rehype-raw`, no raw HTML. Links get `rel="noopener noreferrer"` and open in a new tab only if they are external. `[test]` (an XSS payload test: `<img onerror>`, `javascript:` links, `<script>`)
-- **"Ask about this"** (`/?q=`): fill the input and focus it. **Never send automatically.** `[test]` (Vitest + e2e asserting no `/api/chat` request)
+- **`/?q=` prefill:** fill the input and focus it. **Never send automatically.** `[test]` (Vitest + e2e asserting no `/api/chat` request)
 - Example questions fill the input; they do not send. `[test]`
 - Error boundaries wrap the chat island and the visualization island separately. A crash in one leaves the other and the page usable. `[test]`
 

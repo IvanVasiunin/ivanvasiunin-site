@@ -1,0 +1,130 @@
+---
+// Page shell for every route (ROADMAP 1.1): document head, skip link, backdrop, header, main, footer.
+// Global styles are imported first so the cascade layer order is established before component CSS.
+import { Font } from 'astro:assets';
+import '../styles/global.scss';
+import './BaseLayout.scss';
+import Backdrop from '../components/Backdrop/Backdrop.astro';
+import ModeSwitch from '../components/ModeSwitch/ModeSwitch.astro';
+import ScrollTop from '../components/ScrollTop/ScrollTop.astro';
+import SiteFooter from '../components/SiteFooter/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader/SiteHeader.astro';
+import SkipLink from '../components/SkipLink/SkipLink.astro';
+import ThemeToggle from '../components/ThemeToggle/ThemeToggle.astro';
+import { cspHash } from '../lib/csp';
+import { canonicalUrl as toCanonicalUrl } from '../lib/seo';
+import { THEME_COLOR, themeHeadScript } from '../lib/theme/theme';
+
+interface Props {
+  readonly title: string;
+  readonly description: string;
+  /** Open Graph type: `profile` for the CV, `website` elsewhere. */
+  readonly ogType?: 'website' | 'profile';
+  /**
+   * The "Back to top" rocket. Off on the chat: a conversation is read from the bottom, and the rocket
+   * would sit on the docked input.
+   */
+  readonly scrollTop?: boolean;
+  /**
+   * From `md` the page is exactly one window tall and the main area's content takes the free height
+   * between the header and the footer (AI mode: the chat panel scrolls inside, the page does not).
+   */
+  readonly fit?: boolean;
+}
+
+const { title, description, ogType = 'website', scrollTop = true, fit = false } = Astro.props;
+
+// Canonical and Open Graph URLs (html-a11y.md → Structure) from `site` in astro.config.mjs.
+const SITE_NAME = 'Ivan Vasiunin';
+const canonicalUrl = toCanonicalUrl(Astro.url.pathname, Astro.site);
+
+// The two inline blocks Astro does not hash itself. Their exact text is rendered from these
+// constants and hashed into the page's CSP <meta> (security.csp in astro.config.mjs).
+const LAYER_ORDER = '@layer reset, base, tokens, components, utilities;';
+const THEME_SCRIPT = themeHeadScript();
+Astro.csp?.insertStyleHash(cspHash(LAYER_ORDER));
+Astro.csp?.insertScriptHash(cspHash(THEME_SCRIPT));
+
+const SPECULATION_RULES = {
+  prerender: [
+    {
+      where: {
+        and: [
+          { selector_matches: '.mode-switch__link' },
+          { not: { selector_matches: '[aria-current="page"]' } },
+        ],
+      },
+      eagerness: 'moderate',
+    },
+  ],
+} as const;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    {/* The cascade layer order, declared once and before any bundled CSS (css-scss.md). The bundler
+    orders CSS by import graph and the minifier folds layer statements into the first blocks, so a
+    statement inside a bundled file cannot guarantee the order. Checked by e2e/layout.spec.ts. */}
+    <Fragment set:html={`<style>${LAYER_ORDER}</style>`} />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <title>{title}</title>
+    {/* Self-hosted fonts (astro.config.mjs, ADR-0010). Only the UI face is preloaded: it sets every
+    line of the first screen. The serif loads when text first uses it (Elio's answers, CV prose). The
+    components emit inline style elements (@font-face and two :root variables, unlayered and conflict-free),
+    so the future CSP needs their hashes in style-src, plus font-src 'self'. */}
+    <Font cssVariable="--font-schibsted-grotesk" preload={[{ weight: '400', style: 'normal' }]} />
+    <Font cssVariable="--font-newsreader" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {/* Page-specific head content, e.g. the JSON-LD on /cv. */}
+    <slot name="head" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="theme-color"
+      data-scheme="light"
+      media="(prefers-color-scheme: light)"
+      content={THEME_COLOR.light}
+    />
+    <meta
+      name="theme-color"
+      data-scheme="dark"
+      media="(prefers-color-scheme: dark)"
+      content={THEME_COLOR.dark}
+    />
+    {/* Applies the stored theme choice before first paint (no flash) and syncs the metas above, so it
+    comes after them. Blocking and inline on purpose; its source is src/lib/theme/theme.ts. The future
+    CSP (Phase 8) needs hashes of the inline scripts: this one and ThemeToggle's (Astro inlines it). */}
+    <script is:inline set:html={THEME_SCRIPT} />
+    {/* Speculation rules (no JS): when a mode tab is hovered or pressed, the browser prerenders that
+    page, so the switch (with its view transition) is near-instant. Ignored where unsupported. The
+    future CSP needs 'inline-speculation-rules' or this block's hash. ADR-0009. */}
+    <script type="speculationrules" is:inline set:html={JSON.stringify(SPECULATION_RULES)} />
+  </head>
+  <body class:list={['page', { 'page--fit': fit }]}>
+    <SkipLink target="main" />
+    <Backdrop />
+    <SiteHeader>
+      <ModeSwitch slot="nav" />
+      <slot name="header-actions" slot="actions" />
+      <ThemeToggle slot="actions" />
+    </SiteHeader>
+    <main id="main" class="page__main" tabindex="-1">
+      <slot />
+    </main>
+    <SiteFooter />
+    {scrollTop && <ScrollTop />}
+  </body>
+</html>

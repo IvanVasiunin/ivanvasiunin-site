@@ -1,0 +1,38 @@
+// Hidden above the viewport until focused, then slides in. `position: absolute` = overlay (css-scss.md).
+@layer components {
+  .skip-link {
+    position: absolute;
+    inset-block-start: max(var(--space-xs), env(safe-area-inset-top));
+    inset-inline-start: max(var(--space-xs), env(safe-area-inset-left));
+    z-index: var(--z-skip-link);
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--size-touch);
+    padding-inline: var(--space-md);
+    border-radius: var(--radius-pill);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-on-accent);
+    text-decoration-line: none;
+    background-image: var(--gradient-accent);
+    box-shadow: var(--shadow-glow);
+    opacity: 0;
+    transform: translateY(calc(-100% - var(--space-xl)));
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      opacity var(--duration-base) var(--ease-out);
+
+    &:focus-visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: opacity var(--duration-fast) linear;
+    }
+
+    // Navigation and page chrome stay off paper (css-scss.md → Print).
+    @media print {
+      display: none;
+    }
+  }
+}

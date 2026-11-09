@@ -1,0 +1,20 @@
+// Global style entry. Partials stay layer-agnostic; this file decides which layer each one lands in.
+// The layer order itself is declared inline, first in <head> (src/layouts/BaseLayout.astro), because
+// bundling can put component CSS before this file.
+@use 'sass:meta';
+
+@layer reset {
+  @include meta.load-css('reset');
+}
+
+@layer tokens {
+  @include meta.load-css('tokens');
+}
+
+@layer base {
+  @include meta.load-css('base');
+}
+
+@layer utilities {
+  @include meta.load-css('utilities');
+}

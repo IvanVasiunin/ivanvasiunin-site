@@ -1,27 +1,31 @@
 ---
-// Placeholder for AI mode (SPEC §2). The layout, tokens and islands arrive in Phase 1.
+// AI mode (SPEC §2): the chat island with Elio. `client:load`: the input is the page's main control, so
+// it hydrates right away. The island's server HTML is the no-JS page: the greeting, the example
+// questions as `/?q=` links and a pointer to the CV. The knowledge map (ADR-0012) stands to its right
+// from 80rem and hydrates only there (`client:media`): phones never load its code or its data.
+// The way to the CV is the mode switch's Text mode tab (Ivan, 2026-11-05: no CV button in the chat).
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AiModeLayout from '../components/AiModeLayout/AiModeLayout.astro';
+import { Chat } from '../islands/Chat';
+import { KnowledgeMap } from '../islands/KnowledgeMap';
+import { chatRestoringHeadScript } from '../lib/chat/restoring';
+import { cspHash } from '../lib/csp';
+
+// Hides the topic cards before first paint while a kept conversation waits for its restore
+// (lib/chat/restoring.ts). Inline, so its hash goes into the page's CSP, like /cv's view script.
+const RESTORING_SCRIPT = chatRestoringHeadScript();
+Astro.csp?.insertScriptHash(cspHash(RESTORING_SCRIPT));
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
-    />
-    <title>Ivan Vasiunin</title>
-    <meta
-      name="description"
-      content="Ivan Vasiunin, Senior Markup Developer moving into AI Engineering."
-    />
-  </head>
-  <body>
-    <main>
-      <h1>Ivan Vasiunin</h1>
-      <p>AI mode is coming soon.</p>
-      <p>
-        <a href="/cv">Read the CV</a>
-      </p>
-    </main>
-  </body>
-</html>
+<BaseLayout
+  title="Ivan Vasiunin — ask Elio"
+  description="Ask Elio, an AI assistant, about Ivan Vasiunin's experience, skills and projects."
+  scrollTop={false}
+  fit
+>
+  <script slot="head" is:inline set:html={RESTORING_SCRIPT} />
+  <AiModeLayout>
+    <Chat client:load />
+    <KnowledgeMap client:media="(min-width: 80rem)" />
+  </AiModeLayout>
+</BaseLayout>

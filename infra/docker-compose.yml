@@ -1,0 +1,133 @@
+# Production stack (ROADMAP 1.6, ARCHITECTURE §1, infra-security.md): web (Caddy + static build),
+# api (FastAPI), db (Postgres 18 + pgvector). Only `web` publishes ports; `db` sits on an internal
+# network without internet access.
+#
+# Local run (Docker Desktop):  cp infra/.env.example infra/.env  (set POSTGRES_PASSWORD)
+#                              docker compose -f infra/docker-compose.yml up --build
+# Server (ROADMAP 1.7):         images come from GHCR, IMAGE_TAG pins the release (docs/RUNBOOK.md).
+name: ivanvasiunin-site
+
+# Shared hardening for the services built from this repository.
+x-hardened: &hardened
+  restart: unless-stopped
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  tmpfs:
+    - /tmp
+
+services:
+  web:
+    <<: *hardened
+    image: ${WEB_IMAGE:-ivanvasiunin-site-web}:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    # Lets the non-root caddy user bind 80 / 443 without any capability. A namespaced sysctl: it
+    # applies to this container only. (setcap on the binary would not work: no-new-privileges
+    # strips file capabilities.)
+    sysctls:
+      net.ipv4.ip_unprivileged_port_start: 0
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp' # HTTP/3
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      # The knowledge map's data, written by ingestion in the api container (ARCHITECTURE §5).
+      - points:/srv/data:ro
+    networks:
+      - edge
+    depends_on:
+      api:
+        condition: service_started
+
+  api:
+    <<: *hardened
+    image: ${API_IMAGE:-ivanvasiunin-site-api}:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      # Explicit here, never taken from a copied .env (.env.example has APP_ENV=development).
+      APP_ENV: production
+      APP_VERSION: ${IMAGE_TAG:-local}
+      DATABASE_URL: postgresql+psycopg://site:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/.env}@db:5432/site
+      # Trust X-Forwarded-For only from Caddy's network (the real client IP for rate limiting).
+      FORWARDED_ALLOW_IPS: 172.30.10.0/24
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # The model provider key comes from the server's .env; Compose refuses to start without it.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in infra/.env}
+      # Ingestion output (`python -m site_api.ingestion --root /app/sources --apply`): volumes, not
+      # the read-only image. numba (UMAP) caches compiled code: /tmp is the writable tmpfs.
+      PROJECTION_MODEL_PATH: /var/lib/site/artifacts/projection.joblib
+      POINTS_JSON_PATH: /var/lib/site/points/points.json
+      NUMBA_CACHE_DIR: /tmp/numba
+      # The image user has no home directory; libraries that cache under HOME use the tmpfs.
+      HOME: /tmp
+      TIKTOKEN_CACHE_DIR: /tmp/tiktoken
+    volumes:
+      - artifacts:/var/lib/site/artifacts
+      - points:/var/lib/site/points
+    networks:
+      - edge # outbound access for the LLM provider (Phase 3)
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: pgvector/pgvector:0.8.7-pg18-trixie
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    # The entrypoint starts as root to prepare the data directory, then drops to `postgres`.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: site
+      POSTGRES_DB: site
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/.env}
+    # Postgres 18 images keep data under /var/lib/postgresql/<major>/docker: mount the parent.
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U site -d site']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    # No `ports:`: reachable from `api` only.
+    networks:
+      - backend
+
+networks:
+  edge:
+    ipam:
+      config:
+        - subnet: 172.30.10.0/24
+  backend:
+    internal: true
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+  artifacts:
+  points:

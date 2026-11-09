@@ -1,6 +1,8 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { test as base, expect, type Page } from '@playwright/test';
 
+import { MAP_POINTS } from './map-points';
+
 export interface NetworkConditions {
   readonly latencyMs: number;
   readonly downloadKbps: number;
@@ -14,8 +16,8 @@ export interface ThrottleOptions {
 
 /**
  * Lighthouse mobile "Slow 4G" values for DevTools (applied) throttling: `throttling.mobileSlow4G`
- * (requestLatencyMs, downloadThroughputKbps, uploadThroughputKbps) in Lantern's Constants.js,
- * checked against Lighthouse 12.6.1 bundled with @lhci/cli 0.15.1.
+ * (requestLatencyMs, downloadThroughputKbps, uploadThroughputKbps) in lighthouse/core/config/constants.js,
+ * checked against Lighthouse 13.5.0 (ROADMAP 1.8).
  */
 export const SLOW_4G: NetworkConditions = {
   latencyMs: 562.5,
@@ -25,8 +27,20 @@ export const SLOW_4G: NetworkConditions = {
 
 const kbpsToBytesPerSecond = (kbps: number): number => (kbps * 1024) / 8;
 
-export const test = base.extend<ThrottleOptions & { applyThrottle: undefined }>({
+export const test = base.extend<
+  ThrottleOptions & { applyThrottle: undefined; mapPoints: undefined }
+>({
   throttle: [null, { option: true }],
+
+  // The knowledge map's data: a fixed file for every page (map-points.ts), so the map looks the
+  // same everywhere; a test may route the file again to override it.
+  mapPoints: [
+    async ({ page }, use) => {
+      await page.route('**/data/points.json', (route) => route.fulfill({ json: MAP_POINTS }));
+      await use(undefined);
+    },
+    { auto: true },
+  ],
 
   applyThrottle: [
     async ({ page, throttle, browserName }, use) => {
@@ -59,8 +73,16 @@ export const test = base.extend<ThrottleOptions & { applyThrottle: undefined }>(
 
 export { expect };
 
-/** Fails on any axe violation with impact "serious" or "critical" (html-a11y.md). */
+/**
+ * Fails on any axe violation with impact "serious" or "critical" (html-a11y.md).
+ *
+ * Checks the settled page: scroll-driven reveals (mixins.scss → reveal-on-scroll) leave a block that
+ * rests at the very bottom edge mid-fade, and axe would measure that passing opacity as a contrast
+ * failure (it did, at random, depending on where the fold fell). With reduced motion every reveal
+ * shows its final state, so the colours checked are the ones a reader sees.
+ */
 export async function expectNoSeriousA11yViolations(page: Page): Promise<void> {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();

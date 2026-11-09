@@ -1,0 +1,39 @@
+# Local development database (ROADMAP 3.1). Never on the VPS: production is docker-compose.yml, where
+# the database publishes no port. This file runs only Postgres 18 + pgvector, the same image as
+# production, published on 127.0.0.1 (this machine only), with two databases:
+#   - `site`       for the API in development (`DATABASE_URL` in the repository's .env);
+#   - `site_test`  for the migration tests, `pytest -m db` (`TEST_DATABASE_URL`).
+#
+#   cp infra/.env.example infra/.env            (set POSTGRES_PASSWORD and POSTGRES_MCP_PASSWORD;
+#                                                use development-only values, never the production
+#                                                password, on this machine)
+#   docker compose -f infra/docker-compose.dev.yml up --detach --wait
+#   uv run --directory apps/api alembic upgrade head
+name: ivanvasiunin-site-dev
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.7-pg18-trixie
+    environment:
+      POSTGRES_USER: site
+      POSTGRES_DB: site
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/.env}
+      # The read-only `mcp_reader` role for Postgres MCP (dev/initdb/02-create-mcp-reader.sh).
+      POSTGRES_MCP_PASSWORD: ${POSTGRES_MCP_PASSWORD:?set POSTGRES_MCP_PASSWORD in infra/.env}
+    # Loopback only: other machines on the network cannot reach it.
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      # Postgres 18 images keep data under /var/lib/postgresql/<major>/docker: mount the parent.
+      - dev_pgdata:/var/lib/postgresql
+      # Run once, on the first start with an empty volume: `site_test` and the `mcp_reader` role.
+      - ./dev/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U site -d site']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  dev_pgdata:

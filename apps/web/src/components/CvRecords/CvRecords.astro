@@ -1,0 +1,37 @@
+---
+// A compact list of records: education, certifications, languages. Each has a title, an optional
+// detail line and an optional date or year range.
+import './CvRecords.scss';
+
+export interface CvRecord {
+  readonly title: string;
+  readonly detail?: string | undefined;
+  /** Shown text and machine-readable value of each date, e.g. { label: 'Oct 2026', value: '2026-10' }. */
+  readonly dates?: readonly { readonly label: string; readonly value: string }[];
+}
+
+interface Props {
+  readonly records: readonly CvRecord[];
+}
+
+const { records } = Astro.props;
+---
+
+<ul class="cv-records">
+  {records.map((record) => (
+    <li class="cv-records__item">
+      <p class="cv-records__title">{record.title}</p>
+      {record.detail && <p class="cv-records__detail">{record.detail}</p>}
+      {record.dates && record.dates.length > 0 && (
+        <p class="cv-records__dates">
+          {record.dates.map((date, index) => (
+            <>
+              {index > 0 && ' – '}
+              <time datetime={date.value}>{date.label}</time>
+            </>
+          ))}
+        </p>
+      )}
+    </li>
+  ))}
+</ul>

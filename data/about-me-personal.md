@@ -34,7 +34,7 @@ After university Ivan wanted to understand IT more deeply, so he enrolled in a c
 ### Why markup and frontend? What does he enjoy most?
 He enjoys creating beautiful, elegant designs and writing logic, and seeing the result of his work immediately as he builds it.
 
-### Why is he moving into AI Engineering?
+### Why AI Engineering?
 He sees big prospects in AI and tries to stay ahead of the trends in the job market.
 
 ### What is he most proud of in his career?
@@ -98,6 +98,9 @@ The best way is email (ivanvasyunin@gmail.com) or Telegram (@IvanVasiunin).
 ### Does he have a pet?
 Yes, Ivan has a dog named Monty — a three-year-old corgi. Monty is very friendly and loves everyone, which is exactly why Ivan can't bring him to the office on pet days: Monty loves attention and would definitely steal it from everyone else.
 
+### Is he married?
+Yes, Ivan is married.
+
 ### What are his hobbies?
 Ivan enjoys spending time with his family, running, Formula 1, playing padel and learning new things.
 
@@ -128,7 +131,7 @@ In his own words: "I guess we'll never know."
 
 The assistant politely declines questions on these topics, even if related information appears elsewhere:
 - his exact address;
-- family and relationships (beyond the fact that he enjoys spending time with his family);
+- family and relationships (beyond the facts that he is married and enjoys spending time with his family);
 - health;
 - politics;
 - religion;

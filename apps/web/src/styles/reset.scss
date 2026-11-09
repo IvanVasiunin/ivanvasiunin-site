@@ -1,0 +1,27 @@
+// Minimal reset. Loaded into the `reset` layer by global.scss. `:where()` keeps specificity at zero.
+
+// Pseudo-elements are not allowed inside `:where()` (minifiers drop them), so they stay outside.
+// Their specificity does not matter here: every later layer wins over `reset` anyway.
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
+:where(body, h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ul, ol) {
+  margin: 0;
+}
+
+:where(img, svg, video, canvas, picture) {
+  display: block;
+  max-inline-size: 100%;
+}
+
+:where(input, button, textarea, select) {
+  font: inherit;
+  color: inherit;
+}
+
+:where(p, h1, h2, h3, h4, h5, h6) {
+  overflow-wrap: break-word;
+}

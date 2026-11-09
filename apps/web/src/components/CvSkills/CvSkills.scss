@@ -1,0 +1,32 @@
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .cv-skills {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  .cv-skills__group {
+    @include reveal-on-scroll;
+
+    display: grid;
+    gap: var(--space-xs);
+
+    // From `md` the group name sits in the same rail as the job dates.
+    @include mq(md, $print: true) {
+      grid-template-columns: var(--size-cv-rail) minmax(0, 1fr);
+      column-gap: calc(var(--space-lg) * 2);
+    }
+  }
+
+  .cv-skills__name {
+    font-weight: var(--font-weight-medium);
+
+    @include mq(md, $print: true) {
+      padding-block-start: var(--space-3xs);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+      text-align: end;
+    }
+  }
+}

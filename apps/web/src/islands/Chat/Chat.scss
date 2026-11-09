@@ -1,0 +1,388 @@
+// AI mode's chat (Ivan, 2026-11-05: bubbles B "Orbits", layout L2): Elio's greeting with the live
+// avatar, then the chat panel: the conversation (before it, the topic cards) in a scroll area, the
+// input and the AI disclosure.
+
+// From `md` the panel is as tall as the free height of the window, and only the scroll area inside it
+// scrolls: the input stays at the panel's bottom with nothing behind it. (The knowledge-map card joins
+// on the right in ROADMAP 6.2.) Below `md` the page scrolls, as on any phone page; the dock is
+// `position: sticky` to the bottom above the floating mode switch, `--keyboard-inset`
+// (islands/Chat/useKeyboardInset.ts) lifts it above the keyboard, and while the reader has scrolled
+// up a blurred scrim behind it keeps passing text from showing through around the input.
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .chat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    inline-size: 100%;
+    max-inline-size: var(--size-chat);
+
+    // The free height of the fitted page (BaseLayout `fit`): greeting + panel, above the footer.
+    @include mq(md) {
+      flex: 1;
+      min-block-size: 0;
+    }
+
+    // From `wide` the greeting and the panel go into the AI-mode grid's cells (AiModeLayout.scss),
+    // so the knowledge map card beside the panel is level with it at the top and the bottom.
+    @include mq(wide) {
+      display: contents;
+    }
+  }
+
+  // The greeting: the live avatar next to a short heading and one line of help (Ivan: smaller, and
+  // outside the chat panel).
+  .chat__intro {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+
+    @include mq(wide) {
+      grid-row: 1;
+      grid-column: 1;
+    }
+  }
+
+  .chat__intro-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+    min-inline-size: 0;
+  }
+
+  .chat__title {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    line-height: var(--line-height-snug);
+    text-wrap: balance;
+  }
+
+  // Sans, not the answers' serif: the serif file then loads only with Elio's first answer, which
+  // keeps it off the first screen (e2e/fonts.spec.ts).
+  .chat__lede {
+    max-inline-size: var(--measure);
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-body);
+    color: var(--color-text-muted);
+  }
+
+  .chat__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+
+    @include mq(md) {
+      @include gradient-border($fill-image: var(--gradient-surface));
+
+      flex: 1;
+      gap: var(--space-sm);
+      min-block-size: 0;
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--radius-panel);
+      box-shadow: var(--shadow-raised);
+    }
+
+    @include mq(wide) {
+      grid-row: 2;
+      grid-column: 1;
+    }
+  }
+
+  .chat__scroll {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+
+    @include mq(md) {
+      @include gradient-scrollbar;
+
+      // The containing block of everything positioned inside (visually hidden labels, pills'
+      // layers): otherwise those would be placed against an ancestor outside the scroller, escape its
+      // clipping and make the page itself scroll (found by e2e: a 720 px window scrolled 242 px).
+      position: relative;
+      flex: 1;
+      min-block-size: 0;
+
+      // The bubbles' shadows need a little space on the sides: the padding, pulled back out by the
+      // negative margins, so the text column lines up with the input below.
+      margin-inline: calc(-1 * var(--space-sm));
+      padding: var(--space-xs) var(--space-sm);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+
+      // The scrollbar's gutter goes into the panel's side padding, not into the text column: the
+      // answers end exactly where the input ends (Ivan, 2026-11-05: a gutter-wide step made the input
+      // look as if it stuck out). Where the gutter's width is known (the site's own scrollbar,
+      // mixins.scss → gradient-scrollbar); elsewhere scrollbars overlay or keep the browser's width.
+      @media (hover: hover) and (pointer: fine) and (forced-colors: none) {
+        @supports selector(::-webkit-scrollbar) {
+          margin-inline-end: calc(-1 * (var(--space-sm) + var(--size-scrollbar)));
+        }
+      }
+
+      // While the content is shorter than the panel it sits at the bottom, next to the input, as in
+      // a messenger; once it is taller the area scrolls and the newest line is at the bottom.
+      > :first-child {
+        margin-block-start: auto;
+      }
+    }
+  }
+
+  // The input's row: "New chat" (once there is a conversation), then the input, which takes the rest.
+  .chat__dock-row {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: flex-end;
+  }
+
+  .chat__composer {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  // "New chat": a round frosted button by the input, level with the input's bottom row (the send
+  // button's row); it clears the chat kept for this tab.
+  .chat__new {
+    @include gradient-border($fill: var(--color-scrim-solid));
+
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    inline-size: var(--size-touch);
+    block-size: var(--size-touch);
+    margin-block-end: var(--space-2xs);
+    padding: 0;
+    border-radius: var(--radius-pill);
+    color: var(--color-text-muted);
+    cursor: pointer;
+
+    &::before {
+      position: absolute;
+      inset: 0;
+      z-index: var(--z-below);
+      border-radius: inherit;
+      background-image: var(--gradient-surface-hover);
+      content: '';
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+      color: var(--color-text);
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        color: var(--color-text);
+      }
+
+      &:hover::before {
+        opacity: 1;
+      }
+    }
+
+    &:active::before {
+      background-image: var(--gradient-surface-active);
+      opacity: 1;
+    }
+  }
+
+  .chat__new-icon {
+    inline-size: var(--size-icon-sm);
+    block-size: var(--size-icon-sm);
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .chat__log {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    padding-block-start: var(--space-md);
+  }
+
+  .chat__dock {
+    position: sticky;
+    z-index: var(--z-raised);
+
+    // Above the floating mode switch (below `md`), or above the keyboard when it is open. While the
+    // keyboard is open the switch is hidden and --bottom-bar-space is 0 (useKeyboardInset.ts).
+    inset-block-end: max(
+      calc(var(--keyboard-inset, 0px) + var(--space-sm)),
+      calc(var(--bottom-bar-space, var(--space-bottom-bar)) + var(--space-sm))
+    );
+
+    // In the panel the input is simply its last rows: the scroll area above never reaches under it.
+    @include mq(md) {
+      position: relative;
+      inset-block-end: auto;
+    }
+
+    // Below `md`, while the reader has scrolled up (text passes behind the docked input), a blurred
+    // scrim from a band above the input down past the screen's bottom edge hides it, fading in at the
+    // top so it has no hard edge (the technique of the header's scrim, SiteHeader.scss). At the end
+    // of the conversation nothing passes behind the input, so there is no scrim over the disclosure
+    // or the sky. `backdrop-filter` and `mask-image` (css-scss.md → Performance): one element per
+    // page; the blur is an enhancement where supported and wanted, a more opaque tint otherwise.
+    .chat[data-reading] &::before {
+      position: absolute;
+      inset-block: calc(-1 * var(--space-lg))
+        calc(-1 * var(--bottom-bar-space, var(--space-bottom-bar)) - var(--space-xl));
+      inset-inline: calc(-1 * max(var(--gutter), env(safe-area-inset-left)));
+      z-index: var(--z-below);
+      pointer-events: none;
+      background-color: var(--color-scrim-solid);
+      content: '';
+      mask-image: linear-gradient(to bottom, transparent, #000 var(--space-lg));
+
+      @supports (backdrop-filter: blur(1px)) {
+        @media (prefers-reduced-transparency: no-preference) {
+          background-color: var(--color-scrim);
+          backdrop-filter: blur(var(--blur-scrim));
+        }
+      }
+
+      @include mq(md) {
+        display: none;
+      }
+    }
+  }
+
+  // "Jump to latest": a small frosted pill floating over the text just above the input (Ivan: not a
+  // row of its own, so it neither leaves an empty strip nor shifts the layout when it goes). The
+  // button keeps the 44 px touch target; the visible pill is its ::before, the hover / press layer
+  // its ::after.
+  .chat__jump {
+    position: absolute;
+    inset-block-end: calc(100% + var(--space-2xs));
+    inset-inline-start: 50%;
+    isolation: isolate;
+    display: inline-flex;
+    gap: var(--space-2xs);
+    align-items: center;
+    min-block-size: var(--size-touch);
+    padding-inline: var(--space-sm);
+    border: 0;
+    border-radius: var(--radius-pill);
+    font: inherit;
+    font-size: var(--font-size-xs);
+    color: var(--color-text);
+    background: none;
+    cursor: pointer;
+    translate: -50% 0;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out);
+
+    // Hidden while the reader follows the latest answer: it slides down a little and fades out.
+    &[inert] {
+      opacity: 0;
+      transform: translateY(var(--distance-reveal));
+      pointer-events: none;
+    }
+
+    &::before,
+    &::after {
+      position: absolute;
+      inset: var(--space-xs) 0;
+      z-index: var(--z-below);
+      border-radius: inherit;
+      content: '';
+    }
+
+    &::before {
+      @include gradient-border($fill: var(--color-scrim-solid));
+
+      box-shadow: var(--shadow-raised);
+    }
+
+    &::after {
+      inset: calc(var(--space-xs) + var(--border-width)) var(--border-width);
+      background-image: var(--gradient-surface-hover);
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    // The ring follows the visible pill, not the taller touch area.
+    &:focus-visible {
+      outline: none;
+    }
+
+    &:focus-visible::before {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    @media (hover: hover) {
+      &:hover::after {
+        opacity: 1;
+      }
+    }
+
+    &:active::after {
+      background-image: var(--gradient-surface-active);
+      opacity: 1;
+    }
+
+    @media (forced-colors: active) {
+      &::before {
+        border-color: CanvasText;
+      }
+
+      &:focus-visible::before {
+        outline-color: Highlight;
+      }
+    }
+
+    // Reduced motion: a plain fade, no slide.
+    @media (prefers-reduced-motion: reduce) {
+      transition-property: opacity;
+
+      &[inert] {
+        transform: none;
+      }
+    }
+  }
+
+  .chat__jump-icon {
+    inline-size: var(--size-icon-sm);
+    block-size: var(--size-icon-sm);
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .chat__disclosure {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-body);
+    color: var(--color-text-muted);
+  }
+
+  .chat__disclosure-link {
+    color: var(--color-accent);
+    text-decoration-line: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .chat__fallback {
+    margin: 0;
+  }
+
+  // Read by screen readers only (the live region).
+  .chat__status {
+    @include visually-hidden;
+  }
+}

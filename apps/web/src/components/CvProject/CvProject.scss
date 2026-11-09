@@ -1,0 +1,116 @@
+// A project card: surface gradient with a gradient hairline border (no `mask`, css-scss.md).
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .cv-project {
+    @include reveal-on-scroll;
+
+    display: flex;
+    break-inside: avoid;
+  }
+
+  .cv-project__article {
+    @include gradient-border($fill-image: var(--gradient-surface));
+
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-inline-size: 0;
+    gap: var(--space-xs);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-raised);
+
+    // Print drops the gradient under the transparent border: draw a plain hairline instead.
+    @media print {
+      padding: var(--space-md);
+      border-color: var(--color-border);
+    }
+  }
+
+  .cv-project__name {
+    font-size: var(--font-size-lg);
+  }
+
+  .cv-project__kind {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-caps);
+  }
+
+  // Production work stands out from course work with the gold star colour.
+  .cv-project__kind[data-kind='production'] {
+    color: var(--color-text);
+
+    &::before {
+      content: '★' / ''; // decoration: no "black star" for screen readers
+      color: var(--color-highlight);
+    }
+  }
+
+  .cv-project__text {
+    font-family: var(--font-serif);
+    line-height: var(--line-height-prose);
+  }
+
+  .cv-project__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-md);
+    margin-block-start: auto;
+    padding: 0;
+    list-style: none;
+
+    @media print {
+      flex-direction: column;
+      gap: var(--space-2xs);
+    }
+  }
+
+  // Touch-size links; the underline appears on hover / focus (styles/base.scss).
+  .cv-project__link {
+    position: relative; // contains the visually hidden context
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--size-touch);
+    font-weight: var(--font-weight-medium);
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    &:active {
+      color: var(--color-accent-active);
+    }
+
+    // On paper the address goes on its own line under the link text.
+    @media print {
+      flex-direction: column;
+      align-items: flex-start;
+      min-block-size: 0;
+    }
+  }
+
+  // The address, on paper only (on screen the link is followed instead).
+  .cv-project__link-url {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+
+    @media screen {
+      display: none;
+    }
+  }
+
+  // "Code on GitHub for NumbersValidator" for screen readers; sighted users see the card's heading.
+  .cv-project__link-context {
+    @include visually-hidden;
+  }
+}

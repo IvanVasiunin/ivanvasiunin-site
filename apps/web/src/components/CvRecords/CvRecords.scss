@@ -1,0 +1,52 @@
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .cv-records {
+    display: grid;
+    gap: var(--space-md);
+    padding: 0;
+    list-style: none;
+  }
+
+  // Narrow: title, detail, dates stacked. From `md`: the dates move to the rail, like the job periods.
+  .cv-records__item {
+    @include reveal-on-scroll;
+
+    display: grid;
+    gap: 0 var(--space-xs);
+    break-inside: avoid;
+
+    @include mq(md, $print: true) {
+      grid-template-columns: var(--size-cv-rail) minmax(0, 1fr);
+      column-gap: calc(var(--space-lg) * 2);
+    }
+  }
+
+  .cv-records__title,
+  .cv-records__detail {
+    @include mq(md, $print: true) {
+      grid-column: 2;
+    }
+  }
+
+  .cv-records__title {
+    font-weight: var(--font-weight-medium);
+  }
+
+  .cv-records__detail {
+    color: var(--color-text-muted);
+  }
+
+  .cv-records__dates {
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+
+    @include mq(md, $print: true) {
+      grid-row: 1 / span 2;
+      grid-column: 1;
+      padding-block-start: var(--space-3xs);
+      text-align: end;
+    }
+  }
+}

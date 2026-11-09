@@ -1,0 +1,171 @@
+# Deploy (ROADMAP 1.7, docs/RUNBOOK.md §1.1): after CI passes on main, build the images, scan them,
+# push them to GHCR tagged with the commit SHA, and switch the server to that tag over SSH.
+# No third-party actions: the runner's own docker and ssh, so the supply chain stays small.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # Redeploy the current main by hand (for example after a server change). Main only, see `if`.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  images:
+    name: Build, scan and push images to GHCR
+    # A successful CI run of a push to main in this repository (never a fork or a pull request: a
+    # fork's branch can also be called "main"), or a manual run from main.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      current: ${{ steps.current.outputs.current }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - id: meta
+        name: Image names and tag
+        env:
+          OWNER: ${{ github.repository_owner }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          owner="$(printf '%s' "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          {
+            echo "tag=$SHA"
+            echo "web=ghcr.io/$owner/ivanvasiunin-site-web"
+            echo "api=ghcr.io/$owner/ivanvasiunin-site-api"
+          } >> "$GITHUB_OUTPUT"
+      - id: current
+        name: Is this still the tip of main? (an older CI run finishing late must not deploy)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ steps.meta.outputs.tag }}
+        run: |
+          tip="$(gh api "repos/$REPO/commits/main" --jq .sha)"
+          if [ "$tip" = "$SHA" ]; then echo "current=true" >> "$GITHUB_OUTPUT"
+          else echo "current=false" >> "$GITHUB_OUTPUT"; echo "::notice::$SHA is not the tip of main ($tip); skipping"; fi
+      - name: Build
+        if: steps.current.outputs.current == 'true'
+        env:
+          WEB: ${{ steps.meta.outputs.web }}
+          API: ${{ steps.meta.outputs.api }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          # Links the GHCR packages to this repository (permissions and the package page).
+          SOURCE: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          for app in web api; do
+            name="$WEB"; [ "$app" = api ] && name="$API"
+            docker build --file "apps/$app/Dockerfile" --tag "$name:$TAG" \
+              --label "org.opencontainers.image.source=$SOURCE" \
+              --label "org.opencontainers.image.revision=$TAG" .
+          done
+      - name: Install gitleaks 8.30.1 (pinned sha256)
+        if: steps.current.outputs.current == 'true'
+        working-directory: ${{ runner.temp }}
+        run: |
+          v=8.30.1
+          sha=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+          curl -fsSLO "https://github.com/gitleaks/gitleaks/releases/download/v$v/gitleaks_${v}_linux_x64.tar.gz"
+          echo "$sha  gitleaks_${v}_linux_x64.tar.gz" | sha256sum -c -
+          tar -xzf "gitleaks_${v}_linux_x64.tar.gz" gitleaks
+          echo "$PWD" >> "$GITHUB_PATH"
+      - name: Scan the images that will be deployed (golden rule 5)
+        if: steps.current.outputs.current == 'true'
+        env:
+          WEB: ${{ steps.meta.outputs.web }}
+          API: ${{ steps.meta.outputs.api }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: sh infra/scan-images.sh "$WEB:$TAG" "$API:$TAG"
+      - name: Push
+        if: steps.current.outputs.current == 'true'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          WEB: ${{ steps.meta.outputs.web }}
+          API: ${{ steps.meta.outputs.api }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          printf '%s' "$TOKEN" | docker login ghcr.io --username "$OWNER" --password-stdin
+          docker push "$WEB:$TAG"
+          docker push "$API:$TAG"
+      - name: Log out
+        if: always()
+        run: docker logout ghcr.io
+
+  deploy:
+    name: Deploy to the server
+    needs: images
+    if: needs.images.outputs.current == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Secrets live in the `production` environment (Settings → Environments). Restrict its
+    # deployment branches to main and, optionally, require a manual approval.
+    environment:
+      name: production
+      url: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+          sparse-checkout: |
+            scripts
+            .node-version
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Run the server's deploy script
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          TARGET: ${{ secrets.DEPLOY_TARGET }} # deploy@<host>
+          TAG: ${{ needs.images.outputs.tag }}
+        run: |
+          for name in SSH_KEY KNOWN_HOSTS TARGET; do
+            eval "value=\${$name}"
+            [ -n "$value" ] || { echo "::error::$name is not set in the production environment"; exit 1; }
+          done
+          install -m 700 -d ~/.ssh
+          # Secrets pasted on Windows may carry CR characters, which break the key.
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          # Pinned host key: never trust on first use from CI.
+          printf '%s\n' "$KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+          # The key is restricted to /opt/site/deploy.sh on the server; the tag is its only input.
+          ssh -i ~/.ssh/deploy_key \
+            -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            -o ConnectTimeout=20 -o ServerAliveInterval=15 -o LogLevel=ERROR \
+            "$TARGET" "$TAG"
+      - name: Remove the key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+      - name: Smoke test — headers, caching and /api/health on the live site
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        # Retries: right after a first deploy the certificate may still be being issued.
+        run: |
+          [ -n "$SITE_URL" ] || { echo "::error::vars.SITE_URL is not set"; exit 1; }
+          for attempt in 1 2 3 4 5 6; do
+            if node scripts/check-headers.mjs "$SITE_URL"; then exit 0; fi
+            echo "attempt $attempt failed; retrying in 10 s"; sleep 10
+          done
+          exit 1

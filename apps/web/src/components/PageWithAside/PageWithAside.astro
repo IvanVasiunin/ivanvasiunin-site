@@ -1,0 +1,23 @@
+---
+// A plain page with a side column (the privacy page, Ivan, 2026-11-07: its right side looked empty).
+// The text keeps its measure on the left; from `wide` the aside is a sticky column to its right.
+// Below `wide` the aside follows the text. The aside is a landmark: give it an `aria-label` or a
+// heading inside.
+import './PageWithAside.scss';
+
+interface Props {
+  /** The aside's accessible name (the landmark's label). */
+  readonly label: string;
+}
+
+const { label } = Astro.props;
+---
+
+<div class="page-with-aside">
+  <div class="page-with-aside__main">
+    <slot />
+  </div>
+  <aside class="page-with-aside__aside" aria-label={label}>
+    <slot name="aside" />
+  </aside>
+</div>

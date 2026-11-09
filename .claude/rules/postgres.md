@@ -1,8 +1,7 @@
 ---
 paths:
   - "apps/api/src/site_api/db/**"
-  - "apps/api/migrations/**"
-  - "apps/api/alembic.ini"
+  - "apps/api/tests/db/**"
   - "infra/docker-compose*.yml"
 ---
 

@@ -1,0 +1,62 @@
+// Fixed decorative layer under the page. `position: fixed` is allowed for decoration (css-scss.md).
+// The page background colour stays on `body` (it propagates to the canvas), so this layer can sit at a
+// negative z-index above the canvas and below all content. One static, composited layer: nothing
+// repaints on scroll.
+@layer components {
+  // Sized to the large viewport (`lvh`), not `inset: 0`: when the mobile address bar collapses, the
+  // layer keeps its size, so the percentage-based gradients and the SVG pattern are not re-rasterized.
+  // The width is the whole window (`100vw` includes a classic scrollbar), so the layer is the same on a
+  // short page and a long one and does not jump when switching modes; the scrollbar covers its edge.
+  .backdrop {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: 100vw;
+    block-size: 100lvh;
+    contain: strict;
+    z-index: var(--z-backdrop);
+    overflow: hidden;
+    pointer-events: none;
+    background-image:
+      radial-gradient(70% 55% at 90% 0%, var(--color-glow-1), transparent 70%),
+      radial-gradient(55% 50% at 0% 40%, var(--color-glow-2), transparent 70%),
+      radial-gradient(60% 50% at 65% 100%, var(--color-glow-3), transparent 70%);
+
+    @media print {
+      display: none;
+    }
+  }
+
+  // Details (grid, stars, chart) are dimmed together so they never compete with the content;
+  // the nebulae above keep full strength.
+  .backdrop__grid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, var(--color-grid) 1px, transparent 1.5px);
+    background-size: var(--space-lg) var(--space-lg);
+    opacity: var(--backdrop-detail-opacity);
+  }
+
+  .backdrop__stars {
+    position: absolute;
+    inset: 0;
+    color: var(--color-star);
+    opacity: var(--backdrop-detail-opacity);
+  }
+
+  // A quarter of the chart peeks in from the top-right corner (top-left in RTL, via logical inset).
+  .backdrop__chart {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    inline-size: max(640px, 70vmax);
+    aspect-ratio: 1;
+    color: var(--color-chart-line);
+    opacity: var(--backdrop-detail-opacity);
+    translate: 45% -45%;
+
+    &:dir(rtl) {
+      translate: -45% -45%;
+    }
+  }
+}

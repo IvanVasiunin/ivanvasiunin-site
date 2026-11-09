@@ -1,0 +1,103 @@
+@use '../../styles/mixins' as *;
+
+// Gradient border + gradient fill on the element itself (border-box technique, no mask). State layers:
+// ::before = hover, ::after = active. Each is a gradient over the padding box whose opacity fades in;
+// nothing moves (no transform), and box-shadow is never animated (css-scss.md → Motion).
+@layer components {
+  .button {
+    position: relative;
+    isolation: isolate; // state layers sit above the fill but below the label
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+    justify-content: center;
+    min-block-size: var(--size-touch);
+    padding-inline: var(--space-lg);
+    border-radius: var(--radius-pill);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-snug);
+    text-decoration-line: none;
+
+    &::before,
+    &::after {
+      position: absolute;
+      inset: 0;
+      z-index: var(--z-below);
+      border-radius: inherit;
+      content: '';
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    // The hover layer also carries the glow, so the glow fades in with it.
+    &::before {
+      box-shadow: var(--shadow-glow);
+    }
+
+    &::after {
+      transition-duration: var(--duration-fast);
+    }
+
+    @media (hover: hover) {
+      &:hover::before {
+        opacity: 1;
+      }
+    }
+
+    &:active::after {
+      opacity: 1;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+
+      &::before,
+      &::after {
+        opacity: 0;
+      }
+    }
+
+    &[aria-busy='true'] {
+      opacity: 0.75;
+      cursor: progress;
+    }
+  }
+
+  .button--primary {
+    @include gradient-border($fill-image: var(--gradient-accent));
+
+    color: var(--color-on-accent);
+
+    &::before {
+      background-image: var(--gradient-accent-hover);
+    }
+
+    &::after {
+      background-image: var(--gradient-accent-active);
+    }
+
+    // Forced colours drop gradients; a system border keeps the shape visible.
+    @media (forced-colors: active) {
+      border-color: ButtonText;
+    }
+  }
+
+  // The label keeps the body text colour in every state: accent text on the accent-tinted state layers
+  // reads blue on blue (only ~4.7:1 when pressed); body text stays at 8:1 or more. The layers and the
+  // glow carry the state.
+  .button--secondary {
+    @include gradient-border($fill-image: var(--gradient-surface));
+
+    color: var(--color-text);
+
+    &::before {
+      background-image: var(--gradient-surface-hover);
+    }
+
+    &::after {
+      background-image: var(--gradient-surface-active);
+    }
+  }
+}

@@ -1,0 +1,60 @@
+// Cross-component helpers. Loaded into the `utilities` layer (the last one) by global.scss, so they win
+// over component display values.
+
+// CV Brief / Full (src/lib/cv/view-mode.ts). Blocks marked `data-cv-only` show in one view only. The
+// Full view is the default: without `data-cv-view` on <html> (no JS) the Brief-only blocks stay hidden.
+:root:not([data-cv-view='brief']) [data-cv-only='brief'] {
+  display: none;
+}
+
+// On paper (and in the build-time PDF) the CV is always the Full view, whatever is chosen on screen.
+@media screen {
+  :root[data-cv-view='brief'] [data-cv-only='full'] {
+    display: none;
+  }
+}
+
+@media print {
+  [data-cv-only='brief'] {
+    display: none;
+  }
+
+  // Ink on paper (css-scss.md → Print): no glows or raised shadows. Background colours and images are
+  // already dropped by the browser's default (economy) print colour adjustment.
+  *,
+  ::before,
+  ::after {
+    box-shadow: none;
+    text-shadow: none;
+  }
+}
+
+// After the reader switches the view (`data-cv-view-animate`, set on the first click), the content that
+// appears fades in: an animation restarts whenever an element goes from `display: none` to shown.
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-cv-view-animate] [data-cv-only] {
+    animation: cv-view-in var(--duration-slow) var(--ease-out);
+  }
+}
+
+// Scroll reveal (mixins.scss → reveal-on-scroll). Longhands everywhere it is used: the minifier folds
+// a following `animation-timeline` into the `animation` shorthand, where browsers reject it.
+@keyframes reveal-on-scroll {
+  from {
+    opacity: 0;
+    translate: 0 var(--distance-reveal);
+  }
+}
+
+@keyframes cv-view-in {
+  from {
+    opacity: 0;
+  }
+}
+
+// The virtual keyboard is open (islands/Chat/useKeyboardInset.ts): the floating mode switch would sit
+// on the keyboard and cover the docked chat input, so it steps aside until the keyboard closes.
+:root[data-keyboard-open] .mode-switch {
+  visibility: hidden;
+  opacity: 0;
+}

@@ -8,7 +8,7 @@ paths:
 Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` review only.
 
 ## Architecture
-- Cascade layers, declared once in the global entry: `@layer reset, base, tokens, components, utilities;`. Component styles live in `components`. Nothing is unlayered except third-party CSS that cannot be layered. `[review]`
+- Cascade layers, declared once as an inline `<style>` first in `<head>` (`src/layouts/BaseLayout.astro`), before any bundled CSS: `@layer reset, base, tokens, components, utilities;`. A statement inside a bundled file is not enough: the bundler may emit component CSS first. Component styles live in `components`. Nothing is unlayered except third-party CSS that cannot be layered. `[test]` (e2e/layout.spec.ts)
 - Resets use `:where()` to keep specificity at zero. `[review]`
 - SCSS modules use `@use` / `@forward`; `@import` is forbidden. `[lint]` (`at-rule-disallowed-list: [import]`; `scss/load-no-partial-leading-underscore`)
 - **SCSS variables and mixins** are for build-time values only (breakpoints, mixins for media queries). Everything that themes or varies at runtime is a CSS custom property. `[review]`
@@ -25,7 +25,7 @@ Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` revie
 
 ## Layout
 - Layout is Grid / Flex only. `float` is forbidden. `[lint]` (`property-disallowed-list: [float]`)
-- `position: absolute | fixed` only for overlays and decoration (e.g. the vector-space background), never for layout. `[review]`
+- `position: absolute | fixed` only for overlays and decoration (e.g. tooltips over the knowledge map), never for layout. `[review]`
 - Mobile-first: base styles target 360 px, and enhancements go in `min-width` media queries through the breakpoint mixins (`@include mq(md)`). Container queries for components whose layout depends on their container. `[review]`
 - Logical properties: `margin-inline`, `padding-block`, `inset-inline-start`, `inline-size`, etc., instead of physical left / right / top / bottom equivalents. `[lint]` (stylelint-use-logical: `csstools/use-logical`)
 - Viewport heights use `svh` / `dvh` / `lvh`; the `vh` unit is forbidden. Safe areas via `env(safe-area-inset-*)`. `[lint]` (`unit-disallowed-list: [vh]`)
@@ -67,6 +67,7 @@ Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` revie
 ## Motion
 - State changes animate via `transition` with duration and easing tokens. `transition: all` is forbidden; properties are listed explicitly. `[lint]` (`declaration-property-value-disallowed-list: { transition: [/\ball\b/], transition-property: [/\ball\b/] }`)
 - Animate **only** `transform` and `opacity`. Never `width`, `height`, `top`, `left`, `margin`, `padding`, `filter`, `mask`, `clip-path` or `box-shadow`. `[lint]` (`declaration-property-value-allowed-list` for `transition-property`) `[review]`
+  - **Exception (Ivan, 2026-11-06):** Under the hood folds its height (`grid-template-rows` 1fr → 0fr, 320 ms) when it closes; fading only its picture made the page jump. One element, on a click; the lint disable at that line names the reason. Any other size animation needs Ivan's OK. `[review]`
 - `@media (prefers-reduced-motion: reduce)`: animations are removed or reduced to opacity fades ≤ the shortest duration token. `[review]` `[test]` (e2e with `reducedMotion: 'reduce'`)
 - Scroll-driven animations only inside `@supports (animation-timeline: view())` / `scroll()`. View Transitions only via `@view-transition` and `if (document.startViewTransition)`. The page is fully usable without them. `[review]`
 - JS animation libraries (GSAP, Motion / Framer Motion, anime.js, Lottie) are forbidden. `[lint]` (ESLint `no-restricted-imports`)
@@ -78,7 +79,7 @@ Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` revie
 ## Print
 - Print styles (`@media print`) for `/cv`:
   - always the Full version;
-  - no navigation, theme toggle, mode switcher, "Ask about this" links or backgrounds;
+  - no navigation, theme toggle, mode switcher or backgrounds;
   - black text on white;
   - links show their URL where useful.
 

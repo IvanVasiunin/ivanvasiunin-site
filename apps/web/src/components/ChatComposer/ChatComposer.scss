@@ -1,0 +1,214 @@
+// The question input: a frosted pill with the gradient border and a round gradient Send / Stop button.
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .chat-composer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    inline-size: 100%;
+  }
+
+  // An opaque fill (the surface gradient of secondary controls): the answer text that scrolls under
+  // the docked input never shows through, so no backdrop blur is needed.
+  // State layers fade in, like the buttons': ::before = hover (a lighter surface under the text),
+  // ::after = the focus ring with its glow (an outline cannot fade, a layer's opacity can).
+  .chat-composer__field {
+    @include gradient-border($fill-image: var(--gradient-surface));
+
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    gap: var(--space-xs);
+
+    // The send button stays at the bottom as the text grows to several lines.
+    align-items: flex-end;
+
+    // Equal on every side: on one line the textarea is exactly as tall as the button
+    // (.chat-composer__input), so the button sits in the centre of the pill.
+    padding: var(--space-2xs) var(--space-2xs) var(--space-2xs) var(--space-md);
+    border-radius: var(--radius-input-pill);
+    box-shadow: var(--shadow-raised);
+
+    &::before,
+    &::after {
+      position: absolute;
+      border-radius: inherit;
+      content: '';
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    &::before {
+      inset: 0;
+      z-index: var(--z-below);
+      background-image: var(--gradient-surface-hover);
+    }
+
+    // The ring replaces the gradient border instead of circling it (Ivan, 2026-11-05: two lines with
+    // different radii looked broken): it covers the border box exactly, so its outer corners are the
+    // field's own corners, and it is drawn inward over the 1 px border.
+    &::after {
+      inset: calc(-1 * var(--border-width));
+      border: var(--focus-ring-width) solid var(--color-focus);
+      box-shadow: var(--shadow-glow);
+    }
+
+    @media (hover: hover) {
+      &:hover:not([data-disabled])::before {
+        opacity: 1;
+      }
+    }
+
+    // The textarea's focus ring is drawn around the whole field (see .chat-composer__input); a focused
+    // button has its own ring. `:focus`, not `:focus-visible`: a text field shows where typing goes
+    // however it got focus, and WebKit skips :focus-visible on a programmatic focus (after Send).
+    &:has(.chat-composer__input:focus)::after {
+      opacity: 1;
+    }
+
+    // Forced colours drop shadows and backgrounds: a real outline marks focus there.
+    @media (forced-colors: active) {
+      &:has(.chat-composer__input:focus) {
+        outline: var(--focus-ring-width) solid Highlight;
+        outline-offset: var(--space-3xs);
+      }
+    }
+
+    &[data-disabled] {
+      opacity: 0.6;
+    }
+  }
+
+  .chat-composer__label {
+    @include visually-hidden;
+  }
+
+  .chat-composer__input {
+    flex: 1;
+    min-inline-size: 0;
+    block-size: var(--chat-composer-height, auto);
+    min-block-size: var(--size-touch);
+    max-block-size: var(--size-composer-max);
+
+    // One line of text centred in the button's height: (44 px - one line) / 2 above and below.
+    padding-block: calc((var(--size-touch) - var(--line-height-body) * 1em) / 2);
+    border: 0;
+    font: inherit;
+    font-size: var(--font-size-md); // ≥ 1rem, so iOS does not zoom into the field
+    line-height: var(--line-height-body);
+    color: var(--color-text);
+    background-color: transparent;
+    resize: none;
+
+    // The ring is the field's ::after (:has(… :focus) above), which also wraps the button.
+    outline: none;
+
+    &::placeholder {
+      color: var(--color-text-muted);
+      opacity: 1;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+
+    // Grows with its text up to the cap; elsewhere ChatComposer.tsx sets --chat-composer-height.
+    @supports (field-sizing: content) {
+      block-size: auto;
+      field-sizing: content;
+    }
+  }
+
+  // Send / Stop: a round gradient button; state layers on ::before (hover) and ::after (press).
+  .chat-composer__button {
+    @include gradient-border($fill-image: var(--gradient-accent));
+
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    inline-size: var(--size-touch);
+    block-size: var(--size-touch);
+    padding: 0;
+    border-radius: var(--radius-pill);
+    color: var(--color-on-accent);
+    cursor: pointer;
+
+    &::before,
+    &::after {
+      position: absolute;
+      inset: 0;
+      z-index: var(--z-below);
+      border-radius: inherit;
+      content: '';
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    &::before {
+      background-image: var(--gradient-accent-hover);
+      box-shadow: var(--shadow-glow);
+    }
+
+    &::after {
+      background-image: var(--gradient-accent-active);
+      transition-duration: var(--duration-fast);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    @media (hover: hover) {
+      &:hover:not(:disabled, [aria-disabled='true'])::before {
+        opacity: 1;
+      }
+    }
+
+    &:active:not(:disabled, [aria-disabled='true'])::after {
+      opacity: 1;
+    }
+
+    &:disabled,
+    &[aria-disabled='true'] {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+
+  .chat-composer__button-label {
+    @include visually-hidden;
+  }
+
+  .chat-composer__icon {
+    inline-size: var(--size-icon-sm);
+    block-size: var(--size-icon-sm);
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .chat-composer__stop-square {
+    fill: currentcolor;
+    stroke: none;
+  }
+
+  .chat-composer__counter {
+    align-self: flex-end;
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+
+    &[data-state='limit'] {
+      font-weight: var(--font-weight-bold);
+      color: var(--color-danger);
+    }
+  }
+}

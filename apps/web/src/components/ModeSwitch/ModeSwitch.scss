@@ -1,0 +1,278 @@
+@use '../../styles/mixins' as *;
+
+// Mode switch. Mobile-first: a floating pill at the bottom of the screen with its own gradient border
+// and shadow (a fixed overlay control, so `position: fixed` is allowed by css-scss.md → Layout); the page
+// reserves `--size-bar` for it (BaseLayout.scss). From `md` it sits inside the header bar
+// without a frame of its own. The current mode wears the accent gradient; the other one gets the
+// hover / pressed washes on ::before / ::after (opacity only). Labels keep their colour in every state.
+@layer components {
+  .mode-switch {
+    @include gradient-border;
+
+    position: fixed;
+    inset-block-end: var(--offset-bar-bottom);
+    inset-inline: 0;
+    z-index: var(--z-header);
+    inline-size: fit-content;
+
+    // Never wider than the screen, even with enlarged text (WCAG 1.4.4 / 1.4.10): the links shrink.
+    max-inline-size: calc(100% - 2 * var(--gutter));
+    margin-inline: auto;
+    padding: var(--space-2xs);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-raised);
+
+    @include mq(md) {
+      position: static;
+      max-inline-size: none;
+      padding: 0;
+      border: 0;
+      background: none;
+      box-shadow: none;
+    }
+
+    @media print {
+      display: none;
+    }
+  }
+
+  // The track of the segmented control: one recessed pill around both tabs. Its edge outlines the
+  // group, so the tabs need no borders of their own.
+  .mode-switch__list {
+    display: flex;
+    padding: 0;
+    border-radius: var(--radius-pill);
+    list-style: none;
+    background-color: var(--color-track);
+    box-shadow: var(--shadow-track);
+
+    // Forced colours drop the tint and the inset shadow; an outline keeps the group visible
+    // (outline, not border, so the header height does not change).
+    @media (forced-colors: active) {
+      outline: var(--border-width) solid CanvasText;
+      outline-offset: calc(-1 * var(--border-width));
+    }
+  }
+
+  .mode-switch__item {
+    display: flex;
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  .mode-switch__link {
+    position: relative;
+    isolation: isolate; // keeps the indicator and the washes under the label
+    display: inline-flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 0;
+    min-block-size: var(--size-touch);
+    padding-inline: var(--space-md);
+    border: var(--border-width) solid transparent; // invisible, but drawn in forced colors
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-snug);
+    color: var(--color-text);
+    white-space: nowrap;
+    text-decoration-line: none;
+
+    &::before,
+    &::after {
+      position: absolute;
+
+      // Inset like the pill, so every state sits inside the track with the same margin.
+      inset: var(--space-3xs);
+      z-index: var(--z-below);
+      border-radius: inherit;
+      content: '';
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    &::before {
+      background-color: var(--color-highlight-soft);
+    }
+
+    &::after {
+      background-color: var(--color-highlight-strong);
+      transition-duration: var(--duration-fast);
+    }
+
+    @media (hover: hover) {
+      &:not([aria-current='page']):hover::before {
+        opacity: 1;
+      }
+    }
+
+    &:not([aria-current='page']):active::after {
+      opacity: 1;
+    }
+
+    &[aria-current='page'] {
+      color: var(--color-on-accent);
+    }
+
+    // Forced colours: the other mode keeps a system-coloured border (from the mixin); the current mode
+    // is drawn in the system Highlight colours (see the indicator).
+    @media (forced-colors: active) {
+      &[aria-current='page'] {
+        color: HighlightText;
+        forced-color-adjust: none;
+      }
+    }
+  }
+
+  // The current mode's pill. A separate element (not a background) with a view-transition name, so a
+  // cross-document view transition slides it from one mode to the other (src/styles/base.scss).
+  // A small glow: it sits inside the header bar and must not spill out of it.
+  .mode-switch__indicator {
+    position: absolute;
+    inset: var(--space-3xs);
+    z-index: var(--z-below);
+    border-radius: inherit;
+    background-image: var(--gradient-accent);
+    box-shadow: var(--shadow-glow-sm);
+    view-transition-name: mode-switch-indicator;
+
+    // Forced colours would drop the gradient and leave no marker: paint it in Highlight instead.
+    @media (forced-colors: active) {
+      background-image: none;
+      background-color: Highlight;
+      forced-color-adjust: none;
+    }
+  }
+
+  // Icon + label. Each mode's content is its own view-transition group: it stays put and cross-fades its
+  // colour while the pill slides underneath (groups paint in DOM order, the pill comes first).
+  .mode-switch__content {
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+    min-inline-size: 0;
+  }
+
+  .mode-switch__content--ai {
+    view-transition-name: mode-switch-ai;
+  }
+
+  .mode-switch__content--text {
+    view-transition-name: mode-switch-text;
+  }
+
+  // Enlarged text on a narrow screen: the icons go first, then the short labels replace the full ones
+  // (Impeccable audit, 2026-11-08: "AI mo…" was cut off at 360 px with twice the text size). The `em`
+  // in a media query is the browser's default font size, so this follows the reader's text-size
+  // setting. The full label stays for screen readers; the short one is hidden from them.
+  .mode-switch__label {
+    overflow: hidden;
+    min-inline-size: 0;
+    text-overflow: ellipsis;
+
+    @media (width < 16em) {
+      @include visually-hidden;
+    }
+  }
+
+  .mode-switch__short {
+    display: none;
+
+    @media (width < 16em) {
+      display: inline;
+    }
+  }
+
+  .mode-switch__icon {
+    flex-shrink: 0;
+    inline-size: var(--size-icon-sm);
+    block-size: var(--size-icon-sm);
+
+    @media (width < 20em) {
+      display: none;
+    }
+  }
+
+  // "Frosted glass" icon parts (tokens: --color-icon-*). On the current mode's accent pill the glass
+  // turns to its on-accent variant, so it stands out from the pill in both themes.
+  .mode-switch__stop-glass-start {
+    stop-color: var(--color-icon-glass-1);
+
+    .mode-switch__link[aria-current='page'] & {
+      stop-color: var(--color-icon-glass-on-accent-1);
+    }
+  }
+
+  .mode-switch__stop-glass-end {
+    stop-color: var(--color-icon-glass-2);
+
+    .mode-switch__link[aria-current='page'] & {
+      stop-color: var(--color-icon-glass-on-accent-2);
+    }
+  }
+
+  .mode-switch__stop-sheen {
+    stop-color: var(--color-icon-sheen);
+  }
+
+  .mode-switch__stop-sheen-fade {
+    stop-color: var(--color-icon-sheen);
+    stop-opacity: 0;
+  }
+
+  .mode-switch__rim {
+    fill: none;
+    stroke: var(--color-icon-rim);
+    stroke-width: 0.8;
+  }
+
+  // On the accent pill the white rim and sheen blur the small glyph against the gradient: the current
+  // mode's icon is a plain, crisp glass fill with its detail.
+  .mode-switch__rim,
+  .mode-switch__sheen {
+    .mode-switch__link[aria-current='page'] & {
+      display: none;
+    }
+  }
+
+  .mode-switch__glyph {
+    fill: var(--color-icon-detail);
+
+    .mode-switch__link[aria-current='page'] & {
+      fill: var(--color-icon-detail-on-accent);
+    }
+  }
+
+  .mode-switch__lines {
+    fill: none;
+    stroke: var(--color-icon-detail);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+
+    .mode-switch__link[aria-current='page'] & {
+      stroke: var(--color-icon-detail-on-accent);
+    }
+  }
+
+  // Forced colours drop the gradients: a solid glyph in the link's text colour, the detail in the
+  // background colour, no sheen or rim.
+  @media (forced-colors: active) {
+    .mode-switch__glass {
+      fill: currentcolor;
+    }
+
+    .mode-switch__sheen,
+    .mode-switch__rim {
+      display: none;
+    }
+
+    .mode-switch__glyph {
+      fill: Canvas;
+    }
+
+    .mode-switch__lines {
+      stroke: Canvas;
+    }
+  }
+}

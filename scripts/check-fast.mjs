@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Fast checks for the monorepo: format, lint, typecheck, unit + component tests.
-// Tests marked `mentor_pending` are excluded (docs/TESTING.md §4).
+// Tests marked `mentor_pending` (docs/TESTING.md §4) and `db` (need a live Postgres; CI job `api-db`)
+// are excluded.
 //
 // Usage:
 //   node scripts/check-fast.mjs              # all targets (web, api, scripts)
@@ -39,7 +40,7 @@ const APPS = {
       ['uv', ['run', 'ruff', 'format', '--check', '.']],
       ['uv', ['run', 'ruff', 'check', '.']],
       ['uv', ['run', 'pyright']],
-      ['uv', ['run', 'pytest', '-m', 'not mentor_pending', '-q']],
+      ['uv', ['run', 'pytest', '-m', 'not mentor_pending and not db', '-q']],
     ],
   },
   // Repo-level Node scripts, Claude Code hooks, the git-hook configs they test, and CI workflows.

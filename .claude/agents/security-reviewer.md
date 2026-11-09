@@ -52,7 +52,7 @@ Also read `SPEC.md` §4–§6 and `docs/adr/0004-guardrails.md`.
 - Prompt injection paths: user message, client-sent history, retrieved documents (site docs, READMEs).
 - System prompt leakage, including through the Under the hood panel. It must serialize an allow-list only.
 - Markdown rendering: no raw HTML, sanitized links.
-- "Ask about this" never auto-sends.
+- The `?q=` prefill never auto-sends.
 - Spend controls exist.
 
 **Privacy**

@@ -1,0 +1,144 @@
+@use '../../styles/mixins' as *;
+
+@layer components {
+  .cv-header {
+    display: grid;
+    gap: var(--space-sm);
+    inline-size: 100%;
+    max-inline-size: var(--size-cv);
+  }
+
+  .cv-header__role {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-sm);
+    align-items: baseline;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .cv-header__location {
+    font-weight: var(--font-weight-regular);
+    color: var(--color-text-muted);
+  }
+
+  .cv-header__contacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-block-start: var(--space-xs);
+    padding: 0;
+    list-style: none;
+
+    @media print {
+      gap: var(--space-2xs) var(--space-lg);
+      margin-block-start: 0;
+    }
+  }
+
+  // Contact chips: gradient hairline border, touch-size, the network name as a muted key.
+  .cv-header__link {
+    @include gradient-border($fill-image: var(--gradient-surface));
+
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--size-touch);
+    padding-inline: var(--space-md);
+
+    // Long values (the email) wrap instead of widening the page under enlarged text (WCAG 1.4.4).
+    overflow-wrap: anywhere;
+    color: var(--color-text);
+    border-radius: var(--radius-pill);
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: var(--space-3xs);
+    }
+
+    &:active {
+      background-image: var(--gradient-surface-active), var(--gradient-border);
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background-image: var(--gradient-surface-hover), var(--gradient-border);
+      }
+    }
+
+    // On paper the chips become a plain line of contacts.
+    @media print {
+      min-block-size: 0;
+      padding-inline: 0;
+      border-width: 0;
+      color: var(--color-text);
+    }
+  }
+
+  // LinkedIn: "Profile" on screen, the address on paper.
+  .cv-header__link-value--screen {
+    @media print {
+      display: none;
+    }
+  }
+
+  .cv-header__link-value--print {
+    @media screen {
+      display: none;
+    }
+  }
+
+  .cv-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+    margin-block-start: var(--space-xs);
+
+    // The Brief / Full switch and the PDF link do nothing on paper.
+    @media print {
+      display: none;
+    }
+  }
+
+  // The PDF link (pages/cv.astro) is an action, not a third view: next to the Brief / Full switch, in
+  // the same pill shape, it read as one more option of it (Ivan, 2026-11-05). A download icon and a
+  // wider gap set it apart. (At the far end of the row it hung in empty space on wide screens and
+  // dropped to a line of its own on phones.) On narrow screens it says just "PDF", so the row fits a 360 px
+  // screen; the verb stays in the accessible name.
+  .cv-header__pdf {
+    margin-inline-start: var(--space-xs);
+  }
+
+  // `em` in a media query is the browser's default font size: enlarged text keeps the short label
+  // on wider screens too.
+  .cv-header__pdf-verb {
+    @media (width < 30em) {
+      @include visually-hidden;
+    }
+  }
+
+  .cv-header__pdf-icon {
+    flex-shrink: 0;
+    inline-size: var(--size-icon-sm);
+    block-size: var(--size-icon-sm);
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  // One line of text: the key and the value sit on the same baseline. The font's ascent and descent
+  // differ, so the line box is trimmed to cap height and baseline, which centres the letters optically
+  // in the chip (progressive: without `text-box` the line box is centred instead).
+  .cv-header__link-text {
+    line-height: var(--line-height-snug);
+    text-box: trim-both cap alphabetic;
+  }
+
+  .cv-header__link-label {
+    margin-inline-end: var(--space-2xs);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+}

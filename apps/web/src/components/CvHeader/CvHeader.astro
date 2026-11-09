@@ -1,0 +1,60 @@
+---
+// The CV masthead: name (the page's h1), role, location and the public contacts (SPEC §3.2 US-T2).
+import './CvHeader.scss';
+import { printableUrl, telegramUrl, type CvData } from '../../lib/cv/view';
+
+interface Props {
+  readonly profile: CvData<'profile'>;
+}
+
+const { name, headline, location, contacts } = Astro.props.profile;
+
+// Public contacts only (content-nda rule). Each link's visible text carries its own name. On paper a
+// link cannot be followed, so a value that is not the address itself prints the address (`print`).
+const links: readonly { label: string; value: string; href: string; print?: string }[] = [
+  { label: 'Email', value: contacts.email, href: `mailto:${contacts.email}` },
+  { label: 'Telegram', value: contacts.telegram, href: telegramUrl(contacts.telegram) },
+  { label: 'GitHub', value: new URL(contacts.github).pathname.slice(1), href: contacts.github },
+  {
+    label: 'LinkedIn',
+    value: 'Profile',
+    href: contacts.linkedin,
+    print: printableUrl(contacts.linkedin),
+  },
+];
+---
+
+<header class="cv-header">
+  <h1 class="cv-header__name">{name}</h1>
+  <p class="cv-header__role">
+    {headline}
+    <span class="cv-header__location">{location}</span>
+  </p>
+  <ul class="cv-header__contacts" aria-label="Contacts">
+    {links.map((link) => (
+      <li>
+        <a class="cv-header__link" href={link.href} rel="me">
+          <span class="cv-header__link-text">
+            <span class="cv-header__link-label">{link.label}</span>{' '}
+            {link.print ? (
+              <>
+                <span class="cv-header__link-value cv-header__link-value--screen">
+                  {link.value}
+                </span>
+                <span class="cv-header__link-value cv-header__link-value--print">{link.print}</span>
+              </>
+            ) : (
+              link.value
+            )}
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+  {/* Page actions: the Brief / Full switch and the PDF link (ROADMAP 2.4 / 2.5). */}
+  {Astro.slots.has('default') && (
+    <div class="cv-header__actions">
+      <slot />
+    </div>
+  )}
+</header>

@@ -1,6 +1,6 @@
 ---
 name: step-report
-description: Writes the report for one reviewable step (≤ ~300 diff lines) in Ivan's format — what and why, rejected alternatives, what to check, checks run. Use at the end of every step in zones where Claude writes code, and after mentor tasks.
+description: Writes the report for one reviewable step (code ≤ ~600 diff lines, markup / styles ≤ ~1200) in Ivan's format — what and why, rejected alternatives, what to check, checks run. Use at the end of every step in zones where Claude writes code, and after mentor tasks.
 ---
 
 # Step report
@@ -12,7 +12,7 @@ Every step ends with this report, in **Russian**. Then wait for Ivan's OK before
    - the commands you actually ran and their results.
 
    Never report a check you did not run.
-2. If the diff is larger than ~300 lines, say so and propose how to split it.
+2. If the diff is larger than ~600 lines of code or ~1200 lines of markup / styles, say so and propose how to split it.
 
 ## Template
 
@@ -33,7 +33,7 @@ Every step ends with this report, in **Russian**. Then wait for Ivan's OK before
 | Команда | Результат |
 |---|---|
 | `node scripts/check-fast.mjs web` | ✔ |
-| `pnpm --dir apps/web run e2e -- --project=mobile-android` | ✘ 1 failed → fixed in … |
+| `pnpm --dir apps/web run e2e --project=mobile-android` | ✘ 1 failed → fixed in … |
 
 ### Открытые вопросы / решения за тобой
 - <only if any>

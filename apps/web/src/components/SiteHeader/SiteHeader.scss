@@ -1,0 +1,254 @@
+@use '../../styles/mixins' as *;
+
+// Sticky (not fixed): it stays in the flow, so no layout offsets are needed. The bar is opaque because
+// the gradient border technique paints the gradient under the padding box too.
+@layer components {
+  .site-header {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-header);
+    padding-block-start: max(var(--space-xs), env(safe-area-inset-top));
+    padding-inline: max(var(--gutter), env(safe-area-inset-left))
+      max(var(--gutter), env(safe-area-inset-right));
+
+    @include mq(md) {
+      padding-block-start: max(var(--space-md), env(safe-area-inset-top));
+    }
+
+    // Navigation and page chrome stay off paper (css-scss.md → Print).
+    @media print {
+      display: none;
+    }
+
+    // Scrim (decoration): only around the bar, not across the page (Ivan, 2026-11-03): as wide as the
+    // bar, from the top of the screen to a band below it. Content passing under the bar is tinted and
+    // blurred; the scrim fades out softly below the bar and at both sides, so it has no hard edge.
+    // `backdrop-filter` and `mask-image` (css-scss.md → Performance): one small element per page, and
+    // the fades need the mask, because a blur alone would end at a hard edge. The blur is the costly
+    // part (it re-samples on scroll), so it is an enhancement: only where supported and not for readers
+    // who ask for less transparency; there the scrim is a more opaque tint instead.
+    // At the top of the page nothing is under the bar but the sky, so the scrim is invisible there (a
+    // tint over the backdrop read as a flat stripe). It fades in gradually over the first
+    // `--distance-scrim-fade` of scrolling where scroll-driven animations exist, and stays hidden on a
+    // page too short to scroll. Elsewhere it is always on.
+    &::before {
+      content: '';
+      position: absolute;
+      inset-block: 0 calc(-1 * var(--space-lg));
+
+      // The bar's box widened by the side fades, so the bar itself is fully covered (content that lines
+      // up with the bar's edge is blurred too); centred by the auto margins. It never reaches past the
+      // screen edge (no horizontal scroll), so on narrow screens the fades start at the edge.
+      inset-inline: max(0px, max(var(--gutter), env(safe-area-inset-left)) - var(--space-lg))
+        max(0px, max(var(--gutter), env(safe-area-inset-right)) - var(--space-lg));
+      z-index: var(--z-below);
+      max-inline-size: calc(var(--size-container) - 2 * var(--gutter) + 2 * var(--space-lg));
+      margin-inline: auto;
+      pointer-events: none;
+      background-color: var(--color-scrim-solid);
+      mask-image:
+        linear-gradient(to bottom, #000 calc(100% - var(--space-lg)), transparent),
+        linear-gradient(
+          to right,
+          transparent,
+          #000 var(--space-lg),
+          #000 calc(100% - var(--space-lg)),
+          transparent
+        );
+      mask-composite: intersect;
+
+      @supports (backdrop-filter: blur(1px)) {
+        @media (prefers-reduced-transparency: no-preference) {
+          background-color: var(--color-scrim);
+          backdrop-filter: blur(var(--blur-scrim));
+        }
+      }
+
+      // Opacity only, linked to the scroll position (not a timed motion). Longhands, not the
+      // `animation` shorthand: the minifier folds a following `animation-timeline` into the shorthand,
+      // where browsers reject it (it is a reset-only part of the shorthand) and drop the whole rule.
+      // A page that does not scroll has an inactive timeline (no animation): it keeps opacity 0.
+      @supports (animation-timeline: scroll()) {
+        opacity: 0;
+        animation-name: site-header-scrim-in;
+        animation-timing-function: var(--ease-in-out);
+        animation-fill-mode: both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 var(--distance-scrim-fade);
+      }
+    }
+  }
+
+  @keyframes site-header-scrim-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  .site-header__bar {
+    @include gradient-border;
+
+    // Brand | navigation | actions. Below `md` the navigation column is empty (the mode switch floats at
+    // the bottom) and the brand takes the free space; from `md` equal outer columns centre the navigation.
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: var(--space-md);
+    align-items: center;
+
+    // The page frame includes the gutter, the bar sits inside it: its edge lines up with the content.
+    max-inline-size: calc(var(--size-container) - 2 * var(--gutter));
+    margin-inline: auto;
+    padding: var(--space-2xs);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-raised);
+
+    @include mq(md) {
+      grid-template-columns: 1fr auto 1fr;
+    }
+  }
+
+  // The components layer beats base.scss, so the base link underline on hover never applies here.
+  .site-header__brand {
+    grid-column: 1;
+    justify-self: start;
+    position: relative;
+    isolation: isolate; // keeps the ::before highlight under the text but above the bar
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+    min-block-size: var(--size-touch);
+
+    // The mark's inline offset equals its block offset: (44 − 24) / 2 on every side of the star.
+    padding-inline: calc((var(--size-touch) - var(--size-icon)) / 2) var(--space-md);
+    border-radius: var(--radius-pill);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    white-space: nowrap;
+    text-decoration-line: none;
+
+    // Hover highlight: a soft accent pill that fades in (opacity only).
+    &::before {
+      position: absolute;
+      inset: 0;
+      z-index: var(--z-below);
+      border-radius: inherit;
+      background-color: var(--color-highlight-soft);
+      content: '';
+      opacity: 0;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
+    @media (hover: hover) {
+      &:hover::before {
+        opacity: 1;
+      }
+
+      &:hover .site-header__planet {
+        animation-play-state: running;
+      }
+    }
+
+    &:focus-visible .site-header__planet {
+      animation-play-state: running;
+    }
+  }
+
+  .site-header__mark {
+    flex-shrink: 0;
+  }
+
+  // A very narrow screen with large text (`em` in a media query follows the reader's text-size
+  // setting): the name no longer fits beside the theme toggle, so only the mark shows. The name stays
+  // the link's text for screen readers (Impeccable audit, 2026-11-08).
+  .site-header__name {
+    @media (width < 16em) {
+      @include visually-hidden;
+    }
+  }
+
+  // The planet orbits the reticle's centre at an even pace (linear, one lap per --duration-orbit)
+  // while the brand link is hovered or focused, and stops where it is when the pointer leaves (the
+  // animation pauses rather than resets). Transform only.
+  .site-header__planet {
+    transform-box: view-box;
+    transform-origin: center;
+    animation: site-header-orbit var(--duration-orbit) linear infinite paused;
+
+    @media (forced-colors: active) {
+      fill: CanvasText;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  // Forced colours: draw the mark in the text colour. CSS beats the groups' presentation attributes;
+  // the glows and the centre star are decoration and go.
+  .site-header__reticle {
+    @media (forced-colors: active) {
+      stroke: CanvasText;
+    }
+  }
+
+  .site-header__mark-core {
+    fill: var(--color-star);
+    opacity: 0.85;
+  }
+
+  .site-header__mark-glow,
+  .site-header__mark-haze,
+  .site-header__mark-core,
+  .site-header__planet-halo {
+    @media (forced-colors: active) {
+      display: none;
+    }
+  }
+
+  @keyframes site-header-orbit {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  .site-header__mark-stop-teal {
+    stop-color: var(--color-accent-3);
+  }
+
+  .site-header__mark-stop-start {
+    stop-color: var(--color-accent);
+  }
+
+  .site-header__mark-stop-gold-1 {
+    stop-color: var(--color-mark-gold-1);
+  }
+
+  .site-header__mark-stop-gold-2 {
+    stop-color: var(--color-mark-gold-2);
+  }
+
+  .site-header__mark-stop-gold-3 {
+    stop-color: var(--color-mark-gold-3);
+  }
+
+  .site-header__mark-stop-end {
+    stop-color: var(--color-accent-2);
+  }
+
+  // Below `md` the mode switch floats at the bottom (out of flow), so this column is empty there.
+  .site-header__nav {
+    grid-column: 2;
+  }
+
+  .site-header__actions {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+  }
+}

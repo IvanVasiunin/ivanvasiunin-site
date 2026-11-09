@@ -11,7 +11,7 @@ src/site_api/prompts/     versioned prompt files and localized templates
 src/site_api/evals/       eval datasets and metrics
 tests/{ingestion,rag,graph,evals}/
 ```
-In these folders Claude **does not write the implementation** unless Ivan explicitly asks. Claude writes failing tests marked `@pytest.mark.mentor_pending`, gives hints by levels, reviews as a mentor (`python-reviewer`) and asks explain-back questions. Use the `mentor-task` skill; suggest `/output-style mentor`. Never remove `mentor_pending` yourself.
+In these folders **Ivan writes the implementation; Claude dictates it** (guided mode, [ADR-0011](../../docs/adr/0011-guided-mentor-mode.md)): Claude writes failing tests marked `@pytest.mark.mentor_pending`, then gives the code step by step in small blocks with «Почему так», checks Ivan's result (tests, ruff, pyright, `python-reviewer`) and asks one or two short check questions. Claude never edits mentor-zone implementation files itself. Use the `mentor-task` skill; suggest `/output-style mentor`. Never remove `mentor_pending` yourself.
 
 ## Claude zone
 ```
@@ -19,8 +19,9 @@ src/site_api/core/        settings (pydantic-settings), logging, error format, m
 src/site_api/routers/     health, chat (SSE glue only)
 src/site_api/schemas/     Pydantic request/response models, ChatEvent union (the API contract)
 src/site_api/services/    rate/session limits, chat stats, masking
-src/site_api/db/          SQLAlchemy models, session
-migrations/               Alembic (owns every table, incl. the vector table — ADR-0003)
+src/site_api/db/          engine, `migrate.py` (`python -m site_api.db.migrate`)
+src/site_api/db/migrations/  Alembic (owns every table, incl. the vector table — ADR-0003); inside
+                          the package so the migrations ship in the API image
 tests/api/ …              contract and service tests
 ```
 
@@ -29,10 +30,11 @@ tests/api/ …              contract and service tests
 |---|---|
 | Install / sync | `uv sync --directory apps/api` |
 | Dev server | `uv run --directory apps/api fastapi dev src/site_api/main.py` |
-| Fast checks | `node scripts/check-fast.mjs api` (ruff format --check, ruff check, pyright, pytest -m "not mentor_pending") |
+| Fast checks | `node scripts/check-fast.mjs api` (ruff format --check, ruff check, pyright, pytest -m "not mentor_pending and not db") |
+| Migration tests (live DB) | `uv run --directory apps/api pytest -m db` with `TEST_DATABASE_URL` → a `*_test` DB (docs/TESTING.md §2) |
 | Mentor-pending list | `uv run --directory apps/api pytest -m mentor_pending --co -q` |
-| Migrations | `uv run --directory apps/api alembic upgrade head` |
-| Ingestion | `uv run --directory apps/api python -m site_api.ingestion` (`--refit` only deliberately) |
+| Migrations | `uv run --directory apps/api alembic upgrade head` (dev DB: `infra/docker-compose.dev.yml`); in images: `python -m site_api.db.migrate` |
+| Ingestion | `uv run --directory apps/api python -m site_api.ingestion --estimate` (free: plan + cost) → `--apply` (paid embeddings — Ivan's consent); `--refit` only deliberately (6.1) |
 | Evals (paid — Ivan's consent) | `uv run --directory apps/api python -m site_api.evals --estimate` → `--run` |
 
 ## App-specific notes

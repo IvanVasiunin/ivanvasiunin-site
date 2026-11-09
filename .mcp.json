@@ -3,6 +3,22 @@
     "chrome-devtools": {
       "command": "cmd",
       "args": ["/c", "npx", "-y", "chrome-devtools-mcp@1.12.0"]
+    },
+    "postgres": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "uvx",
+        "--exclude-newer",
+        "2026-10-20",
+        "--from",
+        "postgres-mcp==0.3.0",
+        "postgres-mcp",
+        "--access-mode=restricted"
+      ],
+      "env": {
+        "DATABASE_URI": "${POSTGRES_MCP_DATABASE_URI:-postgresql://mcp_reader@127.0.0.1:5432/site}"
+      }
     }
   }
 }

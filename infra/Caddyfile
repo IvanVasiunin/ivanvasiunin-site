@@ -1,0 +1,71 @@
+# Caddy for ivanvasiunin.com (ROADMAP 1.6, infra-security.md, ARCHITECTURE §1).
+# Serves the static Astro build, proxies /api/* to the API, terminates TLS automatically.
+# Environment: SITE_ADDRESS (the domain; `localhost` for a local run).
+# Let's Encrypt accounts work without an email; certificates renew automatically.
+
+{
+	# No admin API: config changes ship as a new image, never at runtime.
+	admin off
+}
+
+# Container health check only (not published by Compose).
+http://127.0.0.1:2020 {
+	bind 127.0.0.1
+	respond "ok" 200
+}
+
+{$SITE_ADDRESS:localhost} {
+	# No access log: it would record client IPs (fastapi.md privacy; the API logs its own line).
+
+	header {
+		# HTTPS only for a year. No includeSubDomains / preload yet: a future subdomain without TLS
+		# would be locked out for a year (revisit in Phase 8).
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "same-origin"
+		# Header-only directives. Script and style hashes come from the page's own CSP <meta>
+		# (Astro security.csp); browsers enforce both policies together.
+		Content-Security-Policy "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		-Server
+	}
+
+	handle /api/* {
+		# A chat request is small; bigger bodies are rejected before they reach the API.
+		request_body {
+			max_size 64KB
+		}
+		# No `encode` here and an immediate flush: SSE events reach the browser as they are
+		# produced instead of waiting in a buffer (SPEC §4).
+		reverse_proxy api:8000 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /srv
+		encode zstd gzip
+
+		# Hashed build assets never change under the same name.
+		@hashed path /_astro/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+		# Pages: always revalidate, so a deploy is visible at once.
+		@pages path / /cv /cv/ *.html
+		header @pages Cache-Control "no-cache"
+
+		# The knowledge map's data (the `points` volume): changes only after an ingestion run.
+		# Only when the file exists: a 404 before the first run must not be cached.
+		@points {
+			path /data/points.json
+			file
+		}
+		header @points Cache-Control "public, max-age=300"
+
+		# /cv serves /cv/index.html directly (no redirect hop for the mode switch).
+		try_files {path} {path}/index.html
+		file_server
+	}
+}

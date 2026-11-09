@@ -1,0 +1,32 @@
+---
+// One CV section: a labelled <section> with an h2, optionally wrapping its entries in a list.
+// `timeline` = an ordered list of jobs (CvJob items); `cards` = a grid of projects (CvProject items).
+import './CvSection.scss';
+
+interface Props {
+  /** Fragment id, e.g. `experience` (also linkable as /cv#experience). */
+  readonly id: string;
+  readonly title: string;
+  readonly list?: 'timeline' | 'cards';
+}
+
+const { id, title, list } = Astro.props;
+const headingId = `${id}-title`;
+---
+
+<section class="cv-section" id={id} aria-labelledby={headingId}>
+  <h2 class="cv-section__title" id={headingId}>
+    {title}
+  </h2>
+  {list === 'timeline' ? (
+    <ol class="cv-section__list cv-section__list--timeline">
+      <slot />
+    </ol>
+  ) : list === 'cards' ? (
+    <ul class="cv-section__list cv-section__list--cards">
+      <slot />
+    </ul>
+  ) : (
+    <slot />
+  )}
+</section>

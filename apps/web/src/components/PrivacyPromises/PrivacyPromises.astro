@@ -1,0 +1,108 @@
+---
+// The privacy page's side card (Ivan's pick, 2026-11-08: prototype "A · Elio's promises"): Elio says
+// the page's key promises one at a time in a speech bubble, with four facts at a glance below.
+//
+// Every promise is in the page text too; the card only puts them in Elio's voice (first person for
+// Elio, third person for Ivan). Each fact mirrors the code like the page does (pages/privacy.astro).
+//
+// All promises are in the HTML as one list, stacked in one grid cell, so the bubble always has the
+// height of the longest one and never jumps when they change. Screen readers get the whole list.
+// Without JS the first promise shows and the controls stay hidden.
+//
+// The script turns the promises every few seconds (WCAG 2.2.2: a Pause button, and hovering or
+// focusing the card holds them), never with reduced motion. Elio is the React avatar rendered to
+// static HTML; the script lets its eyes follow the mouse (lookAt.ts).
+import { ElioAvatar } from '../ElioAvatar';
+import './PrivacyPromises.scss';
+
+interface Props {
+  /** How long the statistics and the traces are kept (the page's single source for the number). */
+  readonly retentionDays: number;
+}
+
+const { retentionDays } = Astro.props;
+
+const PROMISES = [
+  'Your IP address stays in the server’s memory only, to stop spam. It is never written down.',
+  `Your question is kept ${String(retentionDays)} days, with emails, phones and links masked. Then it’s gone.`,
+  'No cookies, no analytics, no ad trackers. Not even one.',
+  'The chat lives in this tab only. Reload or close it, and it’s gone.',
+  'I can be wrong. Ivan is the source of truth.',
+] as const;
+---
+
+<div class="privacy-promises" data-privacy-promises>
+  <div class="privacy-promises__speaker">
+    <ElioAvatar size="xl" live named={false} />
+    <div class="privacy-promises__bubble">
+      <ul class="privacy-promises__says" aria-label="Elio’s promises">
+        {PROMISES.map((text, index) => (
+          <li class="privacy-promises__say" data-current={index === 0 ? '' : undefined}>
+            {text}
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div class="privacy-promises__controls" hidden data-privacy-promises-controls>
+      <div class="privacy-promises__dots">
+        {PROMISES.map((_, index) => (
+          <button
+            type="button"
+            class="privacy-promises__dot"
+            aria-label={`Promise ${String(index + 1)} of ${String(PROMISES.length)}`}
+            aria-pressed={index === 0 ? 'true' : 'false'}
+            data-index={index}
+          />
+        ))}
+      </div>
+      <button
+        type="button"
+        class="privacy-promises__pause"
+        aria-label="Pause the promises"
+        aria-pressed="false"
+        data-privacy-promises-pause
+      >
+        <svg
+          class="privacy-promises__icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path class="privacy-promises__icon-pause" d="M8 6v12M16 6v12"></path>
+          <path class="privacy-promises__icon-play" d="M8 5.5v13l10.5-6.5z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <ul class="privacy-promises__tiles">
+    <li class="privacy-promises__tile">
+      <strong class="privacy-promises__value">{retentionDays} days</strong>
+      <span class="privacy-promises__caption">then statistics and traces are deleted</span>
+    </li>
+    <li class="privacy-promises__tile">
+      <strong class="privacy-promises__value">0</strong>
+      <span class="privacy-promises__caption">cookies, analytics or ad trackers</span>
+    </li>
+    <li class="privacy-promises__tile">
+      <strong class="privacy-promises__value">Memory only</strong>
+      <span class="privacy-promises__caption">your IP address, never written down</span>
+    </li>
+    <li class="privacy-promises__tile">
+      <strong class="privacy-promises__value">[email]</strong>
+      <span class="privacy-promises__caption">emails, phones and links masked</span>
+    </li>
+  </ul>
+</div>
+
+<script>
+  import { followPointer } from '../ElioAvatar/lookAt';
+  import { startPromises } from './promises';
+
+  const root = document.querySelector<HTMLElement>('[data-privacy-promises]');
+  if (root) {
+    startPromises(root, { reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches });
+    const avatar = root.querySelector<SVGSVGElement>('.elio-avatar__svg');
+    if (avatar) followPointer(avatar);
+  }
+</script>

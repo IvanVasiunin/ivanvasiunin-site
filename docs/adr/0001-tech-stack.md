@@ -100,8 +100,8 @@ If the real build exceeds the budget, the first lever is `preact/compat` (preact
 | MCP: Chrome DevTools | github.com/ChromeDevTools/chrome-devtools-mcp | Apache-2.0, 1.12.0 | Performance traces and CPU / network throttling for the visualization. Unused tool groups are trimmed to save context. |
 | Playwright CLI + its skill (instead of Playwright MCP) | github.com/microsoft/playwright-cli | Apache-2.0, 0.1.23 | Snapshots go to files, not into the context; both Microsoft READMEs recommend the CLI for coding agents. Installed as a project devDependency, not globally. |
 | Plugin: frontend-design | anthropics/claude-plugins-official | Apache-2.0, pinned to sha `41bbe19` | There is no design yet; it sets an aesthetic direction before code is written. No conflicts with our rules: it mandates no fonts, Tailwind or JS animation libraries. |
-| Impeccable (deferred to Phase 7) | github.com/pbakaus/impeccable | Apache-2.0, cli-v4.8.0 | Audit and polish. **`overdrive` is banned** (GSAP / Three.js / WebGL). Our rules override `craft-floor` (it suggests animating blur and mask). Our constraints go into its DESIGN.md. |
-| Postgres MCP Pro, restricted mode (deferred to Phase 3) | github.com/crystaldba/postgres-mcp | MIT, 0.3.0 | Read-only DB inspection, once a DB exists. |
+| Impeccable (Phase 7) | github.com/pbakaus/impeccable | Apache-2.0, skill-v4.8.0 (commit 414603b), engine 0.1.18 | Audit and polish. **`overdrive` is banned** (GSAP / Three.js / WebGL). Our rules override `craft-floor` (it suggests animating blur and mask). Our constraints go into its DESIGN.md. **2026-11-08 (Ivan):** vendored as a project-only copy in `.claude/skills/impeccable/` (no `npx impeccable install`, so no user-level design hook); `overdrive`, `live`, `generate` and `hooks` removed; telemetry off. Details: the folder's VENDORED.md. |
+| Postgres MCP Pro, restricted mode (enabled in ROADMAP 3.1) | github.com/crystaldba/postgres-mcp | MIT, 0.3.0 | Read-only DB inspection of the **local dev** database. `.mcp.json` runs `uvx --from postgres-mcp==0.3.0 postgres-mcp --access-mode=restricted`; the URL comes from `POSTGRES_MCP_DATABASE_URI` in the user's environment (default: the dev DB on 127.0.0.1 without a password), never a production URL. |
 | Rejected | — | — | taste-skill (GSAP, Google / Fontshare fonts, "8+ moving elements"); animation skills (GSAP / Three.js); Playwright MCP (context cost); GitHub MCP (`gh` CLI is enough); `@modelcontextprotocol/server-postgres` (deprecated); Figma MCP (no Figma). |
 | Subagents | `.claude/agents/` | — | Now: `frontend-reviewer` (sonnet), `python-reviewer` (sonnet, mentor tone, read-only), `security-reviewer` (sonnet), `test-runner` (haiku, failures-only summary). Later: `rag-evaluator` (Phase 4), `mobile-qa` (Phase 7). The built-in Explore agent runs on the session model, not Haiku, so every delegated search sets `model` explicitly. |
 | Output style | Custom `.claude/output-styles/mentor.md` (`keep-coding-instructions: true`), enabled with `/output-style mentor` for mentor sessions | — | The built-in Learning style writes code around `TODO(human)` markers, which breaks the mentor rule. Output styles apply to the whole session, so the path-scoped `.claude/rules/mentor-mode.md` stays as the safety net. |
@@ -126,7 +126,7 @@ A hard spend limit is set on the OpenAI project (requests then fail with HTTP 42
 
 ## Consequences
 
-- Pinned exceptions to "latest": TypeScript 6.0.3 and Lighthouse 12.6 (via LHCI). Both are revisited when upstream catches up.
+- Pinned exceptions to "latest": TypeScript 6.0.3 (revisited when upstream catches up). Lighthouse 12.6 via LHCI was replaced by `lighthouse` 13.5.0 (amendment of 2026-11-02 below).
 - Pre-1.0 dependencies on the critical path: langchain-postgres 0.0.19 and eslint-plugin-jsx-a11y-x 0.2.0. Each has a recorded fallback.
 - Every model ID, price, temperature and token limit lives in config, not in code.
 - **Correction (2026-11-01, Stage 5):** frontend-design is not pinned to a commit sha. It is installed from the `claude-plugins-official` marketplace as plugin **version 1.1.1** at project scope (`enabledPlugins` in `.claude/settings.json`). Updates arrive when the marketplace is refreshed. Plugin updates are reviewed before they are accepted, and the version in use is recorded here.
@@ -154,5 +154,38 @@ A hard spend limit is set on the OpenAI project (requests then fail with HTTP 42
   - **Commit messages** are checked by a dependency-free `scripts/check-commit-msg.mjs` instead of commitlint (one regular expression).
   - **`pnpm audit` policy:** production dependencies at `high` or above block CI. Dev dependencies are reported as a warning only. Reason: on 2026-11-01 all 8 advisories (5 high) are in dev tooling, 7 of them via `@lhci/cli`'s outdated transitive dependencies (the trade-off recorded above), and `extract-zip` has no patched version. Revisit when LHCI is replaced by `lighthouse` 13 (the recorded fallback). `pip-audit` audits the locked Python dependencies and blocks.
   - GitHub Actions, pinned by SHA: `actions/checkout` v7.0.1, `actions/setup-node` v7.1.0, `pnpm/action-setup` v6.1.0, `astral-sh/setup-uv` v10.3.3 (all on the node24 runtime).
+- **Amendment (2026-11-02, ROADMAP 1.4–1.8) — status: Accepted by Ivan on 2026-11-05.**
+  - **Lighthouse:** `@lhci/cli` 0.15.1 is replaced by `lighthouse` **13.5.0** (Apache-2.0, released 2026-09-18; 13.6.0 from 2026-10-27 was too new to adopt) run by `apps/web/scripts/lighthouse.mjs`. It serves `dist/` with gzip, runs each page 3 times per profile in Playwright's Chromium, and checks the same budgets on the median (`pnpm --dir apps/web run lighthouse`). The 12.6 exception to "latest" is gone.
+  - **`pnpm audit` policy (revisited):** without LHCI, 7 of the 8 dev advisories are gone. The remaining one is a moderate `minimatch` advisory, reached only by linters and the type generator through glob patterns, so dev dependencies now **block CI at `high`** like production ones.
+  - **CI jobs added:**
+    - `e2e`: Playwright desktop, iPhone / WebKit and throttled Android, plus axe;
+    - `visual`: snapshots in `mcr.microsoft.com/playwright:v1.64.1-noble`; it warns until Linux baselines exist;
+    - `lighthouse`;
+    - `contract`: the OpenAPI types are not stale (ROADMAP 1.5);
+    - `infra`: Compose / Dockerfile checks, the image build, an image scan, a `docker compose up` smoke test and a header check (ROADMAP 1.6).
+
+    A `deploy` workflow builds, scans and pushes the images to GHCR and deploys over SSH, without third-party actions (ROADMAP 1.7).
+  - **API dependencies (ROADMAP 1.4), pinned as in the table:**
+    - runtime: `fastapi` 0.162.0 without extras, `uvicorn[standard]` 0.54.0, `pydantic-settings` 2.16.2, `sqlalchemy[asyncio]` 2.1.6, `psycopg` 3.3.6 (pure Python with the system libpq in the image);
+    - dev: `psycopg-binary` 3.3.6, `fastapi-cli` 0.0.32, `httpx` 0.28.1.
+  - **Web additions:**
+    - `openapi-typescript` 7.13.0 (types, ROADMAP 1.5);
+    - Fontsource font packages (ADR-0010);
+    - Astro `security.csp` for a hash-based CSP `<meta>` (no new dependency).
+- **Amendment (2026-11-04, ROADMAP 3.2) — status: Accepted by Ivan on 2026-11-04** (he chose both options in chat). Ingestion loaders:
+  - **`pyyaml` 6.0.3** (MIT, 2025-09-25) parses the YAML frontmatter of the CV collection and `data/*.md` with `yaml.safe_load`, behind a ~10-line `split_frontmatter` helper. Rejected: `python-frontmatter` (one more wrapper over PyYAML for one regex). Dev: **`types-pyyaml` 6.0.12.20260906** for pyright strict (the newest release older than two weeks).
+  - **`langchain-core` 1.7.0** (MIT, 2026-10-22) is added explicitly because the loaders return `langchain_core.documents.Document`, the type the Markdown splitter (3.3) and `PGVectorStore` (3.6) consume ([ADR-0008](0008-langchain-langgraph-roles.md)). It satisfies the declared ranges of langchain 1.4.7 (≥ 1.6.13) and langchain-openai 1.7.3 (≥ 1.7.0). Rejected: an own `SourceDocument` dataclass (stricter types, but a conversion at every LangChain boundary).
+  - Frontmatter is validated with Pydantic models (`extra="forbid"`), mirroring the strict Zod schema of the CV collection: an unexpected key such as `phone` fails ingestion.
+- **Amendment (2026-11-04, ROADMAP 3.3–3.5) — status: Accepted by Ivan on 2026-11-05** (Ivan asked Claude to implement these steps; no new technology beyond the table and [ADR-0008](0008-langchain-langgraph-roles.md)):
+  - **`langchain-text-splitters` 1.1.3** (MIT, 2026-10-02): `MarkdownHeaderTextSplitter` + `RecursiveCharacterTextSplitter` for heading-aware chunking (ARCHITECTURE §5).
+  - **`langchain-openai` 1.7.3** as pinned in the table above: `OpenAIEmbeddings(model, dimensions=1536)` from config. It brings `openai` 3.45.0 and `tiktoken` 0.14.0.
+  - **`httpx` 0.28.1** moves from dev to runtime dependencies: ingestion fetches allow-listed GitHub READMEs (ROADMAP 3.5) with a sync `httpx.Client` (rules/fastapi.md already names httpx as the HTTP client).
+  - Ingestion writes through a synchronous SQLAlchemy engine (psycopg 3, already in the stack) with `INSERT … ON CONFLICT DO UPDATE`; no `PGVectorStore` table helpers (rules/postgres.md: Alembic owns the schema).
+- **Amendment (2026-11-05, ROADMAP 3.7–3.8, 4.1) — status: Accepted by Ivan on 2026-11-05:**
+  - **`langchain` 1.4.7** (for `init_chat_model`) and **`langchain-anthropic` 1.7.7** (the provider switch), as named in the table; `langgraph` 1.2.20 comes with them.
+  - **`langgraph` 1.2.20** is now a direct dependency (the chat graph, ROADMAP 4.3); the table's 1.2.19 was superseded by the version `langchain` 1.4.7 locked.
+  - **`deepeval` 4.3.2** as in the table, a **dev** dependency only (the production image installs with `--no-dev`). Telemetry opt-out verified: `DEEPEVAL_TELEMETRY_OPT_OUT=1` (deepeval.com/docs/data-privacy), set by `evals/judge.py` before DeepEval is imported. Its pytest plugin is disabled (`-p no:deepeval`) so it never runs in the test suite. The judge is our own LangChain model from config (`EVAL_JUDGE_*`, default `gpt-6-luna`), wrapped as a `DeepEvalBaseLLM`; a full run of the 38 cases is estimated at ~$0.15.
+  - **`langfuse` 5.1.0** as in the table (ROADMAP 4.6): the LangChain `CallbackHandler` traces every graph run; masking uses the SDK v5 export hook `mask_otel_spans` (emails, phone numbers and URLs in every exported span attribute). Off unless both `LANGFUSE_*` keys are set. A test captures real spans in memory (`span_exporter`) and asserts no unmasked text.
+  - **Rate limiting uses `limits` 5.8.0 directly** (MIT, 2026-02-05), the fallback the table names, instead of slowapi. `/api/chat` is a streaming endpoint whose limits must be checked in FastAPI dependencies, before the first event; slowapi's API is a route decorator around the endpoint function, which does not fit that. `limits` gives the same in-memory moving-window counters (`limits.aio`), one process, nothing persisted.
 - pnpm 12 denies dependency install scripts unless they are listed in `allowBuilds` (`pnpm-workspace.yaml`). `@parcel/watcher` (via sass) is set to `false`: its script only compiles from source when no prebuilt binary exists.
 - Follow-up ADRs: 0002 frontend framework, 0003 vector database and schema ownership, 0004 guardrails, 0005 visualization rendering, 0006 2D projection, 0007 mentor mode, 0008 LangChain / LangGraph roles.

@@ -1,0 +1,97 @@
+---
+// Site header: a floating bar with a gradient border. Three columns from left to right: the brand, the
+// navigation slot (mode switch, centred) and the actions slot (theme toggle).
+import './SiteHeader.scss';
+---
+
+<header class="site-header">
+  <div class="site-header__bar">
+    <a class="site-header__brand" href="/">
+      <svg
+        class="site-header__mark"
+        width="24"
+        height="24"
+        viewBox="0 0 64 64"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <defs>
+          <linearGradient
+            id="site-header-mark-line"
+            gradientUnits="userSpaceOnUse"
+            x1="5"
+            y1="59"
+            x2="59"
+            y2="5"
+          >
+            <stop class="site-header__mark-stop-teal" offset="0"></stop>
+            <stop class="site-header__mark-stop-start" offset="0.5"></stop>
+            <stop class="site-header__mark-stop-end" offset="1"></stop>
+          </linearGradient>
+          <radialGradient id="site-header-mark-glow">
+            <stop class="site-header__mark-stop-end" offset="0" stop-opacity="0.6"></stop>
+            <stop class="site-header__mark-stop-end" offset="1" stop-opacity="0"></stop>
+          </radialGradient>
+          <radialGradient id="site-header-mark-halo">
+            <stop class="site-header__mark-stop-teal" offset="0" stop-opacity="0.55"></stop>
+            <stop class="site-header__mark-stop-teal" offset="1" stop-opacity="0"></stop>
+          </radialGradient>
+          <radialGradient id="site-header-mark-gold" cx="0.35" cy="0.3" r="0.8">
+            <stop class="site-header__mark-stop-gold-1" offset="0"></stop>
+            <stop class="site-header__mark-stop-gold-2" offset="0.5"></stop>
+            <stop class="site-header__mark-stop-gold-3" offset="1"></stop>
+          </radialGradient>
+        </defs>
+        {/* A chart reticle, like the celestial chart in the backdrop (Ivan's pick 2026-11-05, "Glowing
+        lines"): two rings with cardinal ticks in a teal-blue-lavender gradient over a soft glow, a
+        faint star at the centre and a golden planet on the inner ring (its orbit). While the brand is
+        hovered or focused the planet travels the orbit at an even pace. */}
+        <circle
+          class="site-header__mark-glow"
+          cx="32"
+          cy="32"
+          r="27"
+          fill="url(#site-header-mark-glow)"
+          opacity="0.35"
+        ></circle>
+        <g
+          class="site-header__reticle"
+          fill="none"
+          stroke="url(#site-header-mark-line)"
+          stroke-linecap="round"
+        >
+          <circle
+            class="site-header__mark-haze"
+            cx="32"
+            cy="32"
+            r="24"
+            stroke-width="7"
+            opacity="0.14"
+          ></circle>
+          <circle cx="32" cy="32" r="24" stroke-width="3.2"></circle>
+          <circle cx="32" cy="32" r="13.3" stroke-width="2.2" opacity="0.75"></circle>
+          <path d="M32 2.7v6.9M32 54.4v6.9M2.7 32h6.9M54.4 32h6.9" stroke-width="3.4"></path>
+        </g>
+        <circle class="site-header__mark-core" cx="32" cy="32" r="1.6"></circle>
+        <g class="site-header__planet" fill="url(#site-header-mark-gold)">
+          <circle
+            class="site-header__planet-halo"
+            cx="41.4"
+            cy="22.6"
+            r="9"
+            fill="url(#site-header-mark-halo)"
+            opacity="0.8"
+          ></circle>
+          <circle cx="41.4" cy="22.6" r="5.4"></circle>
+        </g>
+      </svg>
+      <span class="site-header__name">Ivan Vasiunin</span>
+    </a>
+    <div class="site-header__nav">
+      <slot name="nav" />
+    </div>
+    <div class="site-header__actions">
+      <slot name="actions" />
+    </div>
+  </div>
+</header>

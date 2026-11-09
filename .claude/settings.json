@@ -72,7 +72,11 @@
       "Edit(~/.claude/settings.json)",
       "Edit(~/.ssh/**)",
       "Edit(~/.gitconfig)",
-      "Bash(git push*)",
+      "Bash(git push* --force*)",
+      "Bash(git push* -f*)",
+      "Bash(git push* +*)",
+      "Bash(git push* --delete*)",
+      "Bash(git push* --mirror*)",
       "Bash(git reset --hard*)",
       "Bash(git rebase*)",
       "Bash(git filter-branch*)",
@@ -88,7 +92,11 @@
       "Bash(rm -rf *)",
       "Bash(rm -fr *)",
       "Bash(rm -r *)",
-      "PowerShell(git push*)",
+      "PowerShell(git push* --force*)",
+      "PowerShell(git push* -f*)",
+      "PowerShell(git push* +*)",
+      "PowerShell(git push* --delete*)",
+      "PowerShell(git push* --mirror*)",
       "PowerShell(git reset --hard*)",
       "PowerShell(git rebase*)",
       "PowerShell(git clean -f*)",
@@ -118,7 +126,9 @@
       "PowerShell(pnpm add *)",
       "PowerShell(uv add *)",
       "PowerShell(docker compose up*)",
-      "PowerShell(docker compose down*)"
+      "PowerShell(docker compose down*)",
+      "Bash(git push* main*)",
+      "PowerShell(git push* main*)"
     ]
   },
   "hooks": {

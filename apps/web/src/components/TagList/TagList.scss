@@ -1,0 +1,32 @@
+// Tags read like the labels on a star chart: small sans text on a faint accent track.
+@layer components {
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    padding: 0;
+    list-style: none;
+  }
+
+  .tag-list__item {
+    padding-block: var(--space-3xs);
+    padding-inline: var(--space-xs);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-body);
+    overflow-wrap: anywhere; // long names (google-libphonenumber) wrap under enlarged text
+    color: var(--color-text);
+    background-color: var(--color-track);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-track);
+
+    // Forced colours drop the track and its inset edge: keep a real border.
+    @media (forced-colors: active) {
+      border: var(--border-width) solid CanvasText;
+    }
+
+    // Print drops the track: a hairline keeps each tag a separate label.
+    @media print {
+      border: var(--border-width) solid var(--color-border);
+    }
+  }
+}

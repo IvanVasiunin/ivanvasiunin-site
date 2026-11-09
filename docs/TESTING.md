@@ -7,14 +7,14 @@
 
 | Level | Tooling | Scope |
 |---|---|---|
-| Unit (frontend) | Vitest | SSE parsing, chat state, Brief / Full, "Ask about this", visualization logic (scaling, highlight selection, intensity) |
+| Unit (frontend) | Vitest | SSE parsing, chat state, Brief / Full, the `?q=` prefill, visualization logic (scaling, highlight selection, intensity) |
 | Unit (backend) | pytest, pytest-asyncio | Services, graph nodes, chunking, projection, limits. **LLM calls are always mocked.** |
 | Component | Vitest + Testing Library + user-event (jsdom) | Every state: default, focus, disabled, loading, error, empty; keyboard interaction |
 | API and contract | pytest + httpx `AsyncClient` | Response schemas, error format, rate limits, every SSE event type; generated TS types match OpenAPI (CI staleness check) |
-| E2E | Playwright: desktop Chromium + mobile profiles (iPhone on WebKit, Android on Chromium) | Mode switching, keyboard; Brief / Full + URL; "Ask about this" never sends; streaming chat on a mocked LLM, Stop, network errors; Under the hood contents; point highlight |
+| E2E | Playwright: desktop Chromium + mobile profiles (iPhone on WebKit, Android on Chromium) | Mode switching, keyboard; Brief / Full + URL; the `?q=` prefill never sends; streaming chat on a mocked LLM, Stop, network errors; Under the hood contents; point highlight |
 | Visual regression | Playwright screenshots | Key screens at 360 / 768 / 1440, light and dark, plus the CV print version |
 | Accessibility | @axe-core/playwright inside e2e | Every screen: **zero serious or critical** violations |
-| Performance | Lighthouse CI (mobile + desktop budgets); Playwright + CDP long-frame measurement at 4× / 6× CPU | Budgets in §5 |
+| Performance | Lighthouse 13 (mobile + desktop budgets, `scripts/lighthouse.mjs`); Playwright + CDP long-frame measurement at 4× / 6× CPU | Budgets in §5 |
 | RAG evals | pytest + DeepEval, separate command | Faithfulness, relevance; router accuracy per class; unknown fact → "no information"; NDA and salary policy. Thresholds in config; below threshold = fail. **Costs money, runs only with Ivan's consent.** |
 | Security | gitleaks, pnpm audit, pip-audit | Pre-commit (gitleaks) + CI |
 
@@ -26,15 +26,19 @@ All commands run from the repository root.
 |---|---|
 | Fast checks, all targets | `node scripts/check-fast.mjs` (`web`, `api`, `scripts`; `--changed` for uncommitted changes only; `--strict` in CI). The Stop hook runs `--changed` |
 | Fast checks, web | `node scripts/check-fast.mjs web` = `pnpm --dir apps/web run check:fast` (Prettier check, ESLint, Stylelint, `astro check` + `tsc`, Vitest) |
-| Fast checks, api | `node scripts/check-fast.mjs api` (ruff format --check, ruff check, pyright, `pytest -m "not mentor_pending"`) |
-| E2E (+ axe) | `pnpm --dir apps/web run e2e` (all projects) / `pnpm --dir apps/web run e2e -- --project=mobile-android` |
-| Visual snapshots update (from ROADMAP 1.1) | `pnpm --dir apps/web run e2e -- --update-snapshots` (only with Ivan's OK) |
-| Build + JS budgets | `pnpm --dir apps/web run build` then `pnpm --dir apps/web run budget` |
-| Lighthouse CI | `pnpm --dir apps/web run lhci` (mobile + desktop) |
-| Performance, long frames (from ROADMAP 6.4) | skill `perf-check` |
+| Fast checks, api | `node scripts/check-fast.mjs api` (ruff format --check, ruff check, pyright, `pytest -m "not mentor_pending and not db"`) |
+| Migrations on a live DB (from ROADMAP 3.1) | `docker compose -f infra/docker-compose.dev.yml up -d --wait`, then `TEST_DATABASE_URL=postgresql+psycopg://site:<POSTGRES_PASSWORD>@127.0.0.1:5432/site_test uv run --directory apps/api pytest -m db` (up → down → up, indexes, constraints; the database name must end in `_test`). The offline SQL of every migration is checked by the fast checks (`tests/db/test_migration_sql.py`) |
+| Chat with the real Elio locally (costs a little: real model calls; 6 questions a minute) | `docker compose -f infra/docker-compose.dev.yml up -d --wait`, then `uv run --directory apps/api fastapi dev src/site_api/main.py` and, in a second terminal, `CHAT_MOCK=off pnpm --dir apps/web run dev` (PowerShell: `$env:CHAT_MOCK='off'; pnpm --dir apps/web run dev`). `astro dev` then forwards `/api` to `http://127.0.0.1:8000` (`API_DEV_URL` overrides it) instead of serving the mocked chat |
+| E2E (+ axe) | `pnpm --dir apps/web run e2e` (all projects) / `pnpm --dir apps/web run e2e --project=mobile-android` (no `--` before Playwright flags: pnpm forwards it and Playwright then ignores the flags) |
+| Visual snapshots (from ROADMAP 1.1) | run as part of `e2e` in the `visual-chromium` project (`apps/web/e2e/visual.spec.ts`); update: `pnpm --dir apps/web run e2e --project=visual-chromium --update-snapshots` (only with Ivan's OK). Baselines are per platform: `-win32` locally; the Linux ones (CI job `visual`) are made in the Playwright image with `pnpm --dir apps/web run e2e:visual:linux --update-snapshots` (needs Docker) |
+| API types (from ROADMAP 1.5) | regenerate: `pnpm --dir apps/web run gen:api`; staleness check (CI job `contract`): `pnpm --dir apps/web run gen:api:check` |
+| Infrastructure (from ROADMAP 1.6) | `node scripts/check-infra.mjs` (Compose / Dockerfile / .dockerignore rules, needs the Docker CLI); against a running stack: `node scripts/check-headers.mjs https://localhost` (CI job `infra` runs both, plus the image build, image scan and `docker compose up`) |
+| Build (+ CV PDF, needs Playwright Chromium) + JS budgets | `pnpm --dir apps/web run build` then `pnpm --dir apps/web run budget` |
+| Lighthouse budgets | `pnpm --dir apps/web run lighthouse` (build, then mobile + desktop; CI job `lighthouse`) |
+| Performance, long frames (from ROADMAP 6.4) | skill `perf-check` (sizes, Lighthouse, `e2e/knowledge-map-perf.spec.ts` at 4× / 6× CPU, real-Chrome frame times via Chrome DevTools MCP) |
 | Evals | `uv run --directory apps/api python -m site_api.evals --estimate` then `… --run` |
 | Mentor-pending report | `uv run --directory apps/api pytest -m mentor_pending --co -q` |
-| CI (`.github/workflows/ci.yml`) | Jobs `web` (fast checks, build, budgets), `api` (fast checks + non-blocking mentor-pending report), `security` (gitleaks over the whole history, repo scripts, `pnpm audit --prod` blocking / dev report-only, pip-audit). Fast checks run with `--strict`, so a missing app fails instead of being skipped |
+| CI (`.github/workflows/ci.yml`) | Jobs `web` (fast checks, build, budgets), `api` (fast checks + non-blocking mentor-pending report), `api-db` (migration tests on a Postgres + pgvector service container), `security` (gitleaks over the whole history, repo scripts, `pnpm audit --prod` blocking / dev report-only, pip-audit). Fast checks run with `--strict`, so a missing app fails instead of being skipped |
 | Fast checks, repo scripts and hooks | `node scripts/check-fast.mjs scripts` (Prettier + `node --test scripts/*.test.mjs .claude/hooks/*.test.mjs`) |
 | Git hooks (lefthook) | pre-commit: gitleaks on the staged diff, Prettier, ESLint, Stylelint, ruff (fix + re-stage); commit-msg: `scripts/check-commit-msg.mjs`. Dry run: `pnpm exec lefthook run pre-commit` |
 | Full pre-PR | skill `pre-pr-check` |
@@ -48,6 +52,7 @@ All commands run from the repository root.
 | Chat streaming / SSE client | ✔ | Chat e2e on a mocked LLM (desktop + mobile); API contract tests |
 | Visualization | ✔ | Long-frame measurement at 4× / 6×; screenshots both themes; JS / JSON budget |
 | API (non-AI) | ✔ | Contract tests; TS type regeneration |
+| Database migrations | ✔ (offline SQL) | `pytest -m db` on the dev database (CI job `api-db`); `security-reviewer` for compose / deploy changes |
 | Prompts, retrieval, graph | ✔ | **Evals: cost estimate first, run only with Ivan's consent** |
 | Ingestion / projection | ✔ | Re-ingest on fixtures; `points.json` contract + size |
 | Docker / Caddy / CI | ✔ | `docker compose up` smoke + healthchecks; `security-reviewer` |
@@ -89,7 +94,8 @@ All commands run from the repository root.
 | JS on `/` total | ≤ 200 KB gzip; ≤ 150 KB before the visualization loads |
 | `points.json` | ≤ 50 KB gzip |
 | TTFT, production p50 | < 2 s |
-| Long frames during drift / highlight at 6× CPU | Threshold defined after the prototype (start: < 5% of frames > 50 ms) |
+| Long frames during the knowledge map's ignition, production build, real Chrome (skill `perf-check`) | < 5% of frames > 50 ms at 4× CPU (2026-11-07: 1.9%); at 6× the map may run at ~30 fps, and light mode takes over when > 25% of an ignition's frames are long |
+| The map's work per frame, headless at 4× CPU (`e2e/knowledge-map-perf.spec.ts`) | median < 16.7 ms (2026-11-07: 7–11 ms); the light-mode detector agrees with the frames at 4× and 6× |
 | Coverage | `apps/api` services and graph ≥ 80%; frontend logic ≥ 70% |
 
 ## 6. Device matrix
@@ -103,6 +109,14 @@ All commands run from the repository root.
 | Widths 360 / 390 / 768 / 1024 / 1440 | Chromium | none | Responsive layout snapshots |
 
 **Real devices:** iPhone 17 Pro Max, checked manually before release. There is no physical weak Android, so it is emulated at 6× CPU.
+
+**Known gaps in automated checks** (manual checks on real devices, ROADMAP 7.5):
+- Visual snapshots in CI: the `visual` job only warns until the Linux baselines are created with `e2e:visual:linux --update-snapshots` (needs Docker; ROADMAP 1.8).
+- Mode switch view transitions (ADR-0009). Under CDP CPU + network throttling, Chromium reveals the new page without a view transition even though it loads in about 1.4 s (cause UNVERIFIED), so the throttled Android profile skips the "runs a transition" test.
+- The prerender → activation path. Playwright init scripts do not run in prerendered pages, so it is not observed.
+- Two view transitions in a row on WebKit. Playwright's WebKit build (1.64.1, Windows) crashes on the second cross-document view transition (/ → /cv → /) about one run in three, even without any `view-transition-name`; the keyboard test of the mode switch runs on WebKit with reduced motion (2026-11-08). Whether real iOS Safari is affected is checked on a device after launch.
+
+Check on a real Android Chrome and on iOS Safari 18.2+.
 
 **Cloud real-device services:** free or trial options to evaluate in Phase 7. Their current free tiers are UNVERIFIED:
 - BrowserStack (free for open source on application);

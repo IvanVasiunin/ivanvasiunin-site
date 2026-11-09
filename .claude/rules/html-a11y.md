@@ -31,7 +31,7 @@ Verification tags: `[lint]` ESLint / Stylelint, `[hook]` Claude Code hook, `[tes
 
 ## Media
 - Every `img` has `alt` (decorative images: `alt=""`) and explicit `width` / `height` to prevent CLS. `[lint]` (`alt-text`) `[test]` (CLS budget)
-- Decorative SVG (the vector-space map, icons next to text) has `aria-hidden="true"` and `focusable="false"`. `[review]`
+- Decorative SVG (icons next to text) has `aria-hidden="true"` and `focusable="false"`; the knowledge map's `<canvas>` has `aria-hidden="true"`, its content is text elsewhere. `[review]`
 
 ## Contrast and visibility
 - WCAG 2.2 AA:
