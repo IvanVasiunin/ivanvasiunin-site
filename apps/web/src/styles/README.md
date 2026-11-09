@@ -98,7 +98,7 @@ each with the native keyword as fallback.
   `--font-size-xs` 0.75 · `sm` 0.875 · `md` 1 · `lg` 1.125 · `xl` 1.3125→1.5 · `2xl` 1.5→2.25 ·
   `3xl` 2→3 (fluid steps use `clamp()` with `rem` bounds).
 - Line heights: `--line-height-tight` 1.1 (display), `snug` 1.3 (headings), `body` 1.5 (sans),
-  `prose` 1.6 (serif). Weights: `--font-weight-regular | medium | bold`. Measure: `--measure` 65ch. Tracking: `--letter-spacing-caps` 0.08em (small uppercase labels).
+  `prose` 1.4 (serif, the CV), `chat` 1.25 (chat questions and answers, 18 px). Weights: `--font-weight-regular | medium | bold`. Measure: `--measure` 65ch. Tracking: `--letter-spacing-caps` 0.08em (small uppercase labels).
 
 ## Spacing, shape, motion, layering
 

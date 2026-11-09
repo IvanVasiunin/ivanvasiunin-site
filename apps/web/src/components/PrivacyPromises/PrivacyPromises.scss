@@ -9,9 +9,14 @@
 
     display: grid;
     gap: var(--space-lg);
-    padding: var(--space-lg);
+    min-inline-size: 0;
+    padding: var(--space-md);
     border-radius: var(--radius-panel);
     box-shadow: var(--shadow-raised-glow);
+
+    @include mq(sm) {
+      padding: var(--space-lg);
+    }
   }
 
   .privacy-promises__speaker {
@@ -81,10 +86,15 @@
     }
   }
 
+  // Five 44 px dots and the pause button are wider than the card at 360 px (Ivan, 2026-11-09: they
+  // pushed the whole card past its border): there the pause button wraps under the dots.
   .privacy-promises__controls {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-xs);
     align-items: center;
+    justify-content: center;
+    max-inline-size: 100%;
 
     // `display: flex` would otherwise override the attribute (no JS: no controls).
     &[hidden] {

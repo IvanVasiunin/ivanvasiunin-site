@@ -6,17 +6,18 @@
 // Scrolling to a target (focus, anchors, the skip link) keeps it clear of the sticky header and, below
 // `md`, of the floating mode switch at the bottom (WCAG 2.4.11 Focus Not Obscured).
 :where(html) {
-  // Classic (non-overlay) scrollbars take space only on long pages, which would shift the centred
-  // content sideways when switching between a short page (/) and a long one (/cv). The start margin
-  // equals the scrollbar width (0 without one), so the content stays centred in the whole window.
-  // Not `scrollbar-gutter: stable`: its empty gutter shows as a stripe without the backdrop.
-  // Cost: with a classic scrollbar the column is two scrollbar widths narrower (one on each side),
-  // and a Brief / Full switch that adds or removes the scrollbar re-wraps the text once.
-  margin-inline-start: calc(100vw - 100%);
   scroll-padding-block: calc(var(--size-bar) + var(--space-xl))
     calc(var(--size-bar) + var(--offset-bar-bottom) + var(--space-md));
 
   @include mq(md) {
+    // Desktop only (phones have overlay scrollbars, where this is always 0; Ivan, 2026-11-09).
+    // Classic scrollbars take space only on long pages, which would shift the centred content
+    // sideways when switching between a short page (/) and a long one (/cv). The start margin
+    // equals the scrollbar width (0 without one), so the content stays centred in the whole window.
+    // Not `scrollbar-gutter: stable`: its empty gutter shows as a stripe without the backdrop.
+    // Cost: with a classic scrollbar the column is two scrollbar widths narrower (one on each side),
+    // and a Brief / Full switch that adds or removes the scrollbar re-wraps the text once.
+    margin-inline-start: calc(100vw - 100%);
     scroll-padding-block-end: 0;
   }
 }

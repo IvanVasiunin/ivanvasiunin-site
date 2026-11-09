@@ -9,7 +9,9 @@
     min-block-size: 100svh;
 
     // Below `md` the mode switch floats at the bottom of the screen: keep the footer clear of it.
-    padding-block-end: calc(var(--size-bar) + var(--offset-bar-bottom) + var(--space-md));
+    // Scrolled to the end, the footer text sits as far above the bar as the bar sits above the
+    // screen's edge (Ivan, 2026-11-09); the footer has no bottom padding there (SiteFooter.scss).
+    padding-block-end: calc(var(--size-bar) + 2 * var(--offset-bar-bottom));
 
     @include mq(md) {
       padding-block-end: 0;
@@ -41,9 +43,16 @@
     inline-size: 100%;
     max-inline-size: var(--size-container);
     margin-inline: auto;
-    padding-block: var(--space-2xl) var(--space-3xl);
+
+    // Phones: 24 px above and below (Ivan, 2026-11-09: 48 / 64 px left too much empty space);
+    // more air from `md`.
+    padding-block: var(--space-lg);
     padding-inline: max(var(--gutter), env(safe-area-inset-left))
       max(var(--gutter), env(safe-area-inset-right));
+
+    @include mq(md) {
+      padding-block: var(--space-2xl) var(--space-3xl);
+    }
 
     > :where(p, ul, ol) {
       max-inline-size: var(--measure);

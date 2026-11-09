@@ -1,3 +1,5 @@
+@use '../../styles/mixins' as *;
+
 @layer components {
   // A gradient hairline on top: `border-image` is fine here, the edge is straight (no radius).
   // No side padding: the box itself is inset by the gutter, so the hairline starts where content does.
@@ -7,8 +9,16 @@
       var(--size-container) - 2 * var(--gutter)
     );
     margin-inline: auto;
-    padding-block: var(--space-lg) max(var(--space-lg), env(safe-area-inset-bottom));
+
+    // Below `md` the page's own bottom padding spaces the footer from the floating mode switch
+    // (BaseLayout.scss), so the footer adds none.
+    padding-block: var(--space-lg) 0;
     border-block-start: var(--border-width) solid;
+
+    @include mq(md) {
+      padding-block-end: max(var(--space-lg), env(safe-area-inset-bottom));
+    }
+
     border-image: var(--gradient-border) 1;
 
     // Navigation and page chrome stay off paper (css-scss.md → Print).

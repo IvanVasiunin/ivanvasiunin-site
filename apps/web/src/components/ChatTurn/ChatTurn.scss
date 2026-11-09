@@ -289,7 +289,18 @@
     align-self: flex-start;
   }
 
-  // The time and cost next to "Under the hood": part of its name, quieter than the label.
+  // "Under the hood" on the first line, the time and cost on the second (Ivan, 2026-11-09: side by
+  // side, both wrapped into a cramped two-by-two block on a phone). The note is part of the name,
+  // quieter than the label.
+  .chat-turn__action-lines {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-block: var(--space-2xs);
+    line-height: var(--line-height-snug);
+    text-align: start;
+  }
+
   .chat-turn__action-note {
     font-size: var(--font-size-xs);
   }

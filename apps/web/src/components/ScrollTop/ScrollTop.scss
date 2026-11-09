@@ -19,19 +19,22 @@
     min-inline-size: var(--size-touch);
     border-radius: var(--radius-md);
 
-    // Level with the floating mode switch, in the corner beside it (Ivan, 2026-11-05), wherever the
-    // corner is wide enough: the bar (about 16em wide) plus a 44 px target and the gutter on each
-    // side. In `em`, so enlarged text, which widens the bar, also raises the threshold. On narrower
-    // screens the rocket stands above the bar, clear of it. The box is the bar's height, with the
-    // rocket centred in it.
-    @media (width >= 24em) {
+    // Level with the floating mode switch, in the corner beside it (Ivan, 2026-11-05; 2026-11-09:
+    // also at 360 px, close to the edge), wherever the corner is wide enough: the centred bar (about
+    // 16em wide) leaves room for a 44 px target plus a small edge gap on each side (16em + 2 × 3em).
+    // In `em`, so enlarged text, which widens the bar, also raises the threshold. On narrower screens
+    // the rocket stands above the bar, clear of it. The box is the bar's height, with the rocket
+    // centred in it.
+    @media (width >= 22em) {
       inset-block-end: var(--offset-bar-bottom);
+      inset-inline-end: max(var(--space-2xs), env(safe-area-inset-right));
       block-size: var(--size-bar);
     }
 
     // Room below for the plume and the smoke, which reach under the rocket.
     @include mq(md) {
       inset-block-end: max(var(--space-xl), env(safe-area-inset-bottom));
+      inset-inline-end: max(var(--gutter), env(safe-area-inset-right));
       block-size: auto;
     }
 

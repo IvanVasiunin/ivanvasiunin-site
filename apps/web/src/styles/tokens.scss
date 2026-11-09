@@ -122,6 +122,10 @@
   // Serif reading text: answers and the CV (Ivan, 2026-11-05: was 1.6, felt too airy). Below the
   // 1.5 of WCAG 1.4.8 (AAA, not required at AA); text-spacing overrides (1.4.12, AA) still work.
   --line-height-prose: 1.4;
+
+  // Chat turns (questions and answers): 18 px text, tighter lines (Ivan, 2026-11-09: answers read
+  // too small). Below WCAG 1.4.8 (AAA, not required); text-spacing overrides (1.4.12, AA) still work.
+  --line-height-chat: 1.25;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;

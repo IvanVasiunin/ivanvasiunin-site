@@ -380,9 +380,12 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
                   onClick={toggleHood}
                 >
                   <HoodIcon />
-                  Under the hood{' '}
-                  {/* Part of the name: a visible label must be in the accessible name (WCAG 2.5.3). */}
-                  <span className="chat-turn__action-note">{usageSummary(usage)}</span>
+                  {/* Two lines beside the icon: the label, then the time and cost under it. */}
+                  <span className="chat-turn__action-lines">
+                    Under the hood{' '}
+                    {/* Part of the name: a visible label must be in the accessible name (WCAG 2.5.3). */}
+                    <span className="chat-turn__action-note">{usageSummary(usage)}</span>
+                  </span>
                 </button>
               )}
             </div>

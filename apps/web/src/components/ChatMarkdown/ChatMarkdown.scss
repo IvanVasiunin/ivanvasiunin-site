@@ -5,8 +5,8 @@
   .chat-markdown {
     max-inline-size: var(--measure);
     font-family: var(--font-serif);
-    font-size: var(--font-size-md); // the question's size (Ivan, 2026-11-08; was lg)
-    line-height: var(--line-height-prose);
+    font-size: var(--font-size-lg); // 18 px, the question's size (Ivan, 2026-11-09)
+    line-height: var(--line-height-chat);
     overflow-wrap: anywhere;
 
     // Element selectors inside the block: the Markdown renderer emits plain tags without classes.
