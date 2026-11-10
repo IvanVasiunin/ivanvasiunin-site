@@ -38,6 +38,20 @@
       block-size: auto;
     }
 
+    // Phones: a larger invisible hit area around the slim rocket (Ivan, 2026-11-10: it took several
+    // taps to hit it), 52 × 60 px: 4 px on each side (more would reach over the mode switch beside
+    // it at 360 px), and the bar-high box grown evenly to 60 px. From `md` the box is the target.
+    &::before {
+      position: absolute;
+      inset-block: calc((100% - var(--size-rocket-hit)) / 2);
+      inset-inline: calc(-1 * var(--space-2xs));
+      content: '';
+
+      @include mq(md) {
+        display: none;
+      }
+    }
+
     &:focus-visible {
       outline: var(--focus-ring-width) solid var(--color-focus);
       outline-offset: var(--space-2xs);
@@ -69,6 +83,19 @@
       animation-fill-mode: both;
       animation-timeline: scroll(root block);
       animation-range: var(--distance-scroll-top-start) var(--distance-scroll-top-end);
+    }
+
+    // The same where scroll-driven animations do not exist (Safari before 26): near the top the script
+    // sets `data-at-top` (and `inert`, src/lib/scroll-top/visibility.ts). It fades in, but hides at
+    // once: after a launch the rocket must not reappear on the pad while it fades.
+    @supports not (animation-timeline: scroll()) {
+      &:not([data-at-top]) {
+        transition: opacity var(--duration-base) var(--ease-out);
+      }
+
+      &[data-at-top] {
+        opacity: 0;
+      }
     }
 
     // During the launch the control ignores the scroll position (the page is scrolling up under it).

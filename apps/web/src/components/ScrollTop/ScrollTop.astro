@@ -4,7 +4,8 @@
 // document for that fragment), so it works without JS. With JS, a click launches it like a real rocket
 // (ignition, then a slow lift-off that accelerates and pulls the page up with it; src/lib/scroll-top/
 // launch.ts); with reduced motion it just jumps to the top. Its visibility is a scroll-driven animation
-// (ScrollTop.scss), so a short page never shows it.
+// (ScrollTop.scss), so a short page never shows it; where the browser has none, a scroll listener
+// does the same (src/lib/scroll-top/visibility.ts).
 import './ScrollTop.scss';
 ---
 
@@ -142,7 +143,12 @@ import './ScrollTop.scss';
 
 <script>
   import { initScrollTop } from '../../lib/scroll-top/launch';
+  import { initScrollTopVisibility } from '../../lib/scroll-top/visibility';
 
   const link = document.querySelector<HTMLAnchorElement>('[data-scroll-top]');
-  if (link) initScrollTop(link, window);
+  if (link) {
+    initScrollTop(link, window);
+    // Where scroll-driven animations do not exist (Safari before 26), hides it near the top.
+    initScrollTopVisibility(link, window);
+  }
 </script>

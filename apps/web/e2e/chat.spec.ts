@@ -2,7 +2,7 @@ import type { Page, Route } from '@playwright/test';
 
 import type { ChatEvent, SourceItem } from '../src/lib/api/types';
 import { mockScenario, toSse } from '../src/lib/chat/mock/scenarios';
-import { expect, expectNoSeriousA11yViolations, test } from './fixtures';
+import { chooseTheme, expect, expectNoSeriousA11yViolations, test } from './fixtures';
 
 // The chat on `/` against a mocked `/api/chat` (ROADMAP 3.9; the real endpoint arrives in 3.8). The
 // mock answers with the scenarios of src/lib/chat/mock/scenarios.ts, picked by the question.
@@ -47,6 +47,18 @@ async function holdChat(page: Page): Promise<{ release: () => Promise<void> }> {
 
 const input = (page: Page) => page.getByRole('textbox', { name: 'Ask Elio about Ivan' });
 
+/**
+ * Reads on to the end of the conversation, as a reader would. Below `md` a new question stays at the
+ * top of the screen with its answer below it (Ivan, 2026-11-10), so a long answer is not read to its
+ * end yet; this scrolls the page to its bottom (from `md` the panel already follows the answer).
+ */
+async function readToEnd(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+  });
+  await expect(page.getByRole('button', { name: 'Jump to latest' })).toBeHidden();
+}
+
 async function ask(page: Page, question: string): Promise<void> {
   await expect(input(page)).toBeEnabled();
   await input(page).fill(question);
@@ -58,7 +70,7 @@ test.describe('chat', () => {
     test(`the empty state introduces Elio without a11y violations (${colorScheme})`, async ({
       page,
     }) => {
-      await page.emulateMedia({ colorScheme });
+      await chooseTheme(page, colorScheme);
       await mockChat(page);
       await page.goto('/');
 
@@ -79,7 +91,7 @@ test.describe('chat', () => {
     test(`Under the hood opens under an answer and shows its steps (${colorScheme})`, async ({
       page,
     }) => {
-      await page.emulateMedia({ colorScheme });
+      await chooseTheme(page, colorScheme);
       await mockChat(page);
       await page.goto('/');
       await ask(page, 'What did Ivan do at BrainRocket?');
@@ -252,7 +264,10 @@ test.describe('chat', () => {
     await expectNoSeriousA11yViolations(page);
   });
 
-  test('a topic card fills the input with its question and sends nothing', async ({ page }) => {
+  test('a topic card fills the input with its question and sends nothing', async ({
+    page,
+    isMobile,
+  }) => {
     const questions = await mockChat(page);
     await page.goto('/');
     await expect(input(page)).toBeEnabled();
@@ -260,7 +275,10 @@ test.describe('chat', () => {
     await page.getByRole('link', { name: /Skills & stack/ }).click();
 
     await expect(input(page)).toHaveValue('Which technologies does Ivan use?');
-    await expect(input(page)).toBeFocused();
+    // Focused with a keyboard or a mouse; on a touch screen not (no on-screen keyboard; Ivan,
+    // 2026-11-10): Send is one tap away.
+    if (isMobile) await expect(input(page)).not.toBeFocused();
+    else await expect(input(page)).toBeFocused();
     await expect(page).toHaveURL(/\/$/);
     expect(questions).toEqual([]);
   });
@@ -278,7 +296,7 @@ test.describe('chat', () => {
 
   for (const colorScheme of ['light', 'dark'] as const) {
     test(`a question gets a streamed answer with sources (${colorScheme})`, async ({ page }) => {
-      await page.emulateMedia({ colorScheme });
+      await chooseTheme(page, colorScheme);
       const questions = await mockChat(page);
       await page.goto('/');
 
@@ -370,7 +388,10 @@ test.describe('chat', () => {
       await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
     }
 
+    // Sent: on a touch screen the keyboard goes away (the reader reads the answer now).
+    await expect(input(page)).not.toBeFocused();
     // While typing on a touch screen the keyboard is up and the mode switch steps aside.
+    await input(page).focus();
     await expect(input(page)).toBeFocused();
     await expect(page.getByRole('navigation', { name: 'Mode' })).toBeHidden();
 
@@ -384,7 +405,10 @@ test.describe('chat', () => {
     if (field && bar) expect(field.y + field.height).toBeLessThanOrEqual(bar.y);
   });
 
-  test('the conversation survives Text mode and back, until New chat', async ({ page }) => {
+  test('the conversation survives Text mode and back, until New chat', async ({
+    page,
+    isMobile,
+  }) => {
     await mockChat(page);
     await page.goto('/');
     await ask(page, 'What did Ivan do at BrainRocket?');
@@ -403,7 +427,10 @@ test.describe('chat', () => {
     await page.getByRole('button', { name: 'New chat' }).click();
     // The answer and its actions are gone (the same question returns as an example chip).
     await expect(page.getByRole('button', { name: 'Copy' })).toBeHidden();
-    await expect(input(page)).toBeFocused();
+    // Focus goes where the next question starts: the input, or on a touch screen the greeting
+    // (focusing the input there would open the keyboard; Ivan, 2026-11-10).
+    if (isMobile) await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+    else await expect(input(page)).toBeFocused();
 
     await page.reload();
     await expect(page.getByRole('list', { name: 'Example questions' })).toBeVisible();
@@ -543,6 +570,7 @@ test.describe('chat', () => {
       await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
     }
     await input(page).blur();
+    await readToEnd(page);
 
     await page.getByRole('link', { name: 'Text mode' }).click();
     await expect(page).toHaveURL(/\/cv\/?$/);
@@ -682,6 +710,7 @@ test.describe('chat', () => {
 
     // At the end of the conversation nothing passes behind the input: no scrim over the disclosure.
     await input(page).blur();
+    await readToEnd(page);
     expect(await scrim()).toBe('none');
 
     await page.evaluate(() => {
@@ -886,5 +915,70 @@ test.describe('chat', () => {
         .toBe('0');
       await expect.poll(() => distanceToBottom(page)).toBeLessThanOrEqual(1);
     });
+  });
+});
+
+test.describe('on a phone (Ivan, 2026-11-10)', () => {
+  test('a new question goes to the top of the screen and its answer is read from the start', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(
+      !isMobile,
+      'From md the conversation scrolls inside the panel and follows the answer.',
+    );
+    await mockChat(page);
+    await page.goto('/');
+    await ask(page, 'Which technologies does Ivan use?');
+    await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+
+    // The question sits just under the sticky header, not scrolled away by its answer.
+    const question = page.getByText('Which technologies does Ivan use?', { exact: true }).first();
+    const header = await page.getByRole('banner').boundingBox();
+    const box = await question.boundingBox();
+    expect(header && box).toBeTruthy();
+    if (header && box) {
+      expect(box.y).toBeGreaterThanOrEqual(header.y + header.height);
+      expect(box.y).toBeLessThan(header.y + header.height + 80);
+    }
+    // The footer is below the fold, not half a screen of it.
+    await expect(page.getByRole('contentinfo')).not.toBeInViewport();
+  });
+
+  test('the answer actions look compact but keep a 44 px touch target', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'From md the actions are 44 px boxes.');
+    await mockChat(page);
+    await page.goto('/');
+    await ask(page, 'What did Ivan do at BrainRocket?');
+    const copy = page.getByRole('button', { name: 'Copy' });
+    await expect(copy).toBeVisible();
+
+    await copy.evaluate((element) => {
+      element.scrollIntoView({ block: 'center', behavior: 'instant' });
+    });
+    const box = await copy.boundingBox();
+    expect(box?.height).toBeLessThan(44);
+    // The invisible extension above and below the box is still the button.
+    const reach = await copy.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const target = (y: number): boolean => element.contains(document.elementFromPoint(x, y));
+      return { above: target(rect.top - 5), below: target(rect.bottom + 5) };
+    });
+    expect(reach).toEqual({ above: true, below: true });
+  });
+
+  test('a topic card fills the input without opening the keyboard', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'Only a touch screen has an on-screen keyboard.');
+    await mockChat(page);
+    await page.goto('/');
+    await expect(input(page)).toBeEnabled();
+    await page.getByRole('link', { name: /Skills & stack/ }).click();
+
+    await expect(input(page)).toHaveValue('Which technologies does Ivan use?');
+    await expect(input(page)).not.toBeFocused();
   });
 });

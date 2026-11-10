@@ -134,13 +134,14 @@ describe('ChatTurn', () => {
   });
 
   describe('many sources', () => {
-    // jsdom has no layout: each list item reports a top offset as if two chips fit in a row.
+    // jsdom has no layout: each list item reports a top offset as if two chips fit in a row; a hidden
+    // one reports 0, as `display: none` does in a browser.
     const offsetTop = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetTop');
     beforeEach(() => {
       Object.defineProperty(HTMLElement.prototype, 'offsetTop', {
         configurable: true,
         get(this: HTMLElement) {
-          if (this.tagName !== 'LI' || this.parentElement === null) return 0;
+          if (this.tagName !== 'LI' || this.parentElement === null || this.hidden) return 0;
           return Math.floor(Array.from(this.parentElement.children).indexOf(this) / 2) * 52;
         },
       });
@@ -176,6 +177,21 @@ describe('ChatTurn', () => {
       expect(fewer.getAttribute('aria-controls')).toBe(
         within(sources).getByRole('list').getAttribute('id'),
       );
+    });
+
+    // Ivan, 2026-11-10: after a few opens and closes the button vanished and every source showed.
+    // Closing measured the list while the rest were still hidden, so everything seemed to fit.
+    it('shows fewer again after opening and closing, any number of times', async () => {
+      const user = userEvent.setup();
+      setup({ ...DONE, sources: many });
+      const sources = screen.getByRole('region', { name: 'Sources' });
+
+      for (let round = 0; round < 3; round += 1) {
+        await user.click(within(sources).getByRole('button', { name: 'Show 2 more' }));
+        expect(within(sources).getAllByRole('listitem')).toHaveLength(6);
+        await user.click(within(sources).getByRole('button', { name: 'Show fewer' }));
+        expect(within(sources).getAllByRole('listitem')).toHaveLength(4);
+      }
     });
 
     it('has no button when every source fits', () => {

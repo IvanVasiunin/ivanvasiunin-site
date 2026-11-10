@@ -44,14 +44,14 @@
     max-inline-size: var(--size-container);
     margin-inline: auto;
 
-    // Phones: 24 px above and below (Ivan, 2026-11-09: 48 / 64 px left too much empty space);
-    // more air from `md`.
-    padding-block: var(--space-lg);
+    // Phones: 16 px above and below (Ivan, 2026-11-09: 48 / 64 px left too much empty space;
+    // 2026-11-10: a little less still, at every width); more air from `md`.
+    padding-block: var(--space-md);
     padding-inline: max(var(--gutter), env(safe-area-inset-left))
       max(var(--gutter), env(safe-area-inset-right));
 
     @include mq(md) {
-      padding-block: var(--space-2xl) var(--space-3xl);
+      padding-block: var(--space-xl) var(--space-2xl);
     }
 
     > :where(p, ul, ol) {
@@ -62,7 +62,7 @@
     // padding at every width. From `md` main may also shrink to the free height, and its child takes
     // it (flex: 1 there).
     .page--fit & {
-      padding-block-end: var(--space-lg);
+      padding-block-end: var(--space-md);
 
       @include mq(md) {
         min-block-size: 0;

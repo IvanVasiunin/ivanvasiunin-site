@@ -82,6 +82,23 @@
       }
     }
 
+    // The same drawing where scroll-driven animations do not exist (Safari before 26): the script
+    // (src/lib/cv/timeline-fallback.ts) marks the job and writes its progress into two custom
+    // properties, 0..1. Without the script the line stays fully drawn. Transform and opacity only.
+    @supports not (animation-timeline: view()) {
+      @media screen and (prefers-reduced-motion: no-preference) {
+        &[data-timeline-fallback]::before {
+          transform-origin: top;
+          transform: scaleY(var(--cv-job-draw, 1));
+        }
+
+        &[data-timeline-fallback]::after {
+          opacity: var(--cv-job-star, 1);
+          transform: scale(calc(0.3 + 0.7 * var(--cv-job-star, 1)));
+        }
+      }
+    }
+
     &[data-current]::after {
       background-color: var(--color-highlight);
       box-shadow: var(--shadow-glow);
