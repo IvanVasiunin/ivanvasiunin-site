@@ -113,6 +113,13 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 | 8.5 | README for the public repo; this repo added to the GitHub allow-list and re-ingested | C + I | Repo public; the assistant can answer "how is this site built?" |
 | 8.6 | Open Graph image (1200×630, `og:image` + `twitter:image`, `twitter:card` → `summary_large_image`) for `/` and `/cv` | C, Ivan reviews | Link previews show the image in the Telegram / LinkedIn debuggers |
 
+## Next (after launch; Ivan, 2026-11-10)
+
+- [ ] **Link previews:** an `og:image` (and `twitter:card` `summary_large_image`) for `/` and `/cv`, 1200 × 630, in the Atlas style; review the `og:title` / `og:description` / `og:site_name` texts that exist (`BaseLayout.astro`), and add `og:image:alt`.
+- [ ] **Favicon:** SVG favicon (light / dark), PNG fallbacks, `apple-touch-icon` and a web manifest; `theme-color` stays dark by default.
+- [ ] **Photo on the CV:** Ivan's photo in the `/cv` header (both views, print and PDF); explicit size, modern format (AVIF / WebP), no layout shift, `alt` text; the photo file from Ivan (content approval).
+- [ ] **Fix all current bugs:** the CI follow-ups below (CI on `main` is red until then, so deploys need a manual `Run workflow`), plus whatever Ivan finds on the phone after the 2026-11-10 mobile fixes.
+
 ## CI follow-ups (after launch)
 
 Found by the first CI run (2026-11-09); both pass locally and are skipped on CI only until fixed (Ivan's OK):
@@ -123,6 +130,11 @@ Found by the first CI run (2026-11-09); both pass locally and are skipped on CI 
 Skipped on Linux (CI) for now (2026-11-10, Ivan's OK; it failed the `main` run after PR #2 twice, with the same numbers, and blocked the deploy):
 
 - `apps/api/tests/ingestion/test_projection.py::test_a_refit_is_aligned_to_the_old_points`: UMAP with a fixed `random_state` and one thread still lays points out a little differently on different CI runner CPUs (numba), and once the aligned refit moved the old points more than a fresh one (median 0.29 vs 0.21). Make it robust without losing the policy, e.g. the median over several `random_state`s, or assert only that the aligned shift is small. It loosens the check, so it needs Ivan's OK on the exact form.
+
+Flaky on CI after the mobile scroll rewrite (2026-11-10; they pass locally and passed on the PR, but failed `main` runs, so `main` CI is red and the last deploy was manual):
+
+- `e2e/mode-switch.spec.ts` "switching modes runs a view transition (reduced motion: no-preference)" (desktop): the transition was not seen within 5 s.
+- `e2e/chat.spec.ts` "below md a blurred scrim covers text passing behind the input, only while reading up" (iPhone / WebKit).
 
 Kept off CI for good: the knowledge map frame budgets (`e2e/knowledge-map-perf.spec.ts`) need a quiet machine; they run locally through the `perf-check` skill.
 
