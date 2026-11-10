@@ -61,7 +61,7 @@
       }
     }
 
-    // Without JS the toggle cannot work, so it is not shown; the system theme applies.
+    // Without JS the toggle cannot work, so it is not shown; the default, dark, applies.
     @media (scripting: none) {
       display: none;
     }
@@ -157,24 +157,16 @@
   }
 
   // `data-theme` is set by the head script before first paint, so the right icon shows from the first
-  // frame. Without it (no choice yet) the icon follows the system theme, like the colours do.
+  // frame. Without it (no choice yet) the icon is the default's, dark, like the colours.
   :root[data-theme='light'] .theme-toggle__icon--light,
   :root[data-theme='dark'] .theme-toggle__icon--dark {
     opacity: 1;
     transform: none;
   }
 
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme]) .theme-toggle__icon--light {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) .theme-toggle__icon--dark {
-      opacity: 1;
-      transform: none;
-    }
+  // No choice yet: the default theme, dark.
+  :root:not([data-theme]) .theme-toggle__icon--dark {
+    opacity: 1;
+    transform: none;
   }
 }

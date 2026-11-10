@@ -1,7 +1,7 @@
 // The chat island of AI mode (`/`, ROADMAP 3.9): Elio's greeting, the conversation and the docked
 // input. Hydrated with `client:load`; its server HTML is the no-JS page (the greeting, the example
 // questions as `/?q=` links, a disabled input and, in <noscript>, a pointer to the CV).
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 
 import { ChatComposer } from '../../components/ChatComposer';
 import { ElioAvatar } from '../../components/ElioAvatar';
@@ -28,6 +28,14 @@ export type ChatProps = UseChatOptions;
 
 const NBSP = String.fromCharCode(0xa0);
 
+/**
+ * A touch-only screen (no hover, a coarse pointer, no fine pointer anywhere): focusing the input there
+ * opens the on-screen keyboard, which only a reader about to type wants (Ivan, 2026-11-10: "New chat"
+ * and the topic cards opened it). A tablet with a trackpad or a mouse keeps the desktop behaviour.
+ */
+const isTouchScreen = (): boolean =>
+  window.matchMedia('(hover: none) and (pointer: coarse) and (not (any-pointer: fine))').matches;
+
 /** What the live region says when an answer ends: the whole answer once, or the outcome. */
 function endAnnouncement(turn: Turn): string | null {
   switch (turn.status) {
@@ -51,13 +59,21 @@ function endAnnouncement(turn: Turn): string | null {
 }
 
 // Elio introduces itself in the first person; Ivan stays in the third person, as in every answer.
-function Intro({ busy = false }: { readonly busy?: boolean }) {
+interface IntroProps {
+  readonly busy?: boolean;
+  /** The heading takes focus after "New chat" on a touch screen. */
+  readonly titleRef?: RefObject<HTMLHeadingElement | null>;
+}
+
+function Intro({ busy = false, titleRef }: IntroProps) {
   return (
     <header className="chat__intro">
       {/* The live avatar: its eyes follow the mouse; it shows the thinking light while busy. */}
       <ElioAvatar size="lg" live active={busy} named={false} />
       <div className="chat__intro-text">
-        <h1 className="chat__title">Hi! I’m Elio, Ivan’s AI assistant.</h1>
+        <h1 className="chat__title" ref={titleRef} tabIndex={-1}>
+          Hi! I’m Elio, Ivan’s AI assistant.
+        </h1>
         <p className="chat__lede">
           I can tell you about his experience, skills and projects, or how this site works. Ask me
           anything below, or pick a question to start.
@@ -72,6 +88,7 @@ function ChatView(options: ChatProps) {
   const ready = usePageReady();
   const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
   useKeyboardInset(inputRef);
 
   // The live region (html-a11y.md → Live regions): tokens are never announced; the finished answer,
@@ -85,7 +102,7 @@ function ChatView(options: ChatProps) {
   const last = lastTurn(state);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const dockRef = useRef<HTMLDivElement | null>(null);
-  const { following, jumpToLatest, pause } = useFollowScroll(
+  const { following, covered, jumpToLatest, revealLatest, pause } = useFollowScroll(
     `${String(state.turns.length)}:${String(last?.answer.length ?? 0)}:${last?.status ?? ''}`,
     state.turns.length > 0,
     scrollRef,
@@ -112,7 +129,8 @@ function ChatView(options: ChatProps) {
   }, [last, announce]);
 
   // `?q=` fills the input and focuses it; it never sends (SPEC US-T3). Waits for `ready`: a
-  // prerendered page must not take focus before anyone sees it.
+  // prerendered page must not take focus before anyone sees it. On a phone this focus comes with no
+  // tap, so the browser opens no keyboard for it.
   useEffect(() => {
     if (!ready) return;
     const question = questionFromSearch(window.location.search);
@@ -132,8 +150,11 @@ function ChatView(options: ChatProps) {
     // One short status while the answer is prepared; the steps themselves are not announced.
     announce('Elio is preparing the answer');
     setDraft('');
-    // A new question always brings the reader to it, even after scrolling up.
-    jumpToLatest(false);
+    // A new question always brings the reader to it, even after scrolling up: below `md` to the top
+    // of the screen, with its answer written below it (useFollowScroll.ts).
+    revealLatest();
+    // On a touch screen the keyboard goes away: the reader reads the answer now.
+    if (isTouchScreen()) inputRef.current?.blur();
   };
 
   const onStop = (): void => {
@@ -145,14 +166,22 @@ function ChatView(options: ChatProps) {
   const onNewChat = (): void => {
     clear();
     announce('New chat');
-    // The button disappears with the conversation: focus goes to where the next question starts.
+    // The button disappears with the conversation: focus goes to where the next question starts. On
+    // a touch screen that would open the keyboard before the reader has picked a topic: the page goes
+    // back to the greeting instead, and focus to its heading.
+    if (isTouchScreen()) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      titleRef.current?.focus({ preventScroll: true });
+      return;
+    }
     inputRef.current?.focus();
   };
 
   const onExample = (question: string): void => {
     setDraft(question);
     const input = inputRef.current;
-    if (input === null) return;
+    // On a touch screen the question waits in the input with no keyboard: Send is one tap away.
+    if (input === null || isTouchScreen()) return;
     input.focus();
     // The caret after the text, ready for Enter or an edit (after React has written the value).
     requestAnimationFrame(() => {
@@ -164,10 +193,11 @@ function ChatView(options: ChatProps) {
     <div
       className="chat"
       data-state={state.turns.length === 0 ? 'empty' : 'conversation'}
-      // The reader has scrolled up from the latest answer (text now passes behind the input).
-      data-reading={following || state.turns.length === 0 ? undefined : ''}
+      // Below `md`, text passes behind the docked input (the reader has scrolled up, or the topic
+      // cards reach under it): a scrim covers it.
+      data-reading={covered ? '' : undefined}
     >
-      <Intro busy={busy} />
+      <Intro busy={busy} titleRef={titleRef} />
 
       <div className="chat__panel">
         {/* From `md` the chat is a panel and this area scrolls inside it, above the input; below

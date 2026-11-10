@@ -52,3 +52,10 @@ const meta = [employmentLabel(job.employment), job.location].filter(Boolean).joi
     )}
   </article>
 </li>
+
+<script>
+  // Draws the timeline on scroll where CSS cannot (Safari before 26): lib/cv/timeline-fallback.ts.
+  import { initTimelineFallback } from '../../lib/cv/timeline-fallback';
+
+  initTimelineFallback(Array.from(document.querySelectorAll<HTMLElement>('.cv-job')), window);
+</script>

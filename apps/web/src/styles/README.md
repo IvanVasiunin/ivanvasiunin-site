@@ -19,11 +19,12 @@ accent, star gold for relevance. The chart is the one bold element; everything e
 
 ## Themes
 
-- Light values live on `:root`. Dark values are one Sass mixin, applied under `:root[data-theme='dark']`
-  and under `@media (prefers-color-scheme: dark)` guarded by `:root:not([data-theme='light'])`.
-- Without JS (or with no stored choice) the system preference wins.
+- Light values live on `:root` (the light choice, print and the PDF). Dark values are one Sass mixin,
+  applied on screen under `:root:not([data-theme='light'])`: the site is dark by default, whatever the
+  system theme (SPEC US-X1, Ivan 2026-11-10).
+- Without JS (or with no stored choice) the page is dark.
 - The toggle (`src/components/ThemeToggle/`) switches between light and dark; the choice is stored in
-  `localStorage['theme']`. There is no "System" option: before the first choice the system theme applies.
+  `localStorage['theme']`. There is no "System" option.
   An inline blocking script in `<head>` (BaseLayout) applies it before first paint: it sets `data-theme`
   (none without a choice) and syncs the `theme-color` / `color-scheme` metas. Its source is the pair of
   self-contained functions in `src/lib/theme/theme.ts`, serialized at build time, so the head script and

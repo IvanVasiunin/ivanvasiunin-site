@@ -1,4 +1,4 @@
-import { expect, expectNoSeriousA11yViolations, test } from './fixtures';
+import { chooseTheme, expect, expectNoSeriousA11yViolations, test } from './fixtures';
 
 // Page shell (ROADMAP 1.1): layer order, landmarks, skip link, header, buttons, no horizontal scroll.
 
@@ -74,7 +74,7 @@ for (const path of PAGES) {
 
     for (const colorScheme of ['light', 'dark'] as const) {
       test(`has no serious a11y violations in the ${colorScheme} theme`, async ({ page }) => {
-        await page.emulateMedia({ colorScheme });
+        await chooseTheme(page, colorScheme);
         await page.goto(path);
         await expectNoSeriousA11yViolations(page);
       });
@@ -156,19 +156,17 @@ test('the header scrim stays hidden on a page too short to scroll', async ({ pag
 
 for (const colorScheme of ['light', 'dark'] as const) {
   test(`theme-color matches --color-bg in the ${colorScheme} theme`, async ({ page }) => {
-    await page.emulateMedia({ colorScheme });
+    await chooseTheme(page, colorScheme);
     await page.goto('/');
-    const { meta, background } = await page.evaluate((scheme) => {
-      const tag = document.querySelector<HTMLMetaElement>(
-        `meta[name="theme-color"][media="(prefers-color-scheme: ${scheme})"]`,
-      );
+    const { meta, background } = await page.evaluate(() => {
+      const tag = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
       const probe = document.createElement('span');
       probe.style.color = tag?.content ?? '';
       document.body.append(probe);
       const metaColor = getComputedStyle(probe).color;
       probe.remove();
       return { meta: metaColor, background: getComputedStyle(document.body).backgroundColor };
-    }, colorScheme);
+    });
 
     expect(meta).toBe(background);
   });
@@ -222,7 +220,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     isMobile,
   }) => {
     test.skip(isMobile, 'Touch devices have no hover state.');
-    await page.emulateMedia({ colorScheme });
+    await chooseTheme(page, colorScheme);
     await page.goto('/cv');
     const button = page.getByRole('link', { name: 'Download PDF' });
     const colours = () =>

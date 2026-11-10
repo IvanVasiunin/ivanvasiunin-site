@@ -132,22 +132,24 @@ function Sources({
     };
   }, []);
 
-  // The first rows only, until "Show N more" (sourceRows.ts). Measured with every item shown, then the
-  // rest are hidden (`hidden`: out of the layout, the Tab order and the accessibility tree). A new
-  // width measures again, so a rotation or a resize re-cuts the list.
+  // The first rows only, until "Show N more" (sourceRows.ts). Measured only while every item is shown
+  // (before the first cut, and while expanded), then the rest are hidden (`hidden`: out of the layout,
+  // the Tab order and the accessibility tree). Never measured with items hidden: they report no
+  // position, everything seemed to fit and the button vanished (Ivan, 2026-11-10). A new width
+  // measures again, so a rotation or a resize re-cuts the list.
   const listId = useId();
   const [expanded, setExpanded] = useState(false);
   const [cut, setCut] = useState<number | null>(null);
   const [width, setWidth] = useState(0);
   useLayoutEffect(() => {
     const list = listRef.current;
-    if (!list || expanded) return;
+    const allShown = expanded || cut === null;
+    if (!list || !allShown) return;
     const tops = Array.from(list.children, (child) =>
       child instanceof HTMLElement ? child.offsetTop : 0,
     );
     setCut(firstHiddenIndex(tops));
-    // `cut` is not a dependency: measuring needs every item shown, which a reset of `cut` gives.
-  }, [items, width, expanded]);
+  }, [items, width, expanded, cut]);
   useEffect(() => {
     const list = listRef.current;
     if (!list || typeof ResizeObserver === 'undefined') return;

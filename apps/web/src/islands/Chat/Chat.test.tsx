@@ -57,12 +57,24 @@ function hangingFetch() {
 const input = () => screen.getByRole('textbox', { name: 'Ask Elio about Ivan' });
 const liveRegion = () => document.querySelector('[aria-live="polite"]');
 
+/** A phone: no hover, a coarse pointer (focusing the input would open the keyboard). */
+const touchScreen = (): void => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(
+      (query: string) =>
+        ({ matches: query.includes('pointer: coarse'), media: query }) as MediaQueryList,
+    ),
+  );
+};
+
 let turnCounter = 0;
 const newTurnId = () => `turn-${String((turnCounter += 1))}`;
 
 beforeEach(() => {
   // jsdom has no layout or media queries: scrolling is a no-op and no reduced-motion preference.
   vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+  Element.prototype.scrollIntoView = vi.fn();
   vi.stubGlobal(
     'matchMedia',
     vi.fn((query: string) => ({ matches: false, media: query }) as MediaQueryList),
@@ -107,6 +119,19 @@ describe('Chat', () => {
 
       expect(input()).toHaveProperty('value', 'Which technologies does Ivan use?');
       expect(document.activeElement).toBe(input());
+      expect(fetchImpl).not.toHaveBeenCalled();
+    });
+
+    // Ivan, 2026-11-10: on a phone a card opened the keyboard before the reader wanted to type.
+    it('on a touch screen a topic card fills the input without focusing it (no keyboard)', async () => {
+      touchScreen();
+      const fetchImpl = scenarioFetch();
+      render(<Chat fetchImpl={fetchImpl} />);
+
+      await userEvent.click(screen.getByRole('link', { name: /Skills & stack/ }));
+
+      expect(input()).toHaveProperty('value', 'Which technologies does Ivan use?');
+      expect(document.activeElement).not.toBe(input());
       expect(fetchImpl).not.toHaveBeenCalled();
     });
 
@@ -248,6 +273,21 @@ describe('Chat history for the tab', () => {
     expect(await screen.findByText('BrainRocket?')).toBeDefined();
     expect(screen.getByRole('button', { name: 'New chat' })).toBeDefined();
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  // Ivan, 2026-11-10: on a phone "New chat" opened the keyboard.
+  it('on a touch screen New chat focuses the greeting, not the input, and closes the keyboard after Send', async () => {
+    touchScreen();
+    render(<Chat fetchImpl={scenarioFetch()} newTurnId={newTurnId} />);
+    await userEvent.type(input(), 'BrainRocket?{Enter}');
+    // Sent: the keyboard goes away.
+    expect(document.activeElement).not.toBe(input());
+    await screen.findByRole('button', { name: 'Copy' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'New chat' }));
+
+    expect(screen.queryByText('BrainRocket?')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
   });
 
   it('New chat clears the conversation, forgets it and focuses the input', async () => {

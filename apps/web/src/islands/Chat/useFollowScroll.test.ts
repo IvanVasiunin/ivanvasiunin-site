@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import { FOLLOW_THRESHOLD_PX, nextFollowing } from './useFollowScroll';
+import { atEnd, FOLLOW_THRESHOLD_PX, nextFollowing, SHOW_MARGIN_PX } from './useFollowScroll';
 
 const at = (scrollY: number, distanceToBottom: number) => ({ scrollY, distanceToBottom });
 
@@ -30,5 +30,20 @@ describe('nextFollowing', () => {
 
   it('a smooth jump down never pauses on the way', () => {
     expect(nextFollowing(true, at(100, 900), at(400, 600))).toBe(true);
+  });
+});
+
+describe('atEnd (below md)', () => {
+  it('is at the end within the threshold, away from it past the margin', () => {
+    expect(atEnd(false, FOLLOW_THRESHOLD_PX)).toBe(true);
+    expect(atEnd(true, FOLLOW_THRESHOLD_PX + SHOW_MARGIN_PX + 1)).toBe(false);
+  });
+
+  // Ivan, 2026-11-10: on a phone "Jump to latest" blinked by Copy / Retry. Between the thresholds
+  // the previous state holds, so a page bouncing at the edge never toggles it.
+  it('keeps the previous state between the thresholds', () => {
+    const between = FOLLOW_THRESHOLD_PX + SHOW_MARGIN_PX / 2;
+    expect(atEnd(true, between)).toBe(true);
+    expect(atEnd(false, between)).toBe(false);
   });
 });

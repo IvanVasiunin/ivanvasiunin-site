@@ -52,13 +52,17 @@
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
     align-items: flex-start;
     min-inline-size: 0;
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-bubble-tail) var(--radius-bubble) var(--radius-bubble)
       var(--radius-bubble);
     box-shadow: var(--shadow-raised);
+
+    @include mq(md) {
+      gap: var(--space-sm);
+    }
   }
 
   .chat-turn__note {
@@ -136,12 +140,19 @@
     display: inline-flex;
     gap: var(--space-xs);
     align-items: center;
-    min-block-size: var(--size-touch);
-    padding-block: calc(var(--space-xs) + var(--space-2xs));
+
+    // Phones: a shorter row (the pill itself keeps its size); from `md` the 44 px row.
+    min-block-size: calc(var(--size-control-compact) + var(--space-2xs));
+    padding-block: calc(var(--space-2xs) + var(--space-3xs) * 2);
     padding-inline: var(--space-xs) var(--space-sm);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-snug);
     color: var(--color-text-muted);
+
+    @include mq(md) {
+      min-block-size: var(--size-touch);
+      padding-block: calc(var(--space-xs) + var(--space-2xs));
+    }
 
     // Past the first rows until "Show N more" (ChatTurn.tsx): `display` above would beat the
     // browser's own `[hidden]` rule.
@@ -151,11 +162,15 @@
 
     &::before {
       position: absolute;
-      inset: var(--space-xs) 0;
+      inset: var(--space-3xs) 0;
       z-index: var(--z-below);
       border-radius: var(--radius-chip-pill);
       background-color: var(--color-highlight-soft);
       content: '';
+
+      @include mq(md) {
+        inset-block: var(--space-xs);
+      }
     }
 
     // Its star is pointed at on the knowledge map (lib/viz/events.ts).
@@ -221,8 +236,15 @@
   .chat-turn__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2xs);
+
+    // Phones: the rows as far apart as the actions' touch extensions reach (2 × 6 px, below), so a
+    // tap between two rows never lands on the wrong one. From `md` the boxes are the targets.
+    gap: var(--space-sm) var(--space-2xs);
     align-items: center;
+
+    @include mq(md) {
+      gap: var(--space-2xs);
+    }
   }
 
   .chat-turn__tag {
@@ -242,8 +264,11 @@
     display: inline-flex;
     gap: var(--space-xs);
     align-items: center;
-    min-block-size: var(--size-touch);
-    padding-inline: var(--space-sm);
+
+    // Phones: a 32 px box and a tighter side padding; the ::after keeps the 44 px touch target
+    // around it (Ivan, 2026-11-10: "Show 6 more" was huge on a phone). From `md` the 44 px box.
+    min-block-size: var(--size-control-compact);
+    padding-inline: var(--space-xs);
     border: 0;
     border-radius: var(--radius-pill);
     font: inherit;
@@ -251,6 +276,22 @@
     color: var(--color-text-muted);
     background-color: transparent;
     cursor: pointer;
+
+    @include mq(md) {
+      min-block-size: var(--size-touch);
+      padding-inline: var(--space-sm);
+    }
+
+    &::after {
+      position: absolute;
+      inset-block: calc((var(--size-control-compact) - var(--size-touch)) / 2);
+      inset-inline: 0;
+      content: '';
+
+      @include mq(md) {
+        inset-block: 0;
+      }
+    }
 
     &::before {
       position: absolute;

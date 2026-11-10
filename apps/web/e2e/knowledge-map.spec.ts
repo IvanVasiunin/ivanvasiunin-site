@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { mockScenario, toSse } from '../src/lib/chat/mock/scenarios';
-import { expect, expectNoSeriousA11yViolations, test } from './fixtures';
+import { chooseTheme, expect, expectNoSeriousA11yViolations, test } from './fixtures';
 
 // The knowledge map (SPEC US-A11, US-A12; ADR-0012): a card beside the chat from 80rem, none on
 // phones. Its data is the fixed file fixtures.ts routes (map-points.ts); the chat is mocked.
@@ -43,7 +43,7 @@ test.describe('knowledge map on a wide screen', () => {
 
   for (const colorScheme of ['light', 'dark'] as const) {
     test(`stands beside the chat and says what it is (${colorScheme})`, async ({ page }) => {
-      await page.emulateMedia({ colorScheme });
+      await chooseTheme(page, colorScheme);
       await page.goto('/');
 
       await expect(map(page).getByRole('heading', { name: 'Knowledge map' })).toBeVisible();

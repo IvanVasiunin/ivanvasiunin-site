@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures';
+import { chooseTheme, expect, test } from './fixtures';
 
 // Visual regression (docs/TESTING.md §1, §6; mobile-performance.md): key screens at 360 / 390 / 768 /
 // 1024 / 1440 px and a landscape phone, light and dark. Runs only in
@@ -25,7 +25,7 @@ for (const { path, name } of PAGES) {
     for (const colorScheme of ['light', 'dark'] as const) {
       test(`${name} at ${String(viewport.width)} px, ${colorScheme}`, async ({ page }) => {
         await page.setViewportSize(viewport);
-        await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
+        await chooseTheme(page, colorScheme, { reducedMotion: 'reduce' });
         await page.goto(path);
         // The copyright year comes from the build date; pin it so the baseline survives New Year.
         await page

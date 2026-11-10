@@ -91,3 +91,23 @@ export async function expectNoSeriousA11yViolations(page: Page): Promise<void> {
     .map((violation) => `${violation.id}: ${violation.help}`);
   expect(serious).toEqual([]);
 }
+
+/**
+ * Shows the page in a theme as a visitor's choice would (stored before the page loads), with the
+ * system theme to match. The page is dark by default whatever the system theme (SPEC US-X1), so
+ * `emulateMedia({ colorScheme })` alone no longer picks the light theme. Call before `goto`.
+ */
+export async function chooseTheme(
+  page: Page,
+  theme: 'light' | 'dark',
+  media: Parameters<Page['emulateMedia']>[0] = {},
+): Promise<void> {
+  await page.emulateMedia({ ...media, colorScheme: theme });
+  await page.addInitScript((value) => {
+    try {
+      localStorage.setItem('theme', value);
+    } catch {
+      // Blocked storage: the test that blocks it checks the default instead.
+    }
+  }, theme);
+}

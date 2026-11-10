@@ -44,7 +44,7 @@ Verification tags: `[lint]` Stylelint, `[test]` automated test, `[review]` revie
 
   `[review]`
 - No magic numbers: `color`, `background-color`, `border-color`, `fill`, `stroke`, `z-index`, `transition-duration`, `transition-timing-function`, `font-size`, `border-radius` and `box-shadow` take `var(--…)` (or `inherit` / `currentColor` / `transparent` / `0`). `[lint]` (stylelint-declaration-strict-value)
-- Colour tokens exist for both themes. Themes switch by redefining tokens under `:root[data-theme="dark"]` and `@media (prefers-color-scheme: dark)` (the latter guarded by `:root:not([data-theme="light"])`). `[review]`
+- Colour tokens exist for both themes. Dark is the default on screen (SPEC US-X1): tokens are redefined under `:root:not([data-theme="light"])` inside `@media screen`; light values on `:root` serve the light choice and print. `[review]`
 
 ## Units
 - `font-size` uses `rem`, or `clamp()` whose min / max are `rem` (fluid typography). `px` for font-size is forbidden. `[lint]` (`declaration-property-unit-allowed-list: { font-size: [rem, vw, "%"] }`)

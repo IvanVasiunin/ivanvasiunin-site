@@ -91,19 +91,9 @@ const SPECULATION_RULES = {
     <meta name="twitter:description" content={description} />
     {/* Page-specific head content, e.g. the JSON-LD on /cv. */}
     <slot name="head" />
-    <meta name="color-scheme" content="light dark" />
-    <meta
-      name="theme-color"
-      data-scheme="light"
-      media="(prefers-color-scheme: light)"
-      content={THEME_COLOR.light}
-    />
-    <meta
-      name="theme-color"
-      data-scheme="dark"
-      media="(prefers-color-scheme: dark)"
-      content={THEME_COLOR.dark}
-    />
+    {/* Dark by default (SPEC US-X1); the head script below switches both for a stored light choice. */}
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content={THEME_COLOR.dark} />
     {/* Applies the stored theme choice before first paint (no flash) and syncs the metas above, so it
     comes after them. Blocking and inline on purpose; its source is src/lib/theme/theme.ts. The future
     CSP (Phase 8) needs hashes of the inline scripts: this one and ThemeToggle's (Astro inlines it). */}
