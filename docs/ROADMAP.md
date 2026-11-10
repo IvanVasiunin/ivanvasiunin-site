@@ -120,6 +120,10 @@ Found by the first CI run (2026-11-09); both pass locally and are skipped on CI 
 - `e2e/chat.spec.ts` "closing Under the hood never makes the conversation jump": WebKit on CI measured a 16 px jump.
 - `e2e/fonts.spec.ts` "/cv keeps layout shift under 0.1 when the fonts arrive late": throttled Android on CI measured 0.13.
 
+Skipped on Linux (CI) for now (2026-11-10, Ivan's OK; it failed the `main` run after PR #2 twice, with the same numbers, and blocked the deploy):
+
+- `apps/api/tests/ingestion/test_projection.py::test_a_refit_is_aligned_to_the_old_points`: UMAP with a fixed `random_state` and one thread still lays points out a little differently on different CI runner CPUs (numba), and once the aligned refit moved the old points more than a fresh one (median 0.29 vs 0.21). Make it robust without losing the policy, e.g. the median over several `random_state`s, or assert only that the aligned shift is small. It loosens the check, so it needs Ivan's OK on the exact form.
+
 Kept off CI for good: the knowledge map frame budgets (`e2e/knowledge-map-perf.spec.ts`) need a quiet machine; they run locally through the `perf-check` skill.
 
 ## Backlog
