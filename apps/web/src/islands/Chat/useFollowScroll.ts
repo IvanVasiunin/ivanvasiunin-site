@@ -18,7 +18,8 @@
 //   and "hide" keeps a bouncing page from blinking it too;
 // - the end of the conversation is its last line resting on the input, not the end of the document
 //   (the jump used to scroll to the footer: half a screen of nothing);
-// - `covered` says text passes behind the docked input (the topic cards too), for the scrim.
+// - `covered` says text passes behind the docked input, for the scrim: in a conversation while the
+//   reader is away from its end, before one while the topic cards reach under it.
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /** Within this distance of the bottom, the reader counts as "at the bottom" (px). */
@@ -188,8 +189,13 @@ export function useFollowScroll(
     const measurePage = (): void => {
       if (scrollArea === null) return;
       const distance = pageDistance(scrollArea, dock());
-      setFollow(atEnd(followingRef.current, distance));
-      setCovered(distance > COVER_THRESHOLD_PX);
+      const end = atEnd(followingRef.current, distance);
+      setFollow(end);
+      // In a conversation the scrim goes with "Jump to latest": at its end the docked input may sit
+      // a few px over the last answer's edge near the footer (it sticks above its place there), and
+      // a scrim over the disclosure was the bug of 2026-11-05. Before one, any overlap: the cards.
+      const conversation = scrollArea.querySelector('[data-turn-id]') !== null;
+      setCovered(conversation ? !end : distance > COVER_THRESHOLD_PX);
     };
 
     const pause = (): void => {
