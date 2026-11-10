@@ -181,9 +181,9 @@ Notation: **US-A** = AI mode, **US-T** = Text mode, **US-X** = cross-cutting.
 ### 3.3 Cross-cutting
 
 **US-X1. Theme.**
-- Light and dark themes. The default follows `prefers-color-scheme`.
-- A manual toggle switches between Light and Dark (no separate "System" option: until the first choice, the default above applies). The choice is stored in `localStorage` and applied before first paint (no flash).
-- Without JS, the system preference is used.
+- Light and dark themes. The default is **dark**, whatever the system theme (Ivan, 2026-11-10: the dark sky is the site's face; a phone in light mode opened it light).
+- A manual toggle switches between Light and Dark (no "System" option: until the first choice, the default applies). The choice is stored in `localStorage` and applied before first paint (no flash).
+- Without JS, the page is dark.
 
 **US-X2. Mobile.**
 - Works from 360 px wide, in portrait and landscape, with touch.

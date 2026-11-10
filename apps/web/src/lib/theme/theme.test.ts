@@ -22,9 +22,8 @@ const throwingStorage = (): never => {
 
 function renderHead(): void {
   document.head.innerHTML = `
-    <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" data-scheme="light" media="(prefers-color-scheme: light)" content="${THEME_COLOR.light}">
-    <meta name="theme-color" data-scheme="dark" media="(prefers-color-scheme: dark)" content="${THEME_COLOR.dark}">`;
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="${THEME_COLOR.dark}">`;
   document.documentElement.removeAttribute('data-theme');
 }
 
@@ -87,14 +86,13 @@ describe('storeTheme', () => {
 });
 
 describe('resolveTheme', () => {
-  it('prefers the stored choice over the system preference', () => {
-    expect(resolveTheme('light', true)).toBe('light');
-    expect(resolveTheme('dark', false)).toBe('dark');
+  it('returns the stored choice', () => {
+    expect(resolveTheme('light')).toBe('light');
+    expect(resolveTheme('dark')).toBe('dark');
   });
 
-  it('follows the system preference when there is no choice', () => {
-    expect(resolveTheme(null, true)).toBe('dark');
-    expect(resolveTheme(null, false)).toBe('light');
+  it('is dark when there is no choice', () => {
+    expect(resolveTheme(null)).toBe('dark');
   });
 });
 
@@ -109,21 +107,21 @@ describe('applyTheme', () => {
   beforeEach(renderHead);
 
   it.each(['light', 'dark'] as const)(
-    'pins %s: data-theme, both theme-color metas and color-scheme',
+    'pins %s: data-theme, the theme-color meta and color-scheme',
     (theme) => {
       applyTheme(document, theme, THEME_COLOR);
       expect(document.documentElement.dataset.theme).toBe(theme);
-      expect(themeColors()).toEqual([THEME_COLOR[theme], THEME_COLOR[theme]]);
+      expect(themeColors()).toEqual([THEME_COLOR[theme]]);
       expect(colorScheme()).toBe(theme);
     },
   );
 
-  it('no choice removes data-theme and restores the per-scheme metas', () => {
-    applyTheme(document, 'dark', THEME_COLOR);
+  it('no choice removes data-theme and sets the metas to the default, dark', () => {
+    applyTheme(document, 'light', THEME_COLOR);
     applyTheme(document, null, THEME_COLOR);
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
-    expect(themeColors()).toEqual([THEME_COLOR.light, THEME_COLOR.dark]);
-    expect(colorScheme()).toBe('light dark');
+    expect(themeColors()).toEqual([THEME_COLOR.dark]);
+    expect(colorScheme()).toBe('dark');
   });
 
   it('works without the metas', () => {
@@ -151,13 +149,20 @@ describe('themeHeadScript', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     runHeadScript();
     expect(document.documentElement.dataset.theme).toBe('dark');
-    expect(themeColors()).toEqual([THEME_COLOR.dark, THEME_COLOR.dark]);
+    expect(themeColors()).toEqual([THEME_COLOR.dark]);
   });
 
-  it('follows the system theme when nothing is stored', () => {
+  it('applies the stored light choice', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    runHeadScript();
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(themeColors()).toEqual([THEME_COLOR.light]);
+  });
+
+  it('stays dark when nothing is stored', () => {
     runHeadScript();
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
-    expect(themeColors()).toEqual([THEME_COLOR.light, THEME_COLOR.dark]);
+    expect(themeColors()).toEqual([THEME_COLOR.dark]);
   });
 
   it('ignores an invalid stored value', () => {

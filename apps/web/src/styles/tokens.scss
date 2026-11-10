@@ -3,8 +3,7 @@
 // Documented in README.md.
 @use 'mixins' as *;
 
-// Dark colour values. Included twice: for the explicit `data-theme="dark"` choice and for the
-// system preference when no explicit light choice is stored (SPEC US-X1).
+// Dark colour values: the default on screen, unless the visitor chose light (SPEC US-X1).
 @mixin dark-colors {
   color-scheme: dark;
 
@@ -126,6 +125,11 @@
   // Chat turns (questions and answers): 18 px text, tighter lines (Ivan, 2026-11-09: answers read
   // too small). Below WCAG 1.4.8 (AAA, not required); text-spacing overrides (1.4.12, AA) still work.
   --line-height-chat: 1.25;
+
+  // Phones (below `md`), "moderate" compact (Ivan, 2026-11-10): answers at 17 px with the prose line
+  // height, and quiet controls whose visible box is smaller than their 44 px touch target.
+  --font-size-chat-compact: 1.0625rem;
+  --size-control-compact: 2rem;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
@@ -174,6 +178,12 @@
 
   // The space the floating mode switch takes at the screen's bottom below md (bar + its offset).
   --space-bottom-bar: calc(var(--size-bar) + var(--offset-bar-bottom));
+
+  // Below `md`, the screen height the chat cannot use for a turn: the sticky header with the root's
+  // scroll padding above (base.scss), the docked input with its offset below (Chat.scss).
+  --size-chat-reserve: calc(
+    var(--size-bar) + var(--space-xl) + var(--space-bottom-bar) + var(--space-sm) + var(--size-bar)
+  );
 
   // Shape.
   --radius-sm: 4px; // chips, inputs
@@ -351,6 +361,7 @@
   // The rocket's width (its height follows the drawing, about 2.2×); larger from `md`.
   --size-rocket: 27px;
   --size-rocket-md: 37px;
+  --size-rocket-hit: 60px; // the rocket's touch area height on phones (ScrollTop.scss)
   --size-smoke: 22px; // one exhaust puff at the pad
   --duration-ignition: 500ms; // engine start before lift-off; IGNITION_MS in scroll-top/launch.ts (tested)
   --duration-smoke: 1400ms; // a puff billows and clears
@@ -379,14 +390,9 @@
   color-scheme: light;
 }
 
-// Dark only on screen: print and the build-time PDF are always the light, ink-on-paper version.
+// Dark by default (Ivan, 2026-11-10), whatever the system theme; light only by the visitor's choice.
+// Only on screen: print and the build-time PDF are always the light, ink-on-paper version.
 @media screen {
-  :root[data-theme='dark'] {
-    @include dark-colors;
-  }
-}
-
-@media screen and (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     @include dark-colors;
   }

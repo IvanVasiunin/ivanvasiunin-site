@@ -1,5 +1,6 @@
-// Light / dark theme (SPEC US-X1). Until the visitor picks a theme, the page follows
-// `prefers-color-scheme`; the toggle then switches between light and dark and remembers the choice.
+// Light / dark theme (SPEC US-X1). Until the visitor picks a theme, the page is dark (Ivan,
+// 2026-11-10: the dark sky is the site's face; a phone in light mode opened it light); the toggle
+// then switches between light and dark and remembers the choice.
 //
 // `readStoredTheme` and `applyTheme` are also serialized with `Function.prototype.toString()` into
 // the inline head script in BaseLayout, which runs before first paint (no flash). They must stay
@@ -34,9 +35,12 @@ export function readStoredTheme(
   }
 }
 
+/** The theme before any choice. Keep in step with tokens.scss (dark unless `data-theme="light"`). */
+export const DEFAULT_THEME: Theme = 'dark';
+
 /**
- * Sets `data-theme` on the root (none for `null`, so the CSS follows `prefers-color-scheme`) and keeps
- * the `theme-color` and `color-scheme` metas in step with the visible theme.
+ * Sets `data-theme` on the root (none for `null`: the CSS default, dark) and keeps the `theme-color`
+ * and `color-scheme` metas in step with the visible theme.
  */
 export function applyTheme(
   doc: Document,
@@ -49,16 +53,15 @@ export function applyTheme(
   } else {
     root.setAttribute('data-theme', theme);
   }
-  // Each theme-color meta carries the scheme its `media` query matches.
-  for (const meta of doc.querySelectorAll<HTMLMetaElement>(
-    'meta[name="theme-color"][data-scheme]',
-  )) {
-    const scheme = meta.dataset.scheme === 'dark' ? 'dark' : 'light';
-    meta.content = colors[theme ?? scheme];
+  // No choice: dark (DEFAULT_THEME; a literal, this function is serialized on its own).
+  const visible = theme ?? 'dark';
+  const themeColor = doc.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  if (themeColor) {
+    themeColor.content = colors[visible];
   }
   const colorScheme = doc.querySelector<HTMLMetaElement>('meta[name="color-scheme"]');
   if (colorScheme) {
-    colorScheme.content = theme ?? 'light dark';
+    colorScheme.content = visible;
   }
 }
 
@@ -75,9 +78,9 @@ export function storeTheme(
   }
 }
 
-/** The visible theme: the stored choice, else the system preference. */
-export function resolveTheme(stored: Theme | null, systemPrefersDark: boolean): Theme {
-  return stored ?? (systemPrefersDark ? 'dark' : 'light');
+/** The visible theme: the stored choice, else the default. */
+export function resolveTheme(stored: Theme | null): Theme {
+  return stored ?? DEFAULT_THEME;
 }
 
 /** The toggle switches to the other theme. */

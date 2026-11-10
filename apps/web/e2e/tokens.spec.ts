@@ -6,10 +6,10 @@ import {
   type Rgb,
   type Rgba,
 } from '../src/lib/color/contrast';
-import { expect, test } from './fixtures';
+import { chooseTheme, expect, test } from './fixtures';
 
-// Design tokens (ROADMAP 1.1): both themes resolve from the system preference without JS, an explicit
-// `data-theme` beats the system preference, and every colour pairing the UI relies on meets WCAG contrast.
+// Design tokens (ROADMAP 1.1): the page is dark by default without JS, whatever the system theme (SPEC
+// US-X1), `data-theme="light"` switches it, and every colour pairing the UI relies on meets WCAG contrast.
 
 const BACKGROUND_TOKENS = ['--color-bg', '--color-surface'] as const;
 // The backdrop nebulae, composited over `--color-bg` all at once: the worst case where they overlap.
@@ -89,15 +89,22 @@ const nebulaBackground = (colors: Colors): Rgb =>
     color(colors, '--color-bg'),
   );
 
-/** Background colour of the page for a given system scheme, with no explicit theme choice. */
-async function systemBackground(page: Page, colorScheme: Scheme): Promise<Rgba> {
-  await page.emulateMedia({ colorScheme });
+/** Background colour of the page in its current state. */
+async function background(page: Page): Promise<Rgba> {
   return color(await readColors(page), '--color-bg');
 }
 
+const setTheme = (page: Page, theme: Scheme | null): Promise<void> =>
+  page.evaluate((value) => {
+    if (value === null) delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = value;
+  }, theme);
+
 for (const scheme of ['light', 'dark'] as const) {
-  test.describe(`${scheme} system theme`, () => {
-    test.use({ colorScheme: scheme });
+  test.describe(`${scheme} theme`, () => {
+    test.beforeEach(async ({ page }) => {
+      await chooseTheme(page, scheme);
+    });
 
     test('the page background and text come from the theme tokens', async ({ page }) => {
       await page.goto('/');
@@ -157,29 +164,25 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
-test('light and dark system themes resolve to different backgrounds', async ({ page }) => {
-  await page.goto('/');
-
-  expect(await systemBackground(page, 'dark')).not.toEqual(await systemBackground(page, 'light'));
-});
-
-test('an explicit data-theme overrides the opposite system theme', async ({ page }) => {
-  await page.goto('/');
-  const light = await systemBackground(page, 'light');
-  const dark = await systemBackground(page, 'dark');
-  const setTheme = (theme: Scheme): Promise<void> =>
-    page.evaluate((value) => {
-      document.documentElement.dataset.theme = value;
-    }, theme);
-
-  // System dark, explicit light.
-  await setTheme('light');
-  expect(color(await readColors(page), '--color-bg')).toEqual(light);
-
-  // System light, explicit dark.
+test('the page is dark by default under either system theme, light only by choice', async ({
+  page,
+}) => {
   await page.emulateMedia({ colorScheme: 'light' });
-  await setTheme('dark');
-  expect(color(await readColors(page), '--color-bg')).toEqual(dark);
+  await page.goto('/');
+  const dark = await background(page);
+  await page.emulateMedia({ colorScheme: 'dark' });
+  expect(await background(page)).toEqual(dark);
+
+  await setTheme(page, 'light');
+  const light = await background(page);
+  expect(light).not.toEqual(dark);
+  await page.emulateMedia({ colorScheme: 'light' });
+  expect(await background(page)).toEqual(light);
+
+  await setTheme(page, 'dark');
+  expect(await background(page)).toEqual(dark);
+  await setTheme(page, null);
+  expect(await background(page)).toEqual(dark);
 });
 
 test('the page gutter widens from the md breakpoint', async ({ page }) => {

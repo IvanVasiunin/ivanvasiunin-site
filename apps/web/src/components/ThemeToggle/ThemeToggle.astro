@@ -1,9 +1,9 @@
 ---
 // Theme toggle (SPEC US-X1): a toggle button between the light and dark themes. Until the first click
-// the page follows the system theme. Not a React island: a tiny module script, so /cv ships no framework
+// the page is dark. Not a React island: a tiny module script, so /cv ships no framework
 // runtime. The icon (sun or moon, the visible theme) is pure CSS, keyed on the root `data-theme` that the
 // head script sets before first paint, so it never flashes. Without JS the button is hidden
-// (`scripting: none`) and the system theme applies.
+// (`scripting: none`) and the default, dark, applies.
 //
 // Accessibility: the name stays "Dark theme" and `aria-pressed` says whether it is on; screen readers
 // announce the pressed state when it changes. The server renders `false`; the script corrects it on load.
@@ -141,15 +141,14 @@ import './ThemeToggle.scss';
   } from '../../lib/theme/theme';
 
   const getStorage = (): Storage => window.localStorage;
-  const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
   const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
 
   if (button) {
-    // The explicit choice; `null` until the first click (or while nothing is stored): follow the system.
+    // The explicit choice; `null` until the first click (or while nothing is stored): dark.
     let stored: Theme | null = readStoredTheme(getStorage, THEME_STORAGE_KEY);
 
     const renderPressed = (): void => {
-      const visible = resolveTheme(stored, systemDark.matches);
+      const visible = resolveTheme(stored);
       button.setAttribute('aria-pressed', String(visible === 'dark'));
     };
     const render = (): void => {
@@ -159,13 +158,10 @@ import './ThemeToggle.scss';
 
     render();
     button.addEventListener('click', () => {
-      stored = oppositeTheme(resolveTheme(stored, systemDark.matches));
+      stored = oppositeTheme(resolveTheme(stored));
       storeTheme(getStorage, THEME_STORAGE_KEY, stored);
       render();
     });
-    // The system theme changed: the CSS and the metas follow it by themselves; only the pressed state
-    // can change (when there is no explicit choice). The theme itself is not re-applied.
-    systemDark.addEventListener('change', renderPressed);
     // Another tab changed the choice (`key === null`: that tab cleared all storage).
     window.addEventListener('storage', (event) => {
       if (event.key !== THEME_STORAGE_KEY && event.key !== null) return;

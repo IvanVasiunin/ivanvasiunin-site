@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, expectNoSeriousA11yViolations, test } from './fixtures';
+import { chooseTheme, expect, expectNoSeriousA11yViolations, test } from './fixtures';
 
 // ROADMAP 2.6: "Back to top" (src/components/ScrollTop). A link to #top that appears once the page has
 // scrolled; hidden (and out of the tab order) at the top and on pages too short to scroll.
@@ -145,7 +145,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
   test(`has no serious a11y violations when shown (${colorScheme})`, async ({ page }) => {
     // Reduced motion: blocks entering at the bottom edge are mid-fade while scrolling (the scroll
     // reveal), which axe would read as low contrast. The check is about the page with the button.
-    await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
+    await chooseTheme(page, colorScheme, { reducedMotion: 'reduce' });
     await page.goto('/cv');
     await page.evaluate(() => {
       window.scrollTo({ top: 2000, behavior: 'instant' });
