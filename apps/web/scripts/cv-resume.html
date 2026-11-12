@@ -1,0 +1,468 @@
+<!doctype html>
+<!--
+  The downloadable CV (ROADMAP Next; Ivan, 2026-11-12): a two-page recruiter version, printed to
+  /cv/ivan-vasiunin-cv.pdf by scripts/build-pdf.mjs. Written for recruiters at EU / US tech companies:
+  one column (ATS-readable), action → result bullets, the AI project featured.
+  Its text is curated from src/content/cv/ and data/*.md: when those change, update this file too.
+  No phone number (golden rule 5): the repository and the site are public.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Ivan Vasiunin — Senior Frontend Engineer</title>
+    <style>
+      /* Self-hosted, the site's UI face (Fontsource, OFL; docs/CREDITS.md): scripts/build-pdf.mjs serves
+     these URLs from node_modules, so the PDF looks the same on every machine. */
+      @font-face {
+        font-family: 'Schibsted Grotesk';
+        font-style: normal;
+        font-weight: 400 900;
+        src: url('/fonts/schibsted-grotesk-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Schibsted Grotesk';
+        font-style: italic;
+        font-weight: 400 900;
+        src: url('/fonts/schibsted-grotesk-italic.woff2') format('woff2');
+      }
+      @page {
+        size: A4;
+        margin: 12mm 15mm 11mm;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      body {
+        margin: 0;
+        font-family: 'Schibsted Grotesk', Arial, sans-serif;
+        font-size: 9.4pt;
+        line-height: 1.32;
+        color: #1d2433;
+      }
+      a {
+        color: #1f4fd1;
+        text-decoration: none;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        border-bottom: 2px solid #1f4fd1;
+        padding-bottom: 7pt;
+        margin-bottom: 9pt;
+      }
+      h1 {
+        font-size: 22pt;
+        line-height: 1.05;
+        margin: 0;
+        letter-spacing: -0.3pt;
+        color: #0e1430;
+      }
+      .headline {
+        font-size: 11pt;
+        font-weight: 600;
+        color: #1f4fd1;
+        margin-top: 3pt;
+       white-space: nowrap; }
+      .open {
+        margin: -3pt 0 0;
+        font-size: 8.8pt;
+        color: #3a4357;
+      }
+      .contacts {
+        flex-shrink: 0;
+        white-space: nowrap;
+        text-align: right;
+        font-size: 8.8pt;
+        line-height: 1.5;
+        color: #3a4357;
+      }
+      h2 {
+        font-size: 9.6pt;
+        text-transform: uppercase;
+        letter-spacing: 1.2pt;
+        color: #1f4fd1;
+        margin: 9pt 0 4pt;
+        padding-bottom: 2pt;
+        border-bottom: 0.6pt solid #c9d3ea;
+      }
+      p {
+        margin: 0 0 4pt;
+      }
+      ul {
+        margin: 2pt 0 0;
+        padding-left: 13pt;
+      }
+      li {
+        margin: 0 0 2.2pt;
+      }
+      li::marker {
+        color: #1f4fd1;
+      }
+      .job--keep { break-inside: avoid; }
+      .job {
+        margin-bottom: 7pt;
+      }
+      .job-head,
+      .context {
+        break-after: avoid;
+      }
+      li {
+        break-inside: avoid;
+      }
+      .job-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 10pt;
+      }
+      .role {
+        font-weight: 700;
+        color: #0e1430;
+        font-size: 10.2pt;
+      }
+      .org {
+        font-weight: 600;
+      }
+      .meta {
+        color: #5a6378;
+        font-size: 8.8pt;
+        white-space: nowrap;
+        text-align: right;
+      }
+      .context {
+        color: #5a6378;
+        font-style: italic;
+        font-size: 8.9pt;
+        margin: 1pt 0 1pt;
+      }
+      .stack {
+        color: #5a6378;
+        font-size: 8.6pt;
+        margin-top: 2pt;
+      }
+      .stack b {
+        color: #3a4357;
+        font-weight: 600;
+      }
+      .skills {
+        display: grid;
+        grid-template-columns: 118pt 1fr;
+        gap: 3pt 8pt;
+      }
+      .skills dt {
+        font-weight: 700;
+        color: #0e1430;
+      }
+      .skills dd {
+        margin: 0;
+      }
+      .project {
+        border-left: 2.5pt solid #1f4fd1;
+        background: #f3f6fd;
+        padding: 6pt 9pt 6pt;
+        margin-bottom: 8pt;
+        break-inside: avoid;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 16pt;
+      }
+      .small li {
+        margin-bottom: 1.6pt;
+      }
+      .earlier li {
+        margin-bottom: 1.6pt;
+      }
+      strong {
+        color: #0e1430;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Ivan Vasiunin</h1>
+        <div class="headline">
+          Senior Frontend Engineer · UI &amp; Performance<br />AI Engineering (LLM / RAG)
+        </div>
+      </div>
+      <div class="contacts">
+        Valencia, Spain · authorized to work in Spain<br />
+        <a href="mailto:ivanvasyunin@gmail.com">ivanvasyunin@gmail.com</a><br />
+        Telegram <a href="https://t.me/IvanVasiunin">@IvanVasiunin</a> ·
+        <a href="https://www.linkedin.com/in/ivan-vasiunin-9967a5132/"
+          >linkedin.com/in/ivan-vasiunin</a
+        ><br />
+        <a href="https://github.com/IvanVasiunin">github.com/IvanVasiunin</a> ·
+        <a href="https://ivanvasiunin.com"><strong>ivanvasiunin.com</strong></a> (live CV + AI
+        assistant)
+      </div>
+    </header>
+
+    <p class="open">
+      Open to on-site, hybrid and remote roles · open to relocation · no sponsorship needed in Spain
+    </p>
+    <h2>Summary</h2>
+    <p>
+      Senior frontend engineer with <strong>nearly 10 years</strong> of commercial experience
+      building web interfaces for international products — from high-converting landing pages to
+      large-scale consumer platforms serving multiple brands. Go-to engineer for
+      <strong>UI architecture, SCSS and frontend performance</strong>: I take the hardest UI
+      problems to the root cause, review code, and grow developers (acting team lead; onboarded
+      three developers who became their own team).
+    </p>
+    <p>
+      Now combining this with <strong>AI engineering</strong>: I designed and shipped a production
+      RAG assistant end to end — LangGraph pipeline, pgvector retrieval, streaming UI, guardrails
+      and automated evals — on a hardened, CI-deployed stack.
+    </p>
+
+    <h2>Experience</h2>
+
+    <div class="job">
+      <div class="job-head">
+        <div>
+          <span class="role">Senior Markup Developer | UI Engineering</span> —
+          <span class="org">Brave Brains</span>
+        </div>
+        <div class="meta">Oct 2025 – Present · Valencia, Spain</div>
+      </div>
+      <div class="context">
+        Large-scale iGaming platforms for international markets, several products and brands;
+        cross-functional team (developers, QA, product owner, team lead).
+      </div>
+      <ul>
+        <li>
+          <strong>Acting team lead</strong> for several weeks: kept delivery on track and shipped
+          several business-critical releases to production on time.
+        </li>
+        <li>
+          <strong>Onboarded three developers</strong> over ~3 months, who went on to form a separate
+          team; mentor the team on markup, SCSS and UI architecture.
+        </li>
+        <li>
+          Own <strong>frontend performance</strong> in my area: profile bottlenecks, drive
+          refactoring of technical debt and inefficient code.
+        </li>
+        <li>
+          Take on the most complex UI work and incident-level UI issues, investigating to the root
+          cause instead of shipping workarounds; support release readiness on critical launches.
+        </li>
+        <li>
+          Review code for maintainability, reusability, semantics, performance and architectural fit
+          across a shared component system.
+        </li>
+      </ul>
+      <div class="stack">
+        <b>Stack:</b> HTML, SCSS / BEM, TypeScript, JavaScript, Angular, GitLab, Figma
+      </div>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
+        <div>
+          <span class="role">Markup Developer (Middle → Senior)</span> —
+          <span class="org">BrainRocket</span>
+        </div>
+        <div class="meta">Nov 2024 – Oct 2025 · Limassol, Cyprus</div>
+      </div>
+      <div class="context">Large-scale iGaming platforms across several brands; team of ~10.</div>
+      <ul>
+        <li>
+          <strong>Promoted to Senior</strong> within a year through a formal internal grade review.
+        </li>
+        <li>
+          <strong>Fixed a homepage performance problem:</strong> traced a poor Lighthouse score to
+          CSS masks repeated across the page, rebuilt the components without them and optimized
+          heavy gradient components — giving the team a reusable, render-friendly pattern for
+          gradient UI.
+        </li>
+        <li>
+          Ran <strong>performance reviews</strong> of supported projects: removed dead code,
+          introduced reusable SCSS mixins, optimized images, cut masks and filters, and fixed layout
+          shift (CLS) on page load.
+        </li>
+        <li>
+          Built and extended reusable components without duplication, weighing the impact of every
+          change on the shared system; owned features through design, QA, fixes and release.
+        </li>
+        <li><strong>Mentored a trainee to Junior</strong> level.</li>
+      </ul>
+      <div class="stack">
+        <b>Stack:</b> HTML, SCSS / BEM, TypeScript, JavaScript, Angular, GitLab, Figma
+      </div>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
+        <div>
+          <span class="role">Frontend Developer</span> —
+          <span class="org">University of Educational Medicine</span>
+          <span class="meta">(part-time)</span>
+        </div>
+        <div class="meta">Jan 2024 – Oct 2024 · Remote</div>
+      </div>
+      <ul>
+        <li>
+          Delivered responsive landing pages and multi-page sites for event launches,
+          <strong>often a complete landing page in one day</strong>.
+        </li>
+        <li>
+          Added and improved <strong>React</strong> components in an internal dashboard for
+          teachers; optimized page speed and worked with designers on UI / UX feasibility.
+        </li>
+      </ul>
+    </div>
+
+    <div class="job job--keep">
+      <div class="job-head">
+        <div>
+          <span class="role">Frontend Developer</span> — <span class="org">Liketelecom</span>
+        </div>
+        <div class="meta">Jun 2016 – Oct 2024 · Remote</div>
+      </div>
+      <div class="context">
+        Telecom startup serving corporate clients (call routing, auto dialers); a hybrid role:
+        frontend development plus technical operations for corporate clients.
+      </div>
+      <ul>
+        <li>
+          <strong>Identified a client problem and built the product to solve it:</strong>
+          NumbersValidator, a web service that cleans, validates and converts phone-number databases
+          (type, operator, region; batch XLS / XLSX). Used in production by clients;
+          <strong>company revenue grew 5%</strong> while it was in use.
+        </li>
+        <li>
+          Automated technical-support work with JavaScript tooling; built and maintained the
+          company's landing pages.
+        </li>
+      </ul>
+    </div>
+
+    <div class="job earlier">
+      <div class="job-head">
+        <div><span class="role">Earlier experience</span></div>
+        <div class="meta">2015 – 2022</div>
+      </div>
+      <ul>
+        <li>
+          <strong>Webmaster, own websites</strong> (2019–2022): ran two WordPress content sites with
+          a small copywriting team; SEO-driven traffic growth and ad monetization.
+        </li>
+        <li>
+          <strong>Web Developer, Digital Web</strong> (2019): business websites on MODX CMS, incl.
+          sites with a personal account area.
+        </li>
+        <li>
+          <strong>Technical Specialist, PE «Computer»</strong> (2015–2016): deployed and maintained
+          accounting software for enterprise customers.
+        </li>
+      </ul>
+    </div>
+
+    <h2>Featured Project</h2>
+    <div class="project">
+      <div class="job-head">
+        <div><span class="role">ivanvasiunin.com — CV with an AI assistant (RAG)</span></div>
+        <div class="meta">
+          <a href="https://ivanvasiunin.com">ivanvasiunin.com</a> ·
+          <a href="https://github.com/IvanVasiunin/ivanvasiunin-site">source</a>
+        </div>
+      </div>
+      <ul>
+        <li>
+          Designed and shipped, end to end, a production
+          <strong>RAG assistant (“Elio”)</strong> that answers questions about my experience from
+          retrieved context only: <strong>LangGraph</strong> pipeline with a query router,
+          <strong>pgvector</strong> retrieval, a relevance gate and
+          <strong>streamed answers over SSE</strong> with cited sources.
+        </li>
+        <li>
+          Guardrails for off-topic, prompt-injection and confidential questions; versioned prompts
+          verified by an <strong>automated eval suite</strong> (64 cases, LLM-as-judge) before every
+          prompt change.
+        </li>
+        <li>
+          Frontend: <strong>Astro + React islands, TypeScript strict</strong>; an interactive 2D
+          knowledge map of the sources (UMAP); “Under the hood” panel exposing the pipeline steps,
+          latency and cost of each answer.
+        </li>
+        <li>
+          Engineering quality: performance budgets enforced in CI (Lighthouse ≥ 95 on mobile, ≤ 30
+          KB JS on the CV page), Playwright e2e on desktop / iPhone / Android with axe accessibility
+          checks, visual regression tests.
+        </li>
+        <li>
+          Ops: <strong>FastAPI</strong> + PostgreSQL in Docker Compose behind Caddy (auto-HTTPS,
+          strict CSP), GitHub Actions CI/CD with image scanning, hardened Linux VPS. Built with an
+          AI-assisted workflow (Claude Code, custom skills and subagents).
+        </li>
+      </ul>
+    </div>
+
+    <h2>Skills</h2>
+    <dl class="skills">
+      <dt>Frontend</dt>
+      <dd>
+        HTML5 (semantic, accessible), CSS3, SCSS / Sass, BEM, responsive design, JavaScript,
+        TypeScript, React, Next.js, Redux, TanStack Query, Angular, Astro, Tailwind CSS,
+        styled-components
+      </dd>
+      <dt>Performance &amp; quality</dt>
+      <dd>
+        Core Web Vitals (LCP, CLS, INP), Lighthouse, rendering performance, code review, WCAG 2.2 /
+        axe, Playwright, Vitest
+      </dd>
+      <dt>AI engineering</dt>
+      <dd>
+        Python, LLM APIs (OpenAI, Anthropic), LangChain, LangGraph, RAG, embeddings, vector
+        databases (pgvector), evals, prompt engineering, Hugging Face, NLP fundamentals
+      </dd>
+      <dt>Backend &amp; DevOps</dt>
+      <dd>FastAPI, PostgreSQL, Docker, GitHub Actions, GitLab, Linux, Caddy</dd>
+      <dt>AI-assisted development</dt>
+      <dd>Claude Code (skills, subagents, hooks), agentic coding workflows</dd>
+      <dt>Ways of working</dt>
+      <dd>
+        Mentoring &amp; onboarding, acting team lead, Agile / Scrum, technical documentation, Figma
+        hand-off with designers
+      </dd>
+    </dl>
+
+    <div class="two">
+      <div>
+        <h2>Education</h2>
+        <ul class="small">
+          <li>
+            <strong>Specialist degree (post-bachelor)</strong>, Telecommunication Systems and
+            Networks — Donetsk National Technical University, 2015
+          </li>
+          <li>
+            <strong>Bachelor’s degree</strong>, Telecommunications — Donetsk National Technical
+            University, 2014
+          </li>
+          <li><strong>Full-stack developer program</strong> — IT STEP Computer Academy, 2019</li>
+        </ul>
+        <h2>Languages</h2>
+        <p>
+          English — B1 (intermediate) · Ukrainian — native · Russian — fluent · Spanish, Polish —
+          limited working
+        </p>
+      </div>
+      <div>
+        <h2>Certifications</h2>
+        <ul class="small">
+          <li>The AI Engineer Course 2026: Complete AI Engineer Bootcamp — 365 Careers (2026)</li>
+          <li>Claude Code — Anthropic, Master.dev, Academind (2026)</li>
+          <li>Meta Front-End Developer Specialization — Coursera (2023)</li>
+          <li>React: The Complete Guide · Sass &amp; SCSS · GSAP (Udemy, 2024)</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

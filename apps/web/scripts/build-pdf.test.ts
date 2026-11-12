@@ -1,42 +1,42 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { afterAll, describe, expect, test } from 'vitest';
-import { findPhoneLike, PDF_OPTIONS, pdfOutputPath, resolveDistFile } from './build-pdf.mjs';
+import { describe, expect, test } from 'vitest';
+import { findPhoneLike, PDF_OPTIONS, pdfOutputPath, resumeFile } from './build-pdf.mjs';
 
-describe('resolveDistFile', () => {
-  const dist = mkdtempSync(path.join(tmpdir(), 'cv-pdf-dist-'));
-  mkdirSync(path.join(dist, 'cv'));
-  mkdirSync(path.join(dist, '_astro'));
-  writeFileSync(path.join(dist, 'cv', 'index.html'), '<h1>CV</h1>');
-  writeFileSync(path.join(dist, '_astro', 'cv.css'), 'h1{}');
-  writeFileSync(path.join(dist, '_astro', 'a b.woff2'), '');
-
-  afterAll(() => {
-    rmSync(dist, { recursive: true, force: true });
-  });
-
-  test('serves a directory index for a page path', () => {
-    expect(resolveDistFile(dist, '/cv/')).toBe(path.join(dist, 'cv', 'index.html'));
-    expect(resolveDistFile(dist, '/cv')).toBe(path.join(dist, 'cv', 'index.html'));
-  });
-
-  test('serves assets, including encoded names', () => {
-    expect(resolveDistFile(dist, '/_astro/cv.css')).toBe(path.join(dist, '_astro', 'cv.css'));
-    expect(resolveDistFile(dist, '/_astro/a%20b.woff2')).toBe(
-      path.join(dist, '_astro', 'a b.woff2'),
+describe('resumeFile', () => {
+  test('serves the template and its two font files', () => {
+    expect(resumeFile('/resume.html')?.endsWith(path.join('scripts', 'cv-resume.html'))).toBe(true);
+    expect(resumeFile('/fonts/schibsted-grotesk-normal.woff2')).toMatch(
+      /latin-wght-normal\.woff2$/,
+    );
+    expect(resumeFile('/fonts/schibsted-grotesk-italic.woff2')).toMatch(
+      /latin-wght-italic\.woff2$/,
     );
   });
 
-  test('returns null for missing files and for paths outside dist', () => {
-    expect(resolveDistFile(dist, '/missing.js')).toBeNull();
-    expect(resolveDistFile(dist, '/')).toBeNull();
-    expect(resolveDistFile(dist, '/../outside.txt')).toBeNull();
-    expect(resolveDistFile(dist, '/%2e%2e/outside.txt')).toBeNull();
+  test('blocks everything else', () => {
+    expect(resumeFile('/')).toBeNull();
+    expect(resumeFile('/cv/')).toBeNull();
+    expect(resumeFile('/../package.json')).toBeNull();
+    expect(resumeFile('/fonts/other.woff2')).toBeNull();
+  });
+});
+
+describe('the CV template', () => {
+  const html = readFileSync(path.join(import.meta.dirname, 'cv-resume.html'), 'utf8');
+
+  test('has no phone number and no tel: link (golden rule 5)', () => {
+    expect(
+      findPhoneLike(
+        html,
+        [...html.matchAll(/href="([^"]*)"/g)].map((m) => m[1] ?? ''),
+      ),
+    ).toEqual([]);
   });
 
-  test('returns null for a malformed escape instead of throwing', () => {
-    expect(resolveDistFile(dist, '/_astro/%zz.css')).toBeNull();
+  test('loads nothing from the network: no scripts, no remote styles or fonts', () => {
+    expect(html).not.toMatch(/<script|<link/i);
+    expect(html).not.toMatch(/url\(\s*['"]?https?:/i);
   });
 });
 
