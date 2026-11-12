@@ -8,7 +8,6 @@ code, so this module takes a few seconds once.
 # scikit-learn and joblib ship no type information (as in ingestion/projection.py).
 # pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false
 
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -116,14 +115,38 @@ def test_placing_is_deterministic(fitted: tuple[projection.Projection, Matrix, M
     )
 
 
-# TEMPORARY (Ivan, 2026-11-10): on Linux (CI) UMAP lays the points out differently and the
-# aligned refit lost to a fresh one (median 0.29 vs 0.21), deterministically, blocking the deploy.
-# Runs locally; fixed after reproducing on Linux (docs/ROADMAP.md, CI follow-ups). Remove then.
-@pytest.mark.skipif(sys.platform == "linux", reason="UMAP layout differs on Linux; docs/ROADMAP.md")
+def rms(points: Matrix, targets: Matrix) -> float:
+    """Root mean square distance between paired points: what the alignment minimizes."""
+    return float(np.sqrt(np.mean(np.sum((points - targets) ** 2, axis=1))))
+
+
+def test_the_alignment_beats_any_plain_fit_into_the_square() -> None:
+    # The guarantee behind the stability policy, without UMAP (so the same on every platform):
+    # Procrustes finds the rotation, reflection, uniform scale and shift that bring the new layout
+    # closest to the old points in the mean square. Fitting into the square is one such map (a scale
+    # and a shift), so it can never do better.
+    rng = np.random.default_rng(3)
+    old = rng.uniform(0.1, 0.9, size=(40, 2))
+    angle = 1.1
+    turn = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+    raw = (old @ turn) * 7.0 + np.array([3.0, -2.0]) + 0.02 * rng.normal(size=old.shape)
+
+    matrix, offset = projection._alignment(raw, old)  # pyright: ignore[reportPrivateUsage] -- the guarantee lives in this helper
+    square_matrix, square_offset = projection._fit_square(raw)  # pyright: ignore[reportPrivateUsage] -- the alternative it must beat
+
+    aligned = raw @ matrix + offset
+    assert rms(aligned, old) <= rms(raw @ square_matrix + square_offset, old)
+    # The map is recovered almost exactly: only the noise remains.
+    assert rms(aligned, old) < 0.01
+
+
 def test_a_refit_is_aligned_to_the_old_points(
     fitted: tuple[projection.Projection, Matrix, Matrix],
 ) -> None:
     # Stability policy: a refit (more chunks now) keeps the old points close to where they were.
+    # Measured in the mean square, which the alignment minimizes: the median it once used is not
+    # guaranteed, and on the Linux CI runners (a different UMAP layout) the aligned median lost to a
+    # fresh fit's (0.29 vs 0.21, 2026-11-10) while the policy itself held.
     _, points, vectors = fitted
     more, _ = clustered(seed=0, per_cluster=PER_CLUSTER + 3)
     previous = {i: (float(x), float(y)) for i, (x, y) in enumerate(points)}
@@ -141,12 +164,13 @@ def test_a_refit_is_aligned_to_the_old_points(
     _, fresh = projection.fit(more, PARAMS, previous=None)
 
     old = np.array([previous[int(row)] for row in old_rows])
-    aligned_shift = np.median(np.linalg.norm(aligned[old_rows] - old, axis=1))
-    fresh_shift = np.median(np.linalg.norm(fresh[old_rows] - old, axis=1))
-    assert aligned_shift <= fresh_shift
-    # 0.3, not 0.2 (Ivan, 2026-11-09): UMAP's numba code gives slightly different layouts on Linux
-    # (0.27 on the first CI run) than on Windows (< 0.2); the first assertion is the real policy.
-    assert aligned_shift < 0.3
+    aligned_shift = rms(aligned[old_rows], old)
+    fresh_shift = rms(fresh[old_rows], old)
+    # The numbers in the message, so a failure on another platform explains itself.
+    assert aligned_shift <= fresh_shift, f"aligned {aligned_shift:.3f} vs fresh {fresh_shift:.3f}"
+    # 0.3 (Ivan, 2026-11-09): UMAP's numba code lays points out a little differently per platform;
+    # the comparison above is the real policy, this only catches a broken alignment.
+    assert aligned_shift < 0.3, f"aligned {aligned_shift:.3f}"
 
 
 def test_a_tiny_knowledge_base_still_fits() -> None:
