@@ -102,7 +102,10 @@ Yes, Ivan has a dog named Monty — a three-year-old corgi. Monty is very friend
 Yes, Ivan is married.
 
 ### What are his hobbies?
-Ivan enjoys spending time with his family, running, Formula 1, playing padel and learning new things.
+Ivan enjoys spending time with his family, running, Formula 1, space, playing padel and learning new things.
+
+### Is he interested in space?
+Yes, space is one of his interests. It shows in this site's design too: the background is a star chart, a comet draws the timeline on the CV, and a rocket takes you back to the top of the page.
 
 ### Does he do any sports?
 He runs at an amateur level and sometimes plays padel. In 2021 he ran a marathon.
