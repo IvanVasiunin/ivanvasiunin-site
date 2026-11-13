@@ -389,7 +389,22 @@ describe('ChatTurn', () => {
       }
     }
 
+    /** Gives every element `getAnimations` (jsdom has none) returning these; returns the undo. */
+    const stubAnimations = (animations: readonly object[]): (() => void) => {
+      Object.defineProperty(HTMLElement.prototype, 'getAnimations', {
+        configurable: true,
+        value: () => animations,
+      });
+      return () => {
+        Reflect.deleteProperty(HTMLElement.prototype, 'getAnimations');
+      };
+    };
+
     it('folds when closed: hidden once the fold has ended', async () => {
+      // A browser folding it (jsdom has no Web Animations; without one the panel hides at once).
+      const restore = stubAnimations([
+        { transitionProperty: 'grid-template-rows', finished: new Promise(() => undefined) },
+      ]);
       const user = userEvent.setup();
       setup(WITH_USAGE);
       await user.click(toggle());
@@ -405,18 +420,8 @@ describe('ChatTurn', () => {
       expect(panel()?.hidden).toBe(false);
       foldEnds(panel() ?? document.body);
       expect(panel()?.hidden).toBe(true);
+      restore();
     });
-
-    /** Gives every element `getAnimations` (jsdom has none) returning these; returns the undo. */
-    const stubAnimations = (animations: readonly object[]): (() => void) => {
-      Object.defineProperty(HTMLElement.prototype, 'getAnimations', {
-        configurable: true,
-        value: () => animations,
-      });
-      return () => {
-        Reflect.deleteProperty(HTMLElement.prototype, 'getAnimations');
-      };
-    };
 
     it('closes anyway if the fold never reports its end', () => {
       vi.useFakeTimers();

@@ -8,6 +8,13 @@
     max-inline-size: var(--size-cv);
   }
 
+  // The first section (Summary) is always on the first screen, so its heading never waits for a
+  // scroll to appear: on a narrow phone the masthead photo puts it at the very bottom edge, mid-fade
+  // (2026-11-13).
+  .cv-section:first-of-type .cv-section__title {
+    animation: none;
+  }
+
   // The heading reads like a chart key: a label followed by a fine gradient meridian.
   .cv-section__title {
     @include reveal-on-scroll;

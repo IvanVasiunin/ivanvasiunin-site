@@ -100,11 +100,11 @@ test.describe('/cv', () => {
   });
 });
 
-for (const [path, ogType, canonical] of [
-  ['/', 'website', 'https://ivanvasiunin.com/'],
-  ['/cv', 'profile', 'https://ivanvasiunin.com/cv'],
+for (const [path, ogType, canonical, ogImage] of [
+  ['/', 'website', 'https://ivanvasiunin.com/', '/og/home.jpg'],
+  ['/cv', 'profile', 'https://ivanvasiunin.com/cv', '/og/cv.jpg'],
 ] as const) {
-  test(`${path} has a canonical URL and Open Graph / Twitter tags`, async ({ page }) => {
+  test(`${path} has a canonical URL and Open Graph / Twitter tags`, async ({ page, request }) => {
     await page.goto(path);
     const head = page.locator('head');
     const title = await page.title();
@@ -114,6 +114,49 @@ for (const [path, ogType, canonical] of [
     await expect(head.locator('meta[property="og:title"]')).toHaveAttribute('content', title);
     await expect(head.locator('meta[property="og:url"]')).toHaveAttribute('content', canonical);
     await expect(head.locator('meta[property="og:description"]')).toHaveAttribute('content', /\S/);
-    await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary');
+    await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image',
+    );
+
+    // The link-preview image: absolute, 1200 × 630, described, and served (scripts/og-images.mjs).
+    const image = `https://ivanvasiunin.com${ogImage}`;
+    await expect(head.locator('meta[property="og:image"]')).toHaveAttribute('content', image);
+    await expect(head.locator('meta[name="twitter:image"]')).toHaveAttribute('content', image);
+    await expect(head.locator('meta[property="og:image:width"]')).toHaveAttribute(
+      'content',
+      '1200',
+    );
+    await expect(head.locator('meta[property="og:image:height"]')).toHaveAttribute(
+      'content',
+      '630',
+    );
+    await expect(head.locator('meta[property="og:image:alt"]')).toHaveAttribute('content', /S/);
+    const served = await request.get(ogImage);
+    expect(served.status()).toBe(200);
+    expect(served.headers()['content-type']).toContain('image/jpeg');
   });
 }
+
+test('every page links its icons, and they are served', async ({ page, request }) => {
+  await page.goto('/');
+  const head = page.locator('head');
+  const icons = [
+    ['link[rel="icon"][type="image/svg+xml"]', '/favicon.svg', 'image/svg+xml'],
+    ['link[rel="icon"][type="image/png"]', '/favicon-32.png', 'image/png'],
+    ['link[rel="apple-touch-icon"]', '/apple-touch-icon.png', 'image/png'],
+    ['link[rel="manifest"]', '/site.webmanifest', ''],
+  ] as const;
+  for (const [selector, href, type] of icons) {
+    await expect(head.locator(selector)).toHaveAttribute('href', href);
+    const response = await request.get(href);
+    expect(response.status(), href).toBe(200);
+    if (type !== '') expect(response.headers()['content-type'], href).toContain(type);
+  }
+  const manifest = (await (await request.get('/site.webmanifest')).json()) as {
+    icons: { src: string }[];
+  };
+  for (const icon of manifest.icons) {
+    expect((await request.get(icon.src)).status(), icon.src).toBe(200);
+  }
+});

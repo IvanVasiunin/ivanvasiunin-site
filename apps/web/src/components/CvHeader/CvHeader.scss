@@ -30,11 +30,13 @@
   // The <picture> is the grid item: on the left from `md`, level with the name.
   .cv-header__media {
     display: block;
+    justify-self: center; // phones: centred above the name (Ivan, 2026-11-13)
     inline-size: fit-content;
 
     @include mq(md) {
       grid-row: 1 / span 4;
       grid-column: 1;
+      justify-self: start;
     }
 
     @media print {

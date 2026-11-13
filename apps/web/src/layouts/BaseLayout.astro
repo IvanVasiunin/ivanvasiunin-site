@@ -30,13 +30,26 @@ interface Props {
    * between the header and the footer (AI mode: the chat panel scrolls inside, the page does not).
    */
   readonly fit?: boolean;
+  /** The link-preview image under public/ (scripts/og-images.mjs): 1200 × 630. */
+  readonly ogImage?: string;
 }
 
-const { title, description, ogType = 'website', scrollTop = true, fit = false } = Astro.props;
+const {
+  title,
+  description,
+  ogType = 'website',
+  scrollTop = true,
+  fit = false,
+  ogImage = '/og/home.jpg',
+} = Astro.props;
 
 // Canonical and Open Graph URLs (html-a11y.md → Structure) from `site` in astro.config.mjs.
 const SITE_NAME = 'Ivan Vasiunin';
 const canonicalUrl = toCanonicalUrl(Astro.url.pathname, Astro.site);
+// Link previews (Telegram, LinkedIn, X…) need an absolute image URL.
+const ogImageUrl = new URL(ogImage, Astro.site ?? Astro.url).href;
+const OG_IMAGE_ALT =
+  'Ivan Vasiunin, Senior Frontend Engineer · AI Engineering, on a dark star chart';
 
 // The two inline blocks Astro does not hash itself. Their exact text is rendered from these
 // constants and hashed into the page's CSP <meta> (security.csp in astro.config.mjs).
@@ -86,9 +99,23 @@ const SPECULATION_RULES = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={OG_IMAGE_ALT} />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content={OG_IMAGE_ALT} />
+    <meta name="author" content={SITE_NAME} />
+    {/* Icons (public/): the site's mark on the dark sky. SVG for browsers that take it, a PNG for the
+    rest, the home-screen icon for iOS and the manifest for Android. */}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     {/* Page-specific head content, e.g. the JSON-LD on /cv. */}
     <slot name="head" />
     {/* Dark by default (SPEC US-X1); the head script below switches both for a stored light choice. */}
