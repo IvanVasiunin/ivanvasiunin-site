@@ -18,8 +18,11 @@ import { firstHiddenIndex } from './sourceRows';
 
 import './ChatTurn.scss';
 
-/** The longest a closing Under the hood is waited for (its transition takes 320 ms). */
-const CLOSING_FALLBACK_MS = 800;
+/**
+ * A safety net only: the closing ends when the fold's own transition finishes (see the effect in
+ * ChatTurn). A short timer hid the panel mid-fold on a slow machine (WebKit on CI: a 430 px jump).
+ */
+const CLOSING_FALLBACK_MS = 3000;
 
 const prefersReducedMotion = (): boolean =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -254,6 +257,43 @@ export function ChatTurn({ turn, canRetry, onRetry, onAnnounce }: ChatTurnProps)
     window.clearTimeout(closingTimer.current);
     setHood('closed');
   };
+
+  // Closing: hidden when the fold's transition finishes, however long the machine takes to run it.
+  // Without one (no transition support, or none started) it is hidden at once: nothing is folding.
+  useEffect(() => {
+    if (hood !== 'closing') return;
+    let cancelled = false;
+    const frame = requestAnimationFrame(() => {
+      const panel = hoodRef.current;
+      // Duck-typed: a CSSTransition names its property (old engines and jsdom have no such API).
+      const fold =
+        panel !== null && typeof panel.getAnimations === 'function'
+          ? panel
+              .getAnimations()
+              .find(
+                (animation) =>
+                  'transitionProperty' in animation &&
+                  animation.transitionProperty === 'grid-template-rows',
+              )
+          : undefined;
+      if (fold === undefined) {
+        closed();
+        return;
+      }
+      fold.finished.then(
+        () => {
+          if (!cancelled) closed();
+        },
+        () => {
+          // Cancelled: reopened while closing; the open state takes over.
+        },
+      );
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [hood]);
 
   const toggleHood = (): void => {
     if (hood !== 'open') {

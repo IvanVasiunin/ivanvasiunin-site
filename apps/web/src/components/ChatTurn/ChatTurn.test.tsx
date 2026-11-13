@@ -407,8 +407,24 @@ describe('ChatTurn', () => {
       expect(panel()?.hidden).toBe(true);
     });
 
+    /** Gives every element `getAnimations` (jsdom has none) returning these; returns the undo. */
+    const stubAnimations = (animations: readonly object[]): (() => void) => {
+      Object.defineProperty(HTMLElement.prototype, 'getAnimations', {
+        configurable: true,
+        value: () => animations,
+      });
+      return () => {
+        Reflect.deleteProperty(HTMLElement.prototype, 'getAnimations');
+      };
+    };
+
     it('closes anyway if the fold never reports its end', () => {
       vi.useFakeTimers();
+      // A fold that never finishes (and never fires transitionend): only the safety net ends it.
+      // jsdom has no Web Animations: the panel reports one fold that never finishes.
+      const restore = stubAnimations([
+        { transitionProperty: 'grid-template-rows', finished: new Promise(() => undefined) },
+      ]);
       setup(WITH_USAGE);
       fireEvent.click(toggle());
       fireEvent.click(toggle());
@@ -416,8 +432,35 @@ describe('ChatTurn', () => {
       act(() => {
         vi.advanceTimersByTime(1000);
       });
+      // A slow machine is still folding after a second: not hidden mid-fold (CI WebKit, 430 px jump).
+      expect(panel()?.hidden).toBe(false);
 
+      act(() => {
+        vi.advanceTimersByTime(2500);
+      });
       expect(panel()?.hidden).toBe(true);
+      restore();
+    });
+
+    it('hides the panel when its fold transition finishes, not before', async () => {
+      let finish: () => void = () => undefined;
+      const finished = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      const restore = stubAnimations([{ transitionProperty: 'grid-template-rows', finished }]);
+      const user = userEvent.setup();
+      setup(WITH_USAGE);
+      await user.click(toggle());
+      await user.click(toggle());
+      await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+      expect(panel()?.hidden).toBe(false);
+
+      await act(async () => {
+        finish();
+        await finished;
+      });
+      expect(panel()?.hidden).toBe(true);
+      restore();
     });
 
     it('reopens while folding', async () => {
