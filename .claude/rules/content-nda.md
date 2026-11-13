@@ -43,5 +43,5 @@ Verification tags: `[hook]`, `[test]`, `[review]`.
 - The assistant (Elio) speaks about Ivan in the **third person**. Prompts and templates never make it speak as Ivan. `[review]` `[test]` (eval cases)
 
 ## Assets and licenses
-- Fonts, icons, images and other assets must have open licenses (OFL, MIT, ISC, Apache-2.0, CC0, CC BY). Fonts are self-hosted, with no third-party font CDNs. `[test]` (e2e asserts no third-party requests) `[review]`
+- Fonts, icons, images and other assets must have open licenses (OFL, MIT, ISC, Apache-2.0, CC0, CC BY); the one exception is Ivan's own photo (his rights reserved). Fonts are self-hosted, with no third-party font CDNs. `[test]` (e2e asserts no third-party requests) `[review]`
 - Every such asset gets a row in `docs/CREDITS.md` in the same change that adds it. `[review]`

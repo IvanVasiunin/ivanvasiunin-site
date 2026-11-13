@@ -24,7 +24,7 @@ The repo is public and is itself a portfolio piece. This is Ivan's first AI proj
 apps/web/     Astro 7 + React islands, TS 6 strict, SCSS + BEM     → apps/web/CLAUDE.md
 apps/api/     FastAPI + LangChain/LangGraph, Python 3.13, uv       → apps/api/CLAUDE.md
 data/         experience-notes.md, github-projects.md, about-me-personal.md (RAG sources; edit only with Ivan's OK)
-data/raw/     Word CV with phone number — git-ignored, never read, never ingested
+data/raw/     private files: Word CV and CV PDFs with the phone number (never read), photo originals — git-ignored, never ingested
 infra/        docker-compose, Caddyfile, scripts
 docs/         ARCHITECTURE, ROADMAP, TESTING, RUNBOOK, CREDITS, adr/, phase-0-setup.md
 scripts/      cross-platform Node scripts (check-fast.mjs, check-commit-msg.mjs)
@@ -66,7 +66,7 @@ The full list is in `docs/TESTING.md` §2. Names are finalized when the skeleton
 2. **Every technology has a recorded reason.** New dependencies and architecture choices need an ADR (`write-adr` skill, status Proposed until Ivan accepts).
 3. **Rule → tool.** If a linter, typechecker, test or hook can check it, it must; rules files hold only what can't be automated.
 4. **Never weaken a red test:** no `skip`, no loosened assertions, no deletion without Ivan's consent. The only exception is `mentor_pending`, and only Ivan removes it.
-5. **No phone number anywhere** — repo, CV source, RAG, prompts, fixtures, screenshots. Never read `data/raw/`.
+5. **No phone number anywhere** — repo, CV source, RAG, prompts, fixtures, screenshots, the site. Never read the CVs in `data/raw/` (`.docx`, `.doc`, `.pdf`: they carry the phone number); photos there may be read and edited (Ivan, 2026-11-12).
 6. **NDA:** employer work is described only by role, product type, stack and contribution in general terms.
 7. **Elio speaks about Ivan in the third person**, answers only from retrieved context and follows SPEC §5.
 8. **No secrets** in code, logs, traces or images. Config only via env / pydantic-settings; `.env.example` holds placeholders.

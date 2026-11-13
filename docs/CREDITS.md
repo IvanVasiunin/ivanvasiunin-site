@@ -21,6 +21,6 @@ Font files come from the pinned npm packages above (exact versions in `pnpm-lock
 
 | Asset | License | Source | Used for |
 |---|---|---|---|
-| — | — | — | — |
+| Ivan's photo (`apps/web/src/assets/ivan-vasiunin.jpg`) | © Ivan Vasiunin, all rights reserved (not covered by the repository's MIT license) | Ivan's own photo, background and clothes edited with OpenAI `gpt-image-2` at his request (2026-11-12) | The portrait in the `/cv` masthead and the CV page's JSON-LD |
 
 Code dependencies are not listed here; their licenses are recorded in [ADR-0001](adr/0001-tech-stack.md) and in the lock files.

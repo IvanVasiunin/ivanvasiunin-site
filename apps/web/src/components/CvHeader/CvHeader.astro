@@ -1,6 +1,8 @@
 ---
 // The CV masthead: name (the page's h1), role, location and the public contacts (SPEC §3.2 US-T2).
+import { Picture } from 'astro:assets';
 import './CvHeader.scss';
+import ivanPhoto from '../../assets/ivan-vasiunin.jpg';
 import { printableUrl, telegramUrl, type CvData } from '../../lib/cv/view';
 
 interface Props {
@@ -25,6 +27,21 @@ const links: readonly { label: string; value: string; href: string; print?: stri
 ---
 
 <header class="cv-header">
+  {/* Ivan's photo (2026-11-12): a studio headshot, edited from his own photo. AVIF / WebP at 1x-3x of
+  the largest size it shows at (--size-cv-photo-md), eager: it is on the first screen. Not printed
+  (the PDF has none either). */}
+  <Picture
+    class="cv-header__photo"
+    pictureAttributes={{ class: 'cv-header__media' }}
+    src={ivanPhoto}
+    alt={`Portrait of ${name}`}
+    formats={['avif', 'webp']}
+    width={128}
+    height={128}
+    densities={[1, 2, 3]}
+    loading="eager"
+    decoding="async"
+  />
   <h1 class="cv-header__name">{name}</h1>
   <p class="cv-header__role">
     {headline}

@@ -117,7 +117,7 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 
 - [ ] **Link previews:** an `og:image` (and `twitter:card` `summary_large_image`) for `/` and `/cv`, 1200 × 630, in the Atlas style; review the `og:title` / `og:description` / `og:site_name` texts that exist (`BaseLayout.astro`), and add `og:image:alt`.
 - [ ] **Favicon:** SVG favicon (light / dark), PNG fallbacks, `apple-touch-icon` and a web manifest; `theme-color` stays dark by default.
-- [ ] **Photo on the CV:** Ivan's photo in the `/cv` header (both views, print and PDF); explicit size, modern format (AVIF / WebP), no layout shift, `alt` text; the photo file from Ivan (content approval).
+- [x] **Photo on the CV** (2026-11-12): a studio headshot (edited from Ivan's photo with `gpt-image-2`) in the `/cv` masthead, AVIF / WebP, not printed and not in the PDF (Ivan's choice: US / UK recruiters expect none).
 - [ ] **Fix all current bugs:** the CI follow-ups below (CI on `main` is red until then, so deploys need a manual `Run workflow`), plus whatever Ivan finds on the phone after the 2026-11-10 mobile fixes.
 
 ## CI follow-ups (after launch)

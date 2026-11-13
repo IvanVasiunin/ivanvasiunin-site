@@ -109,10 +109,12 @@ interface PersonInput {
   readonly languages: CvData<'languages'>;
   /** Absolute URL of the CV page. */
   readonly url: string;
+  /** Absolute URL of Ivan's photo, when the page has one. */
+  readonly image?: string;
 }
 
 /** schema.org `Person` for the CV page. Public data only: no phone, no street address. */
-export function personJsonLd({ profile, jobs, education, languages, url }: PersonInput) {
+export function personJsonLd({ profile, jobs, education, languages, url, image }: PersonInput) {
   const { contacts } = profile;
   const current = jobs.filter((job) => job.end === 'present');
   const schools = [...new Set(education.entries.map((entry) => entry.institution))];
@@ -123,6 +125,7 @@ export function personJsonLd({ profile, jobs, education, languages, url }: Perso
     name: profile.name,
     jobTitle: profile.headline,
     url,
+    ...(image === undefined ? {} : { image }),
     email: `mailto:${contacts.email}`,
     homeLocation: { '@type': 'Place', name: profile.location },
     sameAs: [contacts.github, contacts.linkedin, telegramUrl(contacts.telegram)],
