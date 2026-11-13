@@ -59,6 +59,17 @@ async function readToEnd(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: 'Jump to latest' })).toBeHidden();
 }
 
+/**
+ * Below `md`: scrolls up one screen, as a reader going back to an earlier answer. A fixed distance
+ * was not enough on a tall phone (iPhone 17 Pro Max, CI 2026-11-10): the last answer then reached
+ * only 80–128 px under the input, the margin where "Jump to latest" keeps its state on purpose.
+ */
+async function readUp(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    window.scrollBy(0, -window.innerHeight);
+  });
+}
+
 async function ask(page: Page, question: string): Promise<void> {
   await expect(input(page)).toBeEnabled();
   await input(page).fill(question);
@@ -148,18 +159,9 @@ test.describe('chat', () => {
     await expect(panel).toBeHidden();
   });
 
-  test('closing Under the hood never makes the conversation jump', async ({
-    page,
-    browserName,
-  }) => {
+  test('closing Under the hood never makes the conversation jump', async ({ page }) => {
     // Ivan, 2026-11-06: at the very end of the closing animation everything leapt down (the panel's
     // space went at once and the scroll position was clamped).
-    // TEMPORARY (Ivan, 2026-11-09): WebKit on CI measured a 16 px jump; local WebKit runs pass.
-    // Investigated after launch (docs/ROADMAP.md, CI follow-ups); remove this line then.
-    test.skip(
-      Boolean(process.env.CI) && browserName === 'webkit',
-      'Investigating a CI-only WebKit result (see the comment).',
-    );
     await mockChat(page);
     await page.goto('/');
     await ask(page, 'What did Ivan do at BrainRocket?');
@@ -713,9 +715,7 @@ test.describe('chat', () => {
     await readToEnd(page);
     expect(await scrim()).toBe('none');
 
-    await page.evaluate(() => {
-      window.scrollBy(0, -600);
-    });
+    await readUp(page);
     await expect(page.getByRole('button', { name: 'Jump to latest' })).toBeVisible();
     expect(await scrim()).not.toBe('none');
   });
@@ -738,9 +738,7 @@ test.describe('chat', () => {
     }
     await input(page).blur();
 
-    await page.evaluate(() => {
-      window.scrollBy(0, -600);
-    });
+    await readUp(page);
     await expect(page.getByRole('button', { name: 'Jump to latest' })).toBeVisible();
 
     // Back down until the footer's top edge is at the bottom of the screen: the footer is still
@@ -798,9 +796,7 @@ test.describe('chat', () => {
 
     const before = await fieldTop();
     if (isMobile) {
-      await page.evaluate(() => {
-        window.scrollBy(0, -600);
-      });
+      await readUp(page);
     } else {
       // As a reader does it: the wheel over the conversation (an upward wheel pauses following).
       await page.locator('.chat__scroll').hover();

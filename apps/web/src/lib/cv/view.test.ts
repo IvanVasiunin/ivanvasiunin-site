@@ -137,6 +137,19 @@ describe('personJsonLd', () => {
     expect(JSON.stringify(person)).not.toMatch(/telephone|streetAddress/);
   });
 
+  test('names the photo only when there is one', () => {
+    expect(person).not.toHaveProperty('image');
+    const withPhoto = personJsonLd({
+      profile,
+      jobs: [],
+      education,
+      languages,
+      url: 'https://ivanvasiunin.com/cv',
+      image: 'https://ivanvasiunin.com/_astro/ivan.jpg',
+    });
+    expect(withPhoto).toHaveProperty('image', 'https://ivanvasiunin.com/_astro/ivan.jpg');
+  });
+
   test('lists only current employers and each school once', () => {
     expect(person.worksFor).toEqual([{ '@type': 'Organization', name: 'BrainRocket' }]);
     expect(person.alumniOf.map((school) => school.name)).toEqual(['DonNTU', 'IT STEP']);

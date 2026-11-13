@@ -45,7 +45,7 @@ Related: [ARCHITECTURE](docs/ARCHITECTURE.md), [ROADMAP](docs/ROADMAP.md), [TEST
 | `/?q=<text>` | AI mode with a prefilled question | Same | The question is placed in the input and focused, **never sent automatically**: this protects the budget from accidental clicks and crawlers. Used by the example questions' no-JS links. |
 | `/cv` | **Text mode** (CV), Full view | Static HTML, no framework JS | Without JS, the Full version is shown. |
 | `/cv?view=brief` | Text mode, Brief view | Static HTML + small enhancement script | `?view=full` is the default and may be omitted. |
-| `/cv/ivan-vasiunin-cv.pdf` | CV as PDF | Generated at build time from `/cv` print styles | Always the Full version. |
+| `/cv/ivan-vasiunin-cv.pdf` | CV as PDF | Printed at build time from the recruiter template `apps/web/scripts/cv-resume.html` | Two A4 pages for recruiters (Ivan, 2026-11-12); no phone number. |
 | `/privacy` | Privacy notice | Static HTML | Describes chat statistics, masking and retention. |
 | `/api/health` | Healthcheck | JSON | — |
 | `/api/chat` | Chat endpoint | SSE | See §4. |
@@ -172,7 +172,7 @@ Notation: **US-A** = AI mode, **US-T** = Text mode, **US-X** = cross-cutting.
 
 **US-T4. Print and PDF.**
 - Printing `/cv` always prints the Full version, without navigation, the mode switcher or backgrounds.
-- A **Download PDF** link serves the build-time PDF generated from the same HTML and print styles.
+- A **Download PDF** link serves the build-time PDF: a two-page recruiter CV printed from its own template (`apps/web/scripts/cv-resume.html`, text curated from the CV content; Ivan, 2026-11-12). Printing `/cv` from the browser still uses the page's print styles.
 
 **US-T5. Layout details (progressive enhancement).**
 - CSS scroll-driven animations for section reveals or a reading-progress indicator, inside `@supports (animation-timeline: view())`.

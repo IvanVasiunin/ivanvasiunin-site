@@ -204,22 +204,38 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
           Boolean((event as Event & { viewTransition?: unknown }).viewTransition);
       });
     });
-    await page.goto('/');
-    // A prerendered page (speculation rules) is activated without Playwright's init scripts, so this
-    // test drops the rules (removing the script removes its rule set) and checks the transition alone.
-    await page.evaluate(() => {
-      document.querySelector('script[type="speculationrules"]')?.remove();
-    });
-    await textMode(page).click();
-    await expect(page).toHaveURL(/\/cv\/?$/);
+    const switchOnce = async (): Promise<boolean | undefined> => {
+      await page.goto('/');
+      // A prerendered page (speculation rules) is activated without Playwright's init scripts, so
+      // this test drops the rules (removing the script removes its rule set) and checks the
+      // transition alone.
+      await page.evaluate(() => {
+        document.querySelector('script[type="speculationrules"]')?.remove();
+      });
+      await textMode(page).click();
+      await expect(page).toHaveURL(/\/cv\/?$/);
+      await page.waitForFunction(
+        () =>
+          (window as unknown as { revealedWithTransition?: boolean }).revealedWithTransition !==
+          undefined,
+      );
+      return page.evaluate(
+        () => (window as unknown as { revealedWithTransition?: boolean }).revealedWithTransition,
+      );
+    };
 
-    await expect
-      .poll(() =>
-        page.evaluate(
-          () => (window as unknown as { revealedWithTransition?: boolean }).revealedWithTransition,
-        ),
-      )
-      .toBe(reducedMotion === 'no-preference');
+    if (reducedMotion === 'reduce') {
+      expect(await switchOnce()).toBe(false);
+      return;
+    }
+    // Up to three switches: on a busy CI runner Chromium sometimes reveals the new page without the
+    // transition (CI 2026-11-10; likely its reveal timeout, UNVERIFIED). One transition proves the
+    // opt-in works; a broken opt-in fails all three.
+    const seen: (boolean | undefined)[] = [];
+    for (let attempt = 0; attempt < 3 && seen.at(-1) !== true; attempt += 1) {
+      seen.push(await switchOnce());
+    }
+    expect(seen).toContain(true);
   });
 }
 

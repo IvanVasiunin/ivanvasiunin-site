@@ -113,16 +113,19 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 | 8.5 | README for the public repo; this repo added to the GitHub allow-list and re-ingested | C + I | Repo public; the assistant can answer "how is this site built?" |
 | 8.6 | Open Graph image (1200×630, `og:image` + `twitter:image`, `twitter:card` → `summary_large_image`) for `/` and `/cv` | C, Ivan reviews | Link previews show the image in the Telegram / LinkedIn debuggers |
 
+## Next (after launch; Ivan, 2026-11-10)
+
+- [x] **Link previews** (2026-11-13; `scripts/og-images.mjs`): an `og:image` (and `twitter:card` `summary_large_image`) for `/` and `/cv`, 1200 × 630, in the Atlas style; review the `og:title` / `og:description` / `og:site_name` texts that exist (`BaseLayout.astro`), and add `og:image:alt`.
+- [x] **Favicon** (2026-11-13): SVG favicon (light / dark), PNG fallbacks, `apple-touch-icon` and a web manifest; `theme-color` stays dark by default.
+- [x] **Photo on the CV** (2026-11-12): a studio headshot (edited from Ivan's photo with `gpt-image-2`) in the `/cv` masthead, AVIF / WebP, not printed and not in the PDF (Ivan's choice: US / UK recruiters expect none).
+- [ ] **Fix all current bugs:** the CI follow-ups below (CI on `main` is red until then, so deploys need a manual `Run workflow`), plus whatever Ivan finds on the phone after the 2026-11-10 mobile fixes.
+
 ## CI follow-ups (after launch)
 
-Found by the first CI run (2026-11-09); both pass locally and are skipped on CI only until fixed (Ivan's OK):
+Fixed 2026-11-12:
 
-- `e2e/chat.spec.ts` "closing Under the hood never makes the conversation jump": WebKit on CI measured a 16 px jump.
-- `e2e/fonts.spec.ts` "/cv keeps layout shift under 0.1 when the fonts arrive late": throttled Android on CI measured 0.13.
-
-Skipped on Linux (CI) for now (2026-11-10, Ivan's OK; it failed the `main` run after PR #2 twice, with the same numbers, and blocked the deploy):
-
-- `apps/api/tests/ingestion/test_projection.py::test_a_refit_is_aligned_to_the_old_points`: UMAP with a fixed `random_state` and one thread still lays points out a little differently on different CI runner CPUs (numba), and once the aligned refit moved the old points more than a fresh one (median 0.29 vs 0.21). Make it robust without losing the policy, e.g. the median over several `random_state`s, or assert only that the aligned shift is small. It loosens the check, so it needs Ivan's OK on the exact form.
+- They failed `main` runs at random: the UMAP refit alignment test (compares the mean-square shift the alignment minimizes, not the median), the iPhone "reading up" chat tests (scroll one screen) and the view-transition test (one transition in up to three switches).
+- Skipped on CI since 2026-11-09, now on again: "/cv keeps layout shift under 0.1 when the fonts arrive late" (0.13 on throttled Android: the UI font's metric-matched fallback covered only Arial, which Android lacks; `system-ui` now adds Roboto, Segoe UI, Helvetica Neue) and "closing Under the hood never makes the conversation jump" (16 px on WebKit; the latest turn is a screen tall since 2026-11-10, so the end-of-page clamp no longer comes into play).
 
 Kept off CI for good: the knowledge map frame budgets (`e2e/knowledge-map-perf.spec.ts`) need a quiet machine; they run locally through the `perf-check` skill.
 

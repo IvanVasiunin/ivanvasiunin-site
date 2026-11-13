@@ -1,22 +1,53 @@
 // @ts-check
 // Build-time CV PDF (SPEC §2, §3.2 US-T4; ROADMAP 2.5). Runs after `astro build` (the `build` script):
-// renders the built /cv in Playwright's Chromium with the print styles (always the Full view, light,
-// ink on paper) and writes dist/cv/ivan-vasiunin-cv.pdf, which the "Download PDF" link serves.
+// prints the recruiter CV (scripts/cv-resume.html, a two-page layout of its own; Ivan, 2026-11-12) in
+// Playwright's Chromium and writes dist/cv/ivan-vasiunin-cv.pdf, which the "Download PDF" link serves.
+// The /cv page keeps its own print styles for printing from the browser.
 //
 //   pnpm run build                 astro build + this script
 //   node scripts/build-pdf.mjs     after a build, PDF only
 //
-// No server and no port: every request goes to a fake origin that Playwright answers from dist/, so the
-// PDF uses exactly the built HTML, CSS and self-hosted fonts and the build never touches the network.
+// No server and no port: every request goes to a fake origin that Playwright answers from local files
+// (the template and its self-hosted fonts), so the build never touches the network.
 import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from '@playwright/test';
-import { CV_PAGE_PATH, CV_PDF_PATH } from '../src/lib/cv/pdf.ts';
+import { CV_PDF_PATH } from '../src/lib/cv/pdf.ts';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(WEB_DIR, 'dist');
 const ORIGIN = 'http://cv.pdf.invalid';
+const TEMPLATE = path.join(WEB_DIR, 'scripts', 'cv-resume.html');
+const FONTS = path.join(
+  WEB_DIR,
+  'node_modules',
+  '@fontsource-variable',
+  'schibsted-grotesk',
+  'files',
+);
+
+/**
+ * The local file for a URL path on the fake origin: the template, or one of its two font files.
+ * Everything else is null (blocked).
+ * @param {string} pathname
+ * @returns {string | null}
+ */
+export function resumeFile(pathname) {
+  const files = new Map([
+    ['/resume.html', TEMPLATE],
+    [
+      '/fonts/schibsted-grotesk-normal.woff2',
+      path.join(FONTS, 'schibsted-grotesk-latin-wght-normal.woff2'),
+    ],
+    [
+      '/fonts/schibsted-grotesk-italic.woff2',
+      path.join(FONTS, 'schibsted-grotesk-latin-wght-italic.woff2'),
+    ],
+  ]);
+  const file = files.get(pathname);
+  return file !== undefined && existsSync(file) ? file : null;
+}
 
 /**
  * Page size and margins come from `@page` in the print styles (styles/base.scss). Tagged: the PDF
@@ -27,34 +58,10 @@ const ORIGIN = 'http://cv.pdf.invalid';
 export const PDF_OPTIONS = {
   format: 'A4',
   preferCSSPageSize: true,
-  printBackground: false,
+  printBackground: true,
   tagged: true,
   outline: true,
 };
-
-/**
- * The file in `dist` for a URL path: `/cv/` → `cv/index.html`, `/_astro/a.css` → `_astro/a.css`.
- * Returns null for paths that leave `dist` (`..`) or do not exist.
- * @param {string} dist
- * @param {string} pathname
- * @returns {string | null}
- */
-export function resolveDistFile(dist, pathname) {
-  let decoded;
-  try {
-    decoded = decodeURIComponent(pathname);
-  } catch {
-    return null; // a malformed escape (`%zz`) names no file
-  }
-  const relative = decoded.replace(/^\/+/, '');
-  const candidate = path.resolve(dist, relative);
-  if (candidate !== dist && !candidate.startsWith(dist + path.sep)) return null;
-  const file =
-    existsSync(candidate) && statSync(candidate).isDirectory()
-      ? path.join(candidate, 'index.html')
-      : candidate;
-  return existsSync(file) && statSync(file).isFile() ? file : null;
-}
 
 /**
  * Golden rule 5: no phone number anywhere. The same "phone-like" pattern as src/lib/cv/no-phone.test.ts:
@@ -91,6 +98,7 @@ async function main() {
   if (!existsSync(path.join(DIST, 'cv', 'index.html'))) {
     throw new Error('dist/cv/index.html is missing: run `astro build` first.');
   }
+  if (!existsSync(TEMPLATE)) throw new Error(`The CV template is missing: ${TEMPLATE}`);
   let browser;
   try {
     browser = await chromium.launch();
@@ -103,16 +111,20 @@ async function main() {
   }
   try {
     const context = await browser.newContext({ colorScheme: 'light', reducedMotion: 'reduce' });
+    // An unreadable font would silently fall back to Arial and reflow the two pages.
+    if (!resumeFile('/fonts/schibsted-grotesk-normal.woff2')) {
+      throw new Error(`Schibsted Grotesk is missing in ${FONTS}: run pnpm install.`);
+    }
     // Only the fake origin is answered; anything else (there should be nothing) is blocked.
     await context.route('**/*', async (route) => {
       const url = new URL(route.request().url());
-      const file = url.origin === ORIGIN ? resolveDistFile(DIST, url.pathname) : null;
+      const file = url.origin === ORIGIN ? resumeFile(url.pathname) : null;
       await (file ? route.fulfill({ path: file }) : route.abort('blockedbyclient'));
     });
     const page = await context.newPage();
     await page.emulateMedia({ media: 'print' });
-    await page.goto(`${ORIGIN}${CV_PAGE_PATH}`, { waitUntil: 'load' });
-    // The serif loads when print layout first uses it; wait until every face is in.
+    await page.goto(`${ORIGIN}/resume.html`, { waitUntil: 'load' });
+    // Wait until every face is in, so the layout is final.
     await page.evaluate(async () => {
       await document.fonts.ready;
     });

@@ -1,4 +1,6 @@
 ---
+import { getImage } from 'astro:assets';
+import ivanPhoto from '../assets/ivan-vasiunin.jpg';
 // Text mode: the CV (SPEC §2, §3.2; ROADMAP 2.3–2.4). Static HTML, no framework JS. Content comes from
 // the `cv` collection (src/content/cv), validated at build time. Brief / Full: src/lib/cv/view-mode.ts.
 import { render } from 'astro:content';
@@ -40,12 +42,15 @@ const jobContents = await Promise.all(
   jobs.map(async (job) => ({ job, Content: (await render(job)).Content })),
 );
 
+// The photo in the masthead, also named in the JSON-LD (search results may show it).
+const photoForSearch = await getImage({ src: ivanPhoto, width: 512, format: 'jpeg' });
 const person = personJsonLd({
   profile: profile.data,
   jobs: jobs.map((job) => job.data),
   education,
   languages,
   url: canonicalUrl(Astro.url.pathname, Astro.site),
+  image: new URL(photoForSearch.src, Astro.site ?? Astro.url).href,
 });
 
 const year = (value: number) => ({ label: String(value), value: String(value) });
@@ -75,7 +80,8 @@ Astro.csp?.insertScriptHash(cspHash(VIEW_SCRIPT));
 
 <BaseLayout
   title={`CV — ${name}`}
-  description={`CV of ${name}, ${headline}: experience, projects, skills, education and contacts.`}
+  description={`CV of ${name}, ${headline}: experience, projects, skills, education and contacts, with a two-page PDF.`}
+  ogImage="/og/cv.jpg"
   ogType="profile"
 >
   {/* Structured data for search engines (SPEC §3.2 US-T2). A data block, never executed. */}

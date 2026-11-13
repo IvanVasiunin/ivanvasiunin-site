@@ -6,6 +6,59 @@
     gap: var(--space-sm);
     inline-size: 100%;
     max-inline-size: var(--size-cv);
+
+    // From `md` the photo stands on the left, beside everything else.
+    @include mq(md) {
+      grid-template-columns: auto 1fr;
+      column-gap: var(--space-xl);
+
+      > :not(.cv-header__media) {
+        grid-column: 2;
+      }
+    }
+
+    // On paper there is no photo: one column, as before it.
+    @media print {
+      grid-template-columns: 1fr;
+
+      > :not(.cv-header__media) {
+        grid-column: auto;
+      }
+    }
+  }
+
+  // The <picture> is the grid item: on the left from `md`, level with the name.
+  .cv-header__media {
+    display: block;
+    justify-self: center; // phones: centred above the name (Ivan, 2026-11-13)
+    inline-size: fit-content;
+
+    @include mq(md) {
+      grid-row: 1 / span 4;
+      grid-column: 1;
+      justify-self: start;
+    }
+
+    @media print {
+      display: none;
+    }
+  }
+
+  // Ivan's photo: a round headshot with the accent hairline and a soft glow. Above the name on
+  // phones; from `md` on the left, level with the name. Not on paper (nor in the PDF).
+  .cv-header__photo {
+    display: block;
+    inline-size: var(--size-cv-photo);
+    block-size: var(--size-cv-photo);
+    object-fit: cover;
+    border: var(--border-width) solid var(--color-accent);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-glow-sm);
+
+    @include mq(md) {
+      inline-size: var(--size-cv-photo-md);
+      block-size: var(--size-cv-photo-md);
+    }
   }
 
   .cv-header__role {

@@ -97,7 +97,7 @@ For each question I run a vector search and a full-text search, merge them with 
 
 export const PERSONAL_ANSWER = `Ivan lives in Valencia, Spain, and he has a dog named **Monty**, a three-year-old corgi who is far too friendly to bring to the office on pet days.
 
-In his free time he runs (he finished a marathon in 2021), plays padel and follows Formula 1; in 2026 he saw his first Grand Prix live, in Madrid.`;
+In his free time he runs (he finished a marathon in 2021), plays padel, follows Formula 1 and is into space; in 2026 he saw his first Grand Prix live, in Madrid.`;
 
 export const CONTACT_ANSWER = `Ivan is open to offers: frontend, UI and markup roles, and AI-focused roles where a strong frontend background helps. He prefers remote work and is open to relocation.
 
@@ -315,7 +315,7 @@ export const TOPICS: readonly Topic[] = [
     ],
   },
   {
-    pattern: /\b(pet|dog|hobb|free time|sport|run|padel|formula|f1|family|live|from)/,
+    pattern: /\b(pet|dog|hobb|free time|sport|run|padel|formula|f1|space|family|live|from)/,
     answer: PERSONAL_ANSWER,
     sources: [
       source(
@@ -330,7 +330,7 @@ export const TOPICS: readonly Topic[] = [
         0.67,
         'About Ivan — What are his hobbies?',
         null,
-        'Running, Formula 1, playing padel and learning new things…',
+        'Running, Formula 1, space, playing padel and learning new things…',
       ),
     ],
   },
