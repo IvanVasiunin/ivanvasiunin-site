@@ -122,12 +122,10 @@ Stack, docs, rules, Claude Code configuration, empty skeleton with all checks gr
 
 ## CI follow-ups (after launch)
 
-Found by the first CI run (2026-11-09); both pass locally and are skipped on CI only until fixed (Ivan's OK):
+Fixed 2026-11-12:
 
-- `e2e/chat.spec.ts` "closing Under the hood never makes the conversation jump": WebKit on CI measured a 16 px jump.
-- `e2e/fonts.spec.ts` "/cv keeps layout shift under 0.1 when the fonts arrive late": throttled Android on CI measured 0.13.
-
-Fixed 2026-11-12 (they failed `main` runs at random): the UMAP refit alignment test (compares the mean-square shift the alignment minimizes, not the median), the iPhone "reading up" chat tests (scroll one screen) and the view-transition test (one transition in up to three switches).
+- They failed `main` runs at random: the UMAP refit alignment test (compares the mean-square shift the alignment minimizes, not the median), the iPhone "reading up" chat tests (scroll one screen) and the view-transition test (one transition in up to three switches).
+- Skipped on CI since 2026-11-09, now on again: "/cv keeps layout shift under 0.1 when the fonts arrive late" (0.13 on throttled Android: the UI font's metric-matched fallback covered only Arial, which Android lacks; `system-ui` now adds Roboto, Segoe UI, Helvetica Neue) and "closing Under the hood never makes the conversation jump" (16 px on WebKit; the latest turn is a screen tall since 2026-11-10, so the end-of-page clamp no longer comes into play).
 
 Kept off CI for good: the knowledge map frame budgets (`e2e/knowledge-map-perf.spec.ts`) need a quiet machine; they run locally through the `perf-check` skill.
 

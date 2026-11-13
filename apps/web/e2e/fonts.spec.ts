@@ -95,10 +95,6 @@ for (const path of PATHS) {
   }) => {
     // The Layout Instability API is Chromium-only; on iOS Safari the swap is checked by hand (ROADMAP 7.5).
     test.skip(browserName !== 'chromium', 'The Layout Instability API is Chromium-only.');
-    // TEMPORARY (Ivan, 2026-11-09): on CI the throttled Android profile measured 0.13 on /cv while
-    // every local run stays under 0.1. Investigated after launch (docs/ROADMAP.md, CI follow-ups);
-    // remove this line then.
-    test.skip(Boolean(process.env.CI), 'Investigating a CI-only CLS result (see the comment).');
     // Delay the font files so the page first paints with the fallback faces and the swap happens
     // inside the measurement (on localhost the fonts would otherwise be ready before first paint).
     await page.route(FONT_FILES, async (route) => {

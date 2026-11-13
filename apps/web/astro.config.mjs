@@ -57,7 +57,11 @@ export default defineConfig({
       name: 'Schibsted Grotesk',
       cssVariable: '--font-schibsted-grotesk',
       provider: fontProviders.local(),
-      fallbacks: ['sans-serif'],
+      // `system-ui`, not `sans-serif`: Astro then makes metric-matched fallbacks for the faces phones
+      // and desktops really have (BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial). With
+      // `sans-serif` only Arial was matched, which Android does not have: Roboto took over unadjusted
+      // and the swap shifted the layout (CI, throttled Android: CLS 0.13 on /cv; 2026-11-12).
+      fallbacks: ['system-ui'],
       options: {
         variants: fontsourceVariants(
           '@fontsource-variable/schibsted-grotesk',
